@@ -51,7 +51,7 @@ module FriendNews
 
     def send_cmd(cmd_line)
       @socket.puts(cmd_line)
-      while code = @socket.get
+      while code = @socket.gets
         return code
       end
     end
@@ -60,7 +60,7 @@ module FriendNews
       file.each{|line|
         @socket.puts(line)
       }
-      while code = @socket.get
+      while code = @socket.gets
         return code
       end
     end

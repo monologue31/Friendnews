@@ -11,8 +11,8 @@ module FriendNews
     end
 
     def start
+      puts "NNTP Server Started"
 	  	loop do
-        puts "NNTP Server Started"
 		  	socket = @socket.accept
 	
 		  	puts "server:accepted #{socket.addr[2]}"
@@ -53,7 +53,7 @@ module FriendNews
               if true
                 @stat_code += 300
                 self.send_res(@stat_code)
-                self.send_res(self.rcv_msg(post))
+                self.send_res(self.rcv_msg("post",msg_id = nil))
               else
                 @stat_code += 400
                 break
