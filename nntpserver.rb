@@ -116,8 +116,9 @@ module FriendNews
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
-        File.write("#{$fns_path}/article/#{tag}}/#{msg_id.tmp}",self.to_str(message))
+        File.write("#{$fns_path}/article/#{tag}}/#{msg_id}",self.to_str(message))
 
+        $fns_queue.push("192.168.83.146!#{mesg_id},#{tag}")
 	  		return message["Message_id"],message["Tag"]
       when /(?i)ihave/
         tag = msg_str.scan(/Tag\s*:\s*.*\n/)[0].split(/\s*:\s*/)[1].chomp
@@ -127,6 +128,7 @@ module FriendNews
 
         #save file
         File.write("#{$fns_path}/article/#{tag}}/#{msg_id}",File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")) 
+        $fns_queue.push("192.168.83.146!#{mesg_id},#{tag}")
         return code
       end
     end
