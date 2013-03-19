@@ -1,5 +1,7 @@
 require 'socket'
 require 'dbm'
+require 'gem'
+require 'uuidtools'
 
 module FriendNews
 
