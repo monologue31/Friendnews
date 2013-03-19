@@ -1,5 +1,6 @@
 require 'dbm'
 require 'nntpclient'
+require 'log'
 
 module FriendNews
 
@@ -13,8 +14,9 @@ module FriendNews
 	  		loop do
 	  			feeds_list = DBM::open("#{$fns_path}/db/feeds_list",0666)
 		  		feeds_list.each_key{|host|
-              $fns_queue.push("#{host}!#{feeds_list[host]}")
-			  	}
+			  	  list = File.read("#{$fns_path}/feeds/#{host}")
+            $fns_queue.push("#{host}!#{list}")
+          }
 				  feeds_list.close
 				  sleep(3600) #sleep 1 hour
   			end
@@ -26,6 +28,7 @@ module FriendNews
         Thread.start do
           msg_list = $fns_queue.pop().split("!")
           host = msg_list[0]
+          log = 
           msg_list.delete(host)
           client = FriendNews::NNTPClient.new(11119)
           client.connect(host)
@@ -35,6 +38,7 @@ module FriendNews
             case code
             when 235
               self.del_hist(host,msg_id)
+              self.append_log(host,msg_id)
             when 435||436||437
               puts "failed!message will post later!"
             end
@@ -44,8 +48,7 @@ module FriendNews
     end
 
     def del_hist(host,msg_id_del)
-      feeds_list = DBM::open("#{$fns_path}/db/feeds_list",0666)
-      messages = feed_list[host].split("!")
+      messages = File.read("#{$fns_path}/feeds/#{host}").split("!")
       new_messages = ""
       messages.each{|message|
         msg_id,tag = message.split(",")
@@ -53,11 +56,15 @@ module FriendNews
           new_messages += "#{message}!"
         end
       }
+      messages.close
       new_messages.slice!(-1)
-      feeds_list[host] = new_messages
-      feeds_list.close
+      File.write("#{$fns_path}/feeds/#{host}",new_messages)
     end
   end
 
-
+  def append_log(host,msg_id,tag)
+    log = FriendNews::log.new("feeds",nil)
+    log. append_log("Message-id[#{msg_id}] feed to #{host}----success")
+    log.close
+  end
 end
