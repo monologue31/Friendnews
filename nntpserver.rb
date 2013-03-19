@@ -55,7 +55,6 @@ module FriendNews
               if true
                 @stat_code += 300
                 self.send_res(@stat_code)
-                puts "line58"
                 self.send_res(self.rcv_msg("post",msg_id = nil))
               else
                 @stat_code += 400
@@ -94,7 +93,7 @@ module FriendNews
 
       case cmd
       when /(?i)post/
-        self.to_hash(msg_str)
+        message = self.to_hash(msg_str)
 
   			#add Message_id
   			message["Message_id"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"] unless message.key?("Message_id")
