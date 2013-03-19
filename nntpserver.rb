@@ -94,7 +94,8 @@ module FriendNews
       case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
-
+    
+        p message
   			#add Message_id
   			message["Message_id"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"] unless message.key?("Message_id")
 
@@ -102,11 +103,11 @@ module FriendNews
 	  		message["Path"] = @socket.addr[2] unless message.key?("Path")
 
 	  		#add Signature
-	  		unless message.key?("Signature")
-	  			option = DBM::open("#{$fns_path}/db/option",0066)
-	  			message["Signature"] = option["Signature"]
-	  			option.close
-	  		end
+	  		#unless message.key?("Signature")
+	  		#	option = DBM::open("#{$fns_path}/db/option",0066)
+	  		#	message["Signature"] = option["Signature"]
+	  		#	option.close
+	  		#end
 
         #sign msg
 
@@ -118,6 +119,7 @@ module FriendNews
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
+        p message
         File.write("#{$fns_path}/article/#{tag}}/#{msg_id}",self.to_str(message))
 
         $fns_queue.push("192.168.83.146!#{mesg_id},#{tag}")
