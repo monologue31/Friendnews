@@ -86,13 +86,13 @@ module FriendNews
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
       while line = @socket.gets
-        p line
         msg_str += line
-        p msg_str
+        if line == ".\n"
+          break
+        end
       end
  
       p msg_str
-
       case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
