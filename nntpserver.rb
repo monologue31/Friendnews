@@ -46,8 +46,6 @@ module FriendNews
         loop do
           while line = @socket.gets
             cmd,param = line.split(/\s+/,2)
-            p cmd
-            p param
             case cmd
             when /(?i)post/
               @stat_code += 30
@@ -55,7 +53,6 @@ module FriendNews
               if true
                 @stat_code += 300
                 self.send_res(@stat_code)
-                puts "send res"
                 self.send_res(self.rcv_msg("post",msg_id = nil))
               else
                 @stat_code += 400
@@ -91,6 +88,8 @@ module FriendNews
       while line = @socket.gets
         msg_str += line
       end
+  
+      p msg_str
 
       case cmd
       when /(?i)post/
