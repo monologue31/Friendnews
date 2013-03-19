@@ -86,6 +86,7 @@ module FriendNews
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
       while line = @socket.gets
+        p line
         msg_str += line
       end
   
