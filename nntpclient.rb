@@ -8,7 +8,7 @@ module FriendNews
     end
 
     def connect(host)
-      @socket = TCPServer.open(host,@port)
+      @socket = TCPSocket.open(host,@port)
     end
 
     def disconnect
