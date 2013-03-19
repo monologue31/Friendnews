@@ -36,7 +36,7 @@ module FriendNews
       end
       
       stat_code = self.send_cmd(cmd_line)
-      case self.stat_res(code)
+      case self.stat_res(stat_code)
       when 1
         stat_code = send_msg(File.open(file_path))
         case self.stat_res(stat_code)
