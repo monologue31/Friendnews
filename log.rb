@@ -17,9 +17,9 @@ class Log
 
 	def start
     unless File.exist?("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}")
-			@log_name = File.open("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}"),"w")
+			@log_name = File.open("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}","w")
 		else
-			@log_name = File.open("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}"),"a")
+			@log_name = File.open("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}","a")
 		end
 	end
 end
