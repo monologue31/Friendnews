@@ -38,6 +38,7 @@ module FriendNews
       stat_code = self.send_cmd(cmd_line).chomp.to_i
       case self.stat_res(stat_code)
       when 1
+        puts "send msg"
         stat_code = send_msg(File.open(file_path))
         case self.stat_res(stat_code)
         when 1
@@ -57,6 +58,7 @@ module FriendNews
     end
 
     def send_msg(file)
+      p file
       file.each{|line|
         @socket.puts(line)
       }
