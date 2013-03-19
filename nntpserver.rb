@@ -88,8 +88,9 @@ module FriendNews
       while line = @socket.gets
         p line
         msg_str += line
+        p msg_str
       end
-  
+ 
       p msg_str
 
       case cmd
