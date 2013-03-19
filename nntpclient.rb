@@ -36,6 +36,7 @@ module FriendNews
       end
       
       stat_code = self.send_cmd(cmd_line)
+      puts "39 line"
       case self.stat_res(stat_code)
       when 1
         stat_code = send_msg(File.open(file_path))
