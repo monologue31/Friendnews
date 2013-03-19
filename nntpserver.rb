@@ -122,7 +122,7 @@ module FriendNews
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
         p message
-        File.write("#{$fns_path}/article/#{tag}}/#{msg_id}",self.to_str(message))
+        File.write("#{$fns_path}/article/#{message["Tag"]}}/#{message["Message_id"]}",self.to_str(message))
 
         $fns_queue.push("192.168.83.146!#{mesg_id},#{tag}")
 	  		return message["Message_id"],message["Tag"]
