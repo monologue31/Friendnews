@@ -35,8 +35,7 @@ module FriendNews
         cmd_line = "IHAVE #{msg_id}"
       end
       
-      stat_code = self.send_cmd(cmd_line)
-      puts stat_code
+      stat_code = self.send_cmd(cmd_line).chomp.to_i
       case self.stat_res(stat_code)
       when 1
         stat_code = send_msg(File.open(file_path))
