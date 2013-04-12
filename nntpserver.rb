@@ -124,7 +124,7 @@ module FriendNews
         p message
         File.write("#{$fns_path}/article/#{message["Tag"]}}/#{message["Message_id"]}",self.to_str(message))
 
-        $fns_queue.push("192.168.83.146!#{message["Message_id"},#{message["Tag"]}")
+        $fns_queue.push("192.168.83.146!#{message["Message_id"]},#{message["Tag"]}")
 	  		return message["Message_id"],message["Tag"]
       when /(?i)ihave/
         tag = msg_str.scan(/Tag\s*:\s*.*\n/)[0].split(/\s*:\s*/)[1].chomp
