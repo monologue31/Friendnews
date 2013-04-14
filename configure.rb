@@ -1,21 +1,10 @@
 require "fileutils"
 require "dbm"
 #make dir
-unless File.exist?("log")
-  Dir.mkdir("log")
-end
-
-unless File.exist?("article/music")
-  Dir.mkdir("article/music")
-end
-
-unless File.exist?("tmp/music")
-  Dir.mkdir("tmp/music")
-end
-
-unless File.exist?("db")
-  Dir.mkdir("db")
-end
+FileUtils.mkpath("log")
+FileUtils.mkpath("article/music")
+FileUtils.mkpath("tmp/music")
+FileUtils.mkpath("db")
 
 #set header
 header = DBM::open("db/header",0066)
