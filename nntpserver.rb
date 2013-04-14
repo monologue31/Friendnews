@@ -122,7 +122,9 @@ module FriendNews
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
         p message
-        File.write("#{$fns_path}/article/#{message["Tag"]}}/#{message["Message_id"]}",self.to_str(message))
+        File.open("#{$fns_path}/article/#{message["Tag"]}}/#{message["Message_id"]}",w) do |f|
+          f.write self.to_str(message)
+        end
 
         $fns_queue.push("192.168.83.146!#{message["Message_id"]},#{message["Tag"]}")
 	  		return message["Message_id"],message["Tag"]
@@ -131,7 +133,6 @@ module FriendNews
         File.open("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}","w") do |f| 
           f.print msg_str
         end
-#        File.write("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}",msg_str)
 
         #check verify
 
@@ -139,7 +140,6 @@ module FriendNews
         File.open("#{$fns_path}/article/#{tag}}/#{msg_id}") do |f| 
           f.print File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")
         end
-#        File.write("#{$fns_path}/article/#{tag}}/#{msg_id}",File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")) 
         $fns_queue.push("192.168.83.144!#{msg_id},#{tag}")
         return code
       end
