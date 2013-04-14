@@ -128,13 +128,17 @@ module FriendNews
 	  		return message["Message_id"],message["Tag"]
       when /(?i)ihave/
         tag = msg_str.scan(/Tag\s*:\s*.*\n/)[0].split(/\s*:\s*/)[1].chomp
-        open("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}","w"){|f| f.write msg_str}
+        File.open("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}","w") do |f| 
+          f.print msg_str
+        end
 #        File.write("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}",msg_str)
 
         #check verify
 
         #save file
-        open("#{$fns_path}/article/#{tag}}/#{msg_id}"){|f| f.write File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")}
+        File.open("#{$fns_path}/article/#{tag}}/#{msg_id}") do |f| 
+          f.print File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")
+        end
 #        File.write("#{$fns_path}/article/#{tag}}/#{msg_id}",File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")) 
         $fns_queue.push("192.168.83.144!#{msg_id},#{tag}")
         return code
