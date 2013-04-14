@@ -122,11 +122,12 @@ module FriendNews
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
         p message
-        File.open("#{$fns_path}/article/#{message["Tag"]}}/#{message["Message_id"]}",w) do |f|
+        File.open("#{$fns_path}/article/#{message["Tag"]}/#{message["Message_id"]}","w") do |f|
           f.write self.to_str(message)
         end
 
         $fns_queue.push("192.168.83.146!#{message["Message_id"]},#{message["Tag"]}")
+        code = 330
 	  		return message["Message_id"],message["Tag"]
       when /(?i)ihave/
         tag = msg_str.scan(/Tag\s*:\s*.*\n/)[0].split(/\s*:\s*/)[1].chomp
