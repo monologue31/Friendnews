@@ -1,10 +1,21 @@
 require "fileutils"
 require "dbm"
 #make dir
-Dir.mkdir("log")
-Dir.mkdir("article/music")
-Dir.mkdir("tmp/music")
-Dir.mkdir("db")
+unless File.exist?("log")
+  Dir.mkdir("log")
+end
+
+unless File.exist?("article/music")
+  Dir.mkdir("article/music")
+end
+
+unless File.exist?("tmp/music")
+  Dir.mkdir("tmp/music")
+end
+
+unless File.exist?("db")
+  Dir.mkdir("db")
+end
 
 #set header
 header = DBM::open("db/header",0066)
@@ -24,4 +35,4 @@ header["12"] = "Followup-To"
 header["13"] = "References"
 header["14"] = "Keywords"
 header["15"] = "Summary"
-hearer["16"] = "Distribution"
+header["16"] = "Distribution"
