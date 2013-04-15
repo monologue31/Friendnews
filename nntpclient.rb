@@ -8,8 +8,6 @@ module FriendNews
     end
 
     def connect(host)
-      p host
-      p @port
       @socket = TCPSocket.open(host,@port)
     end
 
