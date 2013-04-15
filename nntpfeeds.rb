@@ -27,13 +27,19 @@ module FriendNews
   		loop do
         Thread.start do
           msg_list = $fns_queue.pop().split("!")
+          puts "get msg from queue"
           puts msg_list
+          puts "-----------"
           host = msg_list[0] 
           msg_list.delete(host)
+          p msg_list
           client = FriendNews::NNTPClient.new(11119)
           client.connect(host)
           msg_list.each{|msg|
             msg_id,tag = msg.split(",")
+            p msg_id
+            p tag
+            p "ihave"
             stat_code = client.tran_file("post",msg_id = msg_id,tag = tag)
             case code
             when 235

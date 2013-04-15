@@ -70,9 +70,6 @@ module FriendNews
     end
 
     def stat_res(code)
-      puts "-----"
-      p code
-      p code[1]
       case code[0]
       when 1
       when 2

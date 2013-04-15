@@ -153,8 +153,8 @@ module FriendNews
       while line = feed.gets
         host,host_id,host_tag = line.split("!")
         p host
-        p id 
-        p tag
+        p host_id 
+        p host_tag
         if /#{tag}/ =~ host_tag
           $fns_queue.push("#{id}!#{message_id},#{tag}")
         end
