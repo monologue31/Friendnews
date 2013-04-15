@@ -28,8 +28,7 @@ module FriendNews
         Thread.start do
           msg_list = $fns_queue.pop().split("!")
           puts msg_list
-          host = msg_list[0]
-          log = 
+          host = msg_list[0] 
           msg_list.delete(host)
           client = FriendNews::NNTPClient.new(11119)
           client.connect(host)

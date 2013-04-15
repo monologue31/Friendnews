@@ -126,9 +126,10 @@ module FriendNews
           f.write self.to_str(message)
         end
 
-        $fns_queue.push("192.168.83.146!#{message["Message_id"]},#{message["Tag"]}")
-        code = 330
-	  		return message["Message_id"],message["Tag"]
+        #feed message
+        self.feed(message["Message_id"],message["Tag"])
+        code = 240
+	  		return code
       when /(?i)ihave/
         tag = msg_str.scan(/Tag\s*:\s*.*\n/)[0].split(/\s*:\s*/)[1].chomp
         File.open("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}","w") do |f| 
@@ -141,8 +142,22 @@ module FriendNews
         File.open("#{$fns_path}/article/#{tag}}/#{msg_id}") do |f| 
           f.print File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")
         end
-        $fns_queue.push("192.168.83.144!#{msg_id},#{tag}")
+
+        #feed message
         return code
+      end
+    end
+
+    def feed(message_id,tag)
+      feed = File.open("#{$fns_path}/etc/fnsfeed.conf")
+      while line = feed.gets
+        host,host_id,host_tag = line.split("!")
+        p host
+        p id 
+        p tag
+        if /#{tag}/ =~ host_tag
+          $fns_queue.push("#{id}!#{message_id},#{tag}")
+        end
       end
     end
 
