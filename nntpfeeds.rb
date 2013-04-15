@@ -34,9 +34,11 @@ module FriendNews
           p msg_list
           client = FriendNews::NNTPClient.new(11119)
           client.connect(host)
+          puts "#############"
           msg_list.each do |msg|
+            puts "##############"
             msg_id,tag = msg.split(",")
-            p "ihave"
+            puts "ihave"
             stat_code = client.tran_file("post",msg_id = msg_id,tag = tag)
             case code
             when 235

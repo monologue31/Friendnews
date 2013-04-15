@@ -150,9 +150,10 @@ module FriendNews
 
     def feed(message_id,tag)
       feed = File.open("#{$fns_path}/etc/fnsfeed.conf")
-      while line = feed.gets.chomp
+      while line = feed.gets
         host,host_id,host_tag = line.split("!")
         if /#{tag}/ =~ host_tag
+          puts "feed #{message_id}"
           $fns_queue.push("#{host_id}!#{message_id},#{tag}")
         end
       end
