@@ -25,14 +25,12 @@ module FriendNews
       
       #feeds news
   		loop do
-        Thread.start do
+#        Thread.start do
           msg_list = $fns_queue.pop().split("!")
           puts "get msg from queue"
-          p msg_list
           host = msg_list[0] 
           msg_list.delete(host)
-          p msg_list
-          client = FriendNews::NNTPClient.new(11119)
+          client = FriendNews::NNTPClient.new(111119)
           client.connect(host)
           puts "#############"
           msg_list.each do |msg|
@@ -49,7 +47,7 @@ module FriendNews
             end
           end
           puts "why hers?!!"
-        end
+#        end
       end
     end
 
