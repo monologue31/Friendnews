@@ -28,7 +28,7 @@ module FriendNews
         Thread.start do
           msg_list = $fns_queue.pop().split("!")
           puts "get msg from queue"
-          puts msg_list
+          p msg_list
           puts "-----------"
           host = msg_list[0] 
           msg_list.delete(host)
