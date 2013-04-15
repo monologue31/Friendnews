@@ -44,7 +44,7 @@ module FriendNews
         stat_code = send_msg(File.open(file_path))
         case self.stat_res(stat_code)
         when 1
-          puts "Success code[#{stat_code}]"
+          puts "Success code[#{stat_code.chomp}]"
         end
       end
 

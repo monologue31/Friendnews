@@ -29,16 +29,13 @@ module FriendNews
           msg_list = $fns_queue.pop().split("!")
           puts "get msg from queue"
           p msg_list
-          puts "-----------"
           host = msg_list[0] 
           msg_list.delete(host)
           p msg_list
           client = FriendNews::NNTPClient.new(11119)
           client.connect(host)
-          msg_list.each{|msg|
+          msg_list.each do |msg|
             msg_id,tag = msg.split(",")
-            p msg_id
-            p tag
             p "ihave"
             stat_code = client.tran_file("post",msg_id = msg_id,tag = tag)
             case code
@@ -48,8 +45,9 @@ module FriendNews
             when 435||436||437
               puts "failed!message will post later!"
             end
-          }
           end
+          puts "why hers?!!"
+        end
       end
     end
 
