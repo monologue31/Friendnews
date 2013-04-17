@@ -11,16 +11,16 @@ module FriendNews
     end
 
     def start
-      puts "NNTP Server Started"
+      puts "nntpserver:NNTP Server Started"
 	  	loop do
 		  	socket = @socket.accept
 	
-		  	puts "server:accepted #{socket.addr[2]}"
+		  	puts "nntpserver:accepted #{socket.addr[2]}"
 
 		  	Thread.start do
 		  	process = NNTPProcess.new(socket)
 		  	process.run
-		  	puts "server:#{socket.addr[2]} done"
+		  	puts "nntpserver:#{socket.addr[2]} done"
 			  end
 	  	end
     end
@@ -39,7 +39,7 @@ module FriendNews
   	def run
 	  	if @socket.eof?
 		  	@socket.close
-			  puts "connection closed #{sock.addr[2]}"
+			  puts "nntpserver:connection closed #{sock.addr[2]}"
 		  end
 
 	  	begin
@@ -124,7 +124,7 @@ module FriendNews
           f.write self.to_str(message)
         end
 
-        puts "server:Receive messsage[#{message["Message_id"]}] successful"
+        puts "nntpserver:Receive messsage[#{message["Message_id"]}] successful"
         #feed message
         self.feed(message["Message_id"],message["Tag"])
         code = 240

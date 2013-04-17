@@ -32,8 +32,8 @@ module FriendNews
           msg_list.delete(host)
           puts "nntpfeeds:Feed to [#{host}]"
           puts "nntpfeeds:Message [#{msg_list}]"
-          client = FriendNews::NNTPClient.new(11119)
-          client.connect(host)
+          nntpclient = FriendNews::NNTPClient.new(11119)
+          nntpclient.connect(host.to_s)
           msg_list.each do |msg|
             puts "##############"
             msg_id,tag = msg.split(",")

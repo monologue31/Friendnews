@@ -9,8 +9,12 @@ module FriendNews
     end
 
     def connect(host)
-      @socket = TCPSocket.open(host,@port)
-      puts "nntpclient:Connecting #{host} with port[#{@port}]"
+      begin
+        @socket = TCPSocket.open(host,@port)
+        puts "nntpclient:Connecting #{host} with port[#{@port}]"
+      rescue => e
+        puts "nntpclient:Connecting #{host} with port[#{@port} erro:#{e}]"
+      end
     end
 
     def disconnect
