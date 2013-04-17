@@ -63,6 +63,7 @@ module FriendNews
               if self.chk_hist?(param)
                 @stat_code += 300
                 self.send_res(@stat_code)
+                puts "rec msg---------------------"
                 self.send_res(self.rcv_msg("ihave",msg_id = param))
 
               else
@@ -85,13 +86,14 @@ module FriendNews
 
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
+      puts "start"
       while line = @socket.gets
         msg_str += line
         if line == ".\n"
           break
         end
       end
- 
+      put "end"
       case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
