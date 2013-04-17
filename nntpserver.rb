@@ -60,7 +60,7 @@ module FriendNews
               end
             when /(?i)ihave/
               @stat_code += 40
-              if self.chk_hist?()
+              if self.chk_hist?(param)
                 @stat_code += 300
                 self.send_res(@stat_code)
                 self.send_res(self.rcv_msg(ihave,msg_id = param))
@@ -154,7 +154,7 @@ module FriendNews
       while line = feed.gets
         host,host_id,host_tag = line.split("!")
         if /#{tag}/ =~ host_tag
-          puts "feed #{message_id}"
+          puts "nntpserver:Feed message[#{message_id}]"
           $fns_queue.push("#{host_id}!#{message_id},#{tag}")
         end
       end
