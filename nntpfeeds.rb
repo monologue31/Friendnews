@@ -38,7 +38,7 @@ module FriendNews
             msg_id,tag = msg.split(",")
             p msg_id
             p tag
-            stat_code = nntpclient.tran_file("ihave",msg_id = msg_id,tag = tag)
+            stat_code = nntpclient.trans_file("ihave",msg_id = msg_id,tag = tag)
             case code
             when 235
               self.del_hist(host,msg_id)
