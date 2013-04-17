@@ -63,7 +63,7 @@ module FriendNews
               if self.chk_hist?(param)
                 @stat_code += 300
                 self.send_res(@stat_code)
-                self.send_res(self.rcv_msg(ihave,msg_id = param))
+                self.send_res(self.rcv_msg("ihave",msg_id = param))
 
               else
                 @stat_code += 400
@@ -168,11 +168,11 @@ module FriendNews
 			history = DBM::open("#{$fns_path}/db/history",0666)
 			
 			if history.value?(message_id)
-				puts "message_id<#{message_id}> already in history..."
+				puts "nntpserver:message_id<#{message_id}> already in history..."
 				history.close
 				return nil
 			else
-				puts "message_id<#{message_id}> not in history..."
+				puts "nntpserver:message_id<#{message_id}> not in history..."
 				history.close
 				return 1
 			end
