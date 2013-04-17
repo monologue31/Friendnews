@@ -5,15 +5,14 @@ module FriendNews
   class NNTPClient
     def initialize(port)
       @port = port
-      puts "nntpclient:NNTPClient start port[#{@port}]"
     end
 
     def connect(host)
       begin
         @socket = TCPSocket.open(host,@port)
-        puts "nntpclient:Connecting #{host} with port[#{@port}]"
+        puts "nntpclient:Connecting #{host} with port[#{@port}] successful"
       rescue => e
-        puts "nntpclient:Connecting #{host} with port[#{@port} erro:#{e}]"
+        puts "nntpclient:Connecting #{host} with port[#{@port}] erro [#{e}]"
       end
     end
 
