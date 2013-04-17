@@ -11,7 +11,7 @@ header = DBM::open("db/header",0066)
 header.clear
 header["1"] = "Date"
 header["2"] = "From"
-header["3"] = "Message-id"
+header["3"] = "Message_id"
 header["4"] = "Subject"
 header["5"] = "Tag"
 header["6"] = "Path"
