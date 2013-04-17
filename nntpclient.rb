@@ -25,14 +25,16 @@ module FriendNews
         puts "please write file path or msg_id"
         return -1
       end
-
+  
+      puts "nntpclient:Starting command [#{cmd}] with message_id[#{msg_id}] tag[#{tag}]"
       file_path = "#{$fns_path}/article/#{tag}/#{msg_id}" if (msg_id && tag)
-
+      
       unless File.exist?(file_path)
         puts "Can't find file!!"
         return -1
       end
 
+      puts "nntpclient:Open file in [#{file_path}]"
       case cmd
       when /(?i)post/
         cmd_line = "POST"
