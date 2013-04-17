@@ -221,8 +221,8 @@ module FriendNews
 
       msg_line = 0
       while i < line.length
-        break if line[i] == "."
 		   	message["Body"] += "#{line[i]}\n"
+        break if line[i] == "."
 		  	msg_line += 1
         i += 1 
       end
