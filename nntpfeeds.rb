@@ -27,13 +27,13 @@ module FriendNews
   		loop do
 #        Thread.start do
           msg_list = $fns_queue.pop().split("!")
-          puts "get msg from queue"
+          puts "nntpfeeds:Get command from queue [#{msg_list}]"
           host = msg_list[0] 
           msg_list.delete(host)
+          puts "nntpfeeds:Feed to [#{host}]"
+          puts "nntpfeeds:Message [#{msg_list}]"
           client = FriendNews::NNTPClient.new(11119)
-          p host
           client.connect(host)
-          puts "#############"
           msg_list.each do |msg|
             puts "##############"
             msg_id,tag = msg.split(",")

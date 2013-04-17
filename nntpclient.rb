@@ -5,12 +5,12 @@ module FriendNews
   class NNTPClient
     def initialize(port)
       @port = port
-      puts "NNTPClient start port[#{@port}]"
+      puts "nntpclient:NNTPClient start port[#{@port}]"
     end
 
     def connect(host)
       @socket = TCPSocket.open(host,@port)
-      puts "Connecting #{host} with port[#{@port}]"
+      puts "nntpclient:Connecting #{host} with port[#{@port}]"
     end
 
     def disconnect

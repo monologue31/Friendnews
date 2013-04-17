@@ -120,11 +120,11 @@ module FriendNews
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
-        p message
         File.open("#{$fns_path}/article/#{message["Tag"]}/#{message["Message_id"]}","w") do |f|
           f.write self.to_str(message)
         end
 
+        puts "server:Receive messsage[#{message["Message_id"]}] successful"
         #feed message
         self.feed(message["Message_id"],message["Tag"])
         code = 240
