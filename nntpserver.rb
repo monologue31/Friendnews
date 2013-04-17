@@ -97,7 +97,6 @@ module FriendNews
       when /(?i)post/
         message = self.to_hash(msg_str)
     
-        p message
   			#add Message_id
   			message["Message_id"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"] unless message.key?("Message_id")
 
@@ -131,19 +130,22 @@ module FriendNews
         code = 240
 	  		return code
       when /(?i)ihave/
-        tag = msg_str.scan(/Tag\s*:\s*.*\n/)[0].split(/\s*:\s*/)[1].chomp
-        File.open("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}","w") do |f| 
+        message = self.to_hash(msg_str)
+        File.open("#{$fns_path}/tmp/#{message["Tag"]}}/#{message["Message_id"]}.tmp","w") do |f| 
           f.print msg_str
         end
 
         #check verify
 
         #save file
-        File.open("#{$fns_path}/article/#{tag}}/#{msg_id}") do |f| 
-          f.print File.read("#{$fns_path}/tmp/#{tag}}/#{msg_id.tmp}")
+        File.open("#{$fns_path}/article/#{message["Tag"]}}/#{message["Message_id"]}") do |f| 
+          f.print File.read("#{$fns_path}/tmp/#{message["Tag"]}}/#{message["Message_id"]}.tmp")
         end
 
+        #del tmp file
+        File.delete("#{$fns_path}/tmp/#{message["Tag"]}}/#{message["Message_id"]}.tmp")
         #feed message
+        self.feed(message["Message_id"],message["Tag"])
         return code
       end
     end
