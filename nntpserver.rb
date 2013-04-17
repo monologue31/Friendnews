@@ -93,7 +93,7 @@ module FriendNews
           break
         end
       end
-      put "end"
+      puts "end"
       case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
