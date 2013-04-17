@@ -71,7 +71,6 @@ module FriendNews
         @socket.puts(line)
       }
       while code = @socket.gets
-        puts code
         next unless code
         return code
       end
