@@ -192,6 +192,7 @@ module FriendNews
   					string += header[i.to_s] + ":\s" + message_hash[header[i.to_s]] + "\n"
   				end
   			else
+          string += "\n"
   				string += message_hash[header[i.to_s]]
   			end
   			i+=1
