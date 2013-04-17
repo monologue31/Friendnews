@@ -135,14 +135,14 @@ module FriendNews
         p message
 
         File.open("#{$fns_path}/tmp/#{message["Tag"]}/#{message["Message_id"]}.tmp","w") do |f| 
-          f.print self.to_str(message)
+          f.write self.to_str(message)
         end
 
         #check verify
 
         #save file
-        File.open("#{$fns_path}/article/#{message["Tag"]}/#{message["Message_id"]}") do |f| 
-          f.print File.read("#{$fns_path}/tmp/#{message["Tag"]}/#{message["Message_id"]}.tmp")
+        File.open("#{$fns_path}/article/#{message["Tag"]}/#{message["Message_id"]}","w") do |f| 
+          f.write File.read("#{$fns_path}/tmp/#{message["Tag"]}/#{message["Message_id"]}.tmp")
         end
 
         #del tmp file
