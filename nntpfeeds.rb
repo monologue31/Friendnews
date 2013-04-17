@@ -36,15 +36,15 @@ module FriendNews
           nntpclient.connect(host.to_s)
           msg_list.each do |msg|
             msg_id,tag = msg.split(",")
-            p msg_id
-            p tag
-            stat_code = nntpclient.trans_file("ihave",msg_id = msg_id,tag = tag)
-            case code
+            stat_code = nntpclient.trans_file("ihave",file_path = nil,msg_id = msg_id,tag = tag)
+            case stat_code
             when 235
               self.del_hist(host,msg_id)
               self.append_log(host,msg_id)
             when 435||436||437
-              puts "nntpfeeds:failed!message will post later!"
+              puts "nntpfeeds:Failed!message will post later!"
+            when -1
+              puts "nntpfeeds:Transfer message[#{mesg_id}] failed!"
             end
           end
 #        end
