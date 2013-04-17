@@ -43,39 +43,37 @@ module FriendNews
 		  end
 
 	  	begin
-        loop do
           while line = @socket.gets
-            cmd,param = line.split(/\s+/,2)
-            case cmd
-            when /(?i)post/
-              @stat_code += 30
-              #user check
-              if true
-                @stat_code += 300
-                self.send_res(@stat_code)
-                self.send_res(self.rcv_msg("post",msg_id = nil))
-              else
-                @stat_code += 400
-                break
-              end
-            when /(?i)ihave/
-              @stat_code += 40
-              if self.chk_hist?(param)
-                @stat_code += 300
-                self.send_res(@stat_code)
-                puts "rec msg---------------------"
-                self.send_res(self.rcv_msg("ihave",msg_id = param))
-
-              else
-                @stat_code += 400
-                break
-              end
-            when /(?i)quit/
-              break
+          next unless line
+          cmd,param = line.split(/\s+/,2)
+          case cmd
+          when /(?i)post/
+            @stat_code += 30
+            #user check
+            if true
+              @stat_code += 300
+              self.send_res(@stat_code)
+              self.send_res(self.rcv_msg("post",msg_id = nil))
             else
-              @stat_code += 500
+              @stat_code += 400
               break
             end
+          when /(?i)ihave/
+            @stat_code += 40
+            if self.chk_hist?(param)
+              @stat_code += 300
+              self.send_res(@stat_code)
+              self.send_res(self.rcv_msg("ihave",msg_id = param))
+
+            else
+              @stat_code += 400
+              break
+            end
+          when /(?i)quit/
+            break
+          else
+            @stat_code += 500
+            break
           end
         end
 	  	rescue => e
@@ -86,14 +84,13 @@ module FriendNews
 
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
-      puts "start"
       while line = @socket.gets
         msg_str += line
         if line == ".\n"
           break
         end
       end
-      puts "end"
+
       case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)

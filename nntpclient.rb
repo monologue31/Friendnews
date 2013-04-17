@@ -61,6 +61,7 @@ module FriendNews
       @socket.puts(cmd_line)
       puts "nntpclient:Send command [#{cmd_line}]"
       while code = @socket.gets
+        next unless code
         puts "nntpclient:Receive status code [#{code.chomp}]"
         return code
       end
