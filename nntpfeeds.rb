@@ -32,7 +32,7 @@ module FriendNews
           msg_list.delete(host)
           puts "nntpfeeds:Feed to [#{host}]"
           puts "nntpfeeds:Message [#{msg_list}]"
-          nntpclient = FriendNews::NNTPClient.new(11119)
+          nntpclient = FriendNews::NNTPClient.new(119)
           nntpclient.connect(host.to_s)
           msg_list.each do |msg|
             puts "##############"
@@ -44,10 +44,9 @@ module FriendNews
               self.del_hist(host,msg_id)
               self.append_log(host,msg_id)
             when 435||436||437
-              puts "failed!message will post later!"
+              puts "nntpfeeds:failed!message will post later!"
             end
           end
-          puts "why hers?!!"
 #        end
       end
     end

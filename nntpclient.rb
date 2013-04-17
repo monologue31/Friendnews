@@ -41,13 +41,14 @@ module FriendNews
       end
       
       stat_code = self.send_cmd(cmd_line).chomp.to_i
+
       case self.stat_res(stat_code)
       when 1
-        puts "send msg"
+        puts "nntpclient:Send message to server"
         stat_code = send_msg(File.open(file_path))
         case self.stat_res(stat_code)
         when 1
-          puts "Success code[#{stat_code.chomp}]"
+          puts "nntpclient:Transfer message successfule with code[#{stat_code.chomp}]"
         end
       end
 
@@ -56,8 +57,10 @@ module FriendNews
     end
 
     def send_cmd(cmd_line)
-      @socket.puts(cmd_line)
+      @socket.puts(cmd_line)i
+      puts "nntpclient:Send command [#{cmd_line}]"
       while code = @socket.gets
+        puts "nntpclient:Receive status code [#{code.chomp}]"
         return code
       end
     end
