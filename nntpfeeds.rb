@@ -30,7 +30,8 @@ module FriendNews
           puts "get msg from queue"
           host = msg_list[0] 
           msg_list.delete(host)
-          client = FriendNews::NNTPClient.new(111119)
+          client = FriendNews::NNTPClient.new(11119)
+          p host
           client.connect(host)
           puts "#############"
           msg_list.each do |msg|
