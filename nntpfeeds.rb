@@ -35,10 +35,10 @@ module FriendNews
           nntpclient = FriendNews::NNTPClient.new(119)
           nntpclient.connect(host.to_s)
           msg_list.each do |msg|
-            puts "##############"
             msg_id,tag = msg.split(",")
-            puts "ihave"
-            stat_code = client.tran_file("post",msg_id = msg_id,tag = tag)
+            p msg_id
+            p tag
+            stat_code = client.tran_file("ihave",msg_id = msg_id,tag = tag)
             case code
             when 235
               self.del_hist(host,msg_id)
