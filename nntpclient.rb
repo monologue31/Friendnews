@@ -69,7 +69,6 @@ module FriendNews
 
     def send_msg(file)
       file.each{|line|
-        p line
         @socket.puts(line)
       }
       while code = @socket.gets

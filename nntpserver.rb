@@ -84,7 +84,6 @@ module FriendNews
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
       while line = @socket.gets
-        p line
         msg_str += line
         if line == ".\n"
           break
@@ -118,8 +117,6 @@ module FriendNews
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
-        p message
-        p self.to_str(message)
         File.open("#{$fns_path}/article/#{message["Tag"]}/#{message["Message_id"]}","w") do |f|
           f.write self.to_str(message)
         end
@@ -135,6 +132,8 @@ module FriendNews
 	  		#add Path
 	  		message["Path"] += "!#{@socket.addr[2]}"
 
+        p message
+
         File.open("#{$fns_path}/tmp/#{message["Tag"]}/#{message["Message_id"]}.tmp","w") do |f| 
           f.print msg_str
         end
@@ -142,12 +141,12 @@ module FriendNews
         #check verify
 
         #save file
-        File.open("#{$fns_path}/article/#{message["Tag"]}}/#{message["Message_id"]}") do |f| 
+        File.open("#{$fns_path}/article/#{message["Tag"]}/#{message["Message_id"]}") do |f| 
           f.print File.read("#{$fns_path}/tmp/#{message["Tag"]}}/#{message["Message_id"]}.tmp")
         end
 
         #del tmp file
-        File.delete("#{$fns_path}/tmp/#{message["Tag"]}}/#{message["Message_id"]}.tmp")
+        File.delete("#{$fns_path}/tmp/#{message["Tag"]}/#{message["Message_id"]}.tmp")
         #feed message
         self.feed(message["Message_id"],message["Tag"])
         return code
