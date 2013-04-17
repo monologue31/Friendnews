@@ -46,6 +46,7 @@ module FriendNews
       case self.stat_res(stat_code)
       when 1
         puts "nntpclient:Send message to server"
+        puts file_path
         stat_code = send_msg(File.open(file_path))
         case self.stat_res(stat_code)
         when 1
