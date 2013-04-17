@@ -64,7 +64,6 @@ module FriendNews
               @stat_code += 300
               self.send_res(@stat_code)
               self.send_res(self.rcv_msg("ihave",msg_id = param))
-
             else
               @stat_code += 400
               break
@@ -85,6 +84,7 @@ module FriendNews
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
       while line = @socket.gets
+        p line
         msg_str += line
         if line == ".\n"
           break
@@ -129,7 +129,11 @@ module FriendNews
 	  		return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
-        File.open("#{$fns_path}/tmp/#{message["Tag"]}}/#{message["Message_id"]}.tmp","w") do |f| 
+        
+	  		#add Path
+	  		message["Path"] += "!#{@socket.addr[2]}"
+
+        File.open("#{$fns_path}/tmp/#{message["Tag"]}/#{message["Message_id"]}.tmp","w") do |f| 
           f.print msg_str
         end
 
