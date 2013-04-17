@@ -14,6 +14,6 @@ Thread.start do
 end
 
 #Start Server
-server  = FriendNews::NNTPServer.new(11119)
+server  = FriendNews::NNTPServer.new(119)
 server.start
 
