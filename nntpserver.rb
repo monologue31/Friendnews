@@ -15,7 +15,7 @@ module FriendNews
 	  	loop do
 		  	conn = @socket.accept
 	
-		  	puts "nntpserver:accepted #{socket.addr[2]}"
+		  	puts "nntpserver:accepted #{conn.addr[2]}"
 
         #check 127.0.0.1
         if true
@@ -23,7 +23,7 @@ module FriendNews
             conn.puts(200)
 		  	    process = NNTPProcess.new(conn)
 		  	    process.run
-		  	    puts "nntpserver:#{socket.addr[2]} done"
+		  	    puts "nntpserver:#{conn.addr[2]} done"
 			    end
         else
           
