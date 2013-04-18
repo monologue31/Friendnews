@@ -90,6 +90,7 @@ module FriendNews
             @socket.close
             return
           else
+            puts "errro"
             stat_code += 500
             @socket.puts(stat_code)
           end
