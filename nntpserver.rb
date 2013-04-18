@@ -87,6 +87,7 @@ module FriendNews
             end
             @socket.puts(".")
           when /(?i)quit/
+			      puts "nntpserver:connection closed #{sock.addr[2]}"
             @socket.close
             return
           else
