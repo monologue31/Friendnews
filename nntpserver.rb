@@ -13,15 +13,21 @@ module FriendNews
     def start
       puts "nntpserver:NNTP Server Started"
 	  	loop do
-		  	socket = @socket.accept
+		  	conn = @socket.accept
 	
 		  	puts "nntpserver:accepted #{socket.addr[2]}"
 
-		  	Thread.start do
-		  	process = NNTPProcess.new(socket)
-		  	process.run
-		  	puts "nntpserver:#{socket.addr[2]} done"
-			  end
+        #check 127.0.0.1
+        if true
+		  	  Thread.start do
+            conn.puts(200)
+		  	    process = NNTPProcess.new(conn)
+		  	    process.run
+		  	    puts "nntpserver:#{socket.addr[2]} done"
+			    end
+        else
+          
+        end
 	  	end
     end
 
@@ -37,57 +43,65 @@ module FriendNews
   	end
 
   	def run
+      loop do
 	  	if @socket.eof?
 		  	@socket.close
 			  puts "nntpserver:connection closed #{sock.addr[2]}"
 		  end
 
 	  	begin
-          while line = @socket.gets
+        while line = @socket.gets
           next unless line
           cmd,param = line.split(/\s+/,2)
           case cmd
           when /(?i)post/
-            @stat_code += 30
+            stat_code += 30
             #user check
             if true
-              @stat_code += 300
-              self.send_res(@stat_code)
-              self.send_res(self.rcv_msg("post",msg_id = nil))
+              stat_code += 300
+              @socket.puts(stat_code)
+              @socket.puts(self.rcv_msg("post",msg_id = nil))
             else
-              @stat_code += 400
-              break
+              stat_code += 400
+              @socket.puts(stat_code)
             end
           when /(?i)ihave/
-            @stat_code += 40
+            stat_code += 40
             if self.chk_hist?(param)
-              @stat_code += 300
-              self.send_res(@stat_code)
-              self.send_res(self.rcv_msg("ihave",msg_id = param))
+              stat_code += 300
+              @socekt.puts(stat_code)
+              @socket.puts(self.rcv_msg("ihave",msg_id = param))
             else
-              @stat_code += 400
-              break
+              stat_code += 400
+              @socket.puts(stat_code)
             end
+          when /(?i)article/
+          when /(?i)list/
+            tag = File.open("#{$fns_path}/etc/fnstags.conf")
+            while line = tag.gets
+              @socket.puts(line)
+            end
+            @socket.puts(".")
           when /(?i)quit/
-            break
+            @socket.close
+            return
           else
-            @stat_code += 500
-            break
+            stat_code += 500
+            @socket.puts(stat_code)
           end
         end
 	  	rescue => e
 		  	puts e.to_s
 		  	@socket.close
       end
+      end
 		end
 
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
       while line = @socket.gets
+        break if line == ".\n"
         msg_str += line
-        if line == ".\n"
-          break
-        end
       end
 
       case cmd
@@ -164,8 +178,7 @@ module FriendNews
       end
     end
 
-    def send_res(code)
-      @socket.puts(code)
+    def history()
     end
 
     def chk_hist?(message_id)
@@ -229,6 +242,7 @@ module FriendNews
       message["line"] = msg_line
 	  	return message
   	end
+
   end
 
 end

@@ -20,14 +20,8 @@ module FriendNews
       @socket.close
     end
 
-    def trans_file(cmd,file_path = nil,msg_id = nil,tag = nil)
-      unless (msg_id && tag) || file_path
-        puts "please write file path or msg_id"
-        return -1
-      end
-  
-      puts "nntpclient:Starting command [#{cmd}] with message_id[#{msg_id}] tag[#{tag}]"
-      file_path = "#{$fns_path}/article/#{tag}/#{msg_id}" if (msg_id && tag)
+    def command(cmd,file_path = nil,msg_id = nil,tag = nil)
+      puts "nntpclient:Starting command [#{cmd}]"
       
       unless File.exist?(file_path)
         puts "nntpclient:Can't find file with path[#{file_path}]"
@@ -36,21 +30,9 @@ module FriendNews
 
       case cmd
       when /(?i)post/
-        cmd_line = "POST"
+        stat_code = self.post(file_path)
       when /(?i)ihave/
-        cmd_line = "IHAVE #{msg_id}"
-      end
-      
-      stat_code = self.send_cmd(cmd_line).chomp.to_i
-
-      case self.stat_res(stat_code)
-      when 1
-        puts "nntpclient:Send message to server"
-        stat_code = send_msg(File.open(file_path))
-        case self.stat_res(stat_code)
-        when 1
-          puts "nntpclient:Transfer message successfule with code[#{stat_code.chomp}]"
-        end
+        stat_code = self.ihave(msg_id,tag)
       end
 
       #return code
@@ -71,6 +53,7 @@ module FriendNews
       file.each{|line|
         @socket.puts(line)
       }
+      @socket.puts(".")
       while code = @socket.gets
         next unless code
         return code
@@ -93,6 +76,32 @@ module FriendNews
       else
         return 1
       end
+    end
+
+    def text_res
+      res = ""
+      while line = @socket.gets
+        break if line == ".\n"
+        res += line
+      end
+      return res
+    end
+
+    def post(file_path)
+        stat_code = self.send_cmd("POST")
+        puts "nntpclient:Send message to server"
+        return stat_code if stat_res(stat_code) != 1
+        stat_code = send_msg(File.open(file_path))
+        return stat_code
+    end
+
+    def ihave(msg_id,tag)
+        stat_code = self.send_cmd("IHAVE #{msg_id}")
+        puts "nntpclient:Send message to server"
+        return stat_code if stat_res(stat_code) != 1
+        file_path = "#{$fns_path}/article/#{tag}/#{msg_id}"
+        stat_code = send_msg(File.open(file_path))
+        return stat_code
     end
 
   end
