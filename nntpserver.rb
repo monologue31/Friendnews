@@ -50,7 +50,6 @@ module FriendNews
 			  puts "nntpserver:connection closed #{sock.addr[2]}"
 		  end
 
-      puts "lets rec command"
 	  	begin
         while line = @socket.gets
           puts line
@@ -82,6 +81,7 @@ module FriendNews
           when /(?i)list/
             puts "yes!list!"
             tag = File.open("#{$fns_path}/etc/fnstags.conf")
+            @socket.puts(215)
             while line = tag.gets
               @socket.puts(line)
             end
@@ -90,9 +90,8 @@ module FriendNews
             @socket.close
             return
           else
-            puts "errro"
-            stat_code += 500
-            @socket.puts(stat_code)
+            #stat_code += 500
+            #@socket.puts(stat_code)
           end
         end
 	  	rescue => e
