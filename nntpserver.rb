@@ -45,10 +45,10 @@ module FriendNews
   	def run
       stat_code = 0
       loop do
-	  	if @socket.eof?
-		  	@socket.close
-			  puts "nntpserver:connection closed #{sock.addr[2]}"
-		  end
+#	  	if @socket.eof?
+#		  	@socket.close
+#			  puts "nntpserver:connection closed #{sock.addr[2]}"
+#		  end
 
 	  	begin
         while line = @socket.gets
@@ -91,6 +91,7 @@ module FriendNews
             @socket.close
             return
           else
+            puts "oo"
             #stat_code += 500
             #@socket.puts(stat_code)
           end
