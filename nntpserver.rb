@@ -49,7 +49,7 @@ module FriendNews
 #		  	@socket.close
 #			  puts "nntpserver:connection closed #{sock.addr[2]}"
 #		  end
-
+      puts "turn----------"
 	  	begin
         while line = @socket.gets
           puts line
