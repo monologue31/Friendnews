@@ -87,9 +87,10 @@ module FriendNews
             end
             @socket.puts(".")
           when /(?i)group/
-            @socket.puts("211 1 0 1 com")
+            puts "yes!its group"
+            @socket.puts("211 1 0 1 com group selected")
           when /(?i)quit/
-			      puts "nntpserver:connection closed #{sock.addr[2]}"
+			      puts "nntpserver:connection closed #{@socket.addr[2]}"
             @socket.close
             return
           else
