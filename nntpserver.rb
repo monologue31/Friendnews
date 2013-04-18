@@ -43,14 +43,17 @@ module FriendNews
   	end
 
   	def run
+      stat_code = 0
       loop do
 	  	if @socket.eof?
 		  	@socket.close
 			  puts "nntpserver:connection closed #{sock.addr[2]}"
 		  end
 
+      puts "lets rec command"
 	  	begin
         while line = @socket.gets
+          puts line
           next unless line
           cmd,param = line.split(/\s+/,2)
           case cmd
@@ -77,6 +80,7 @@ module FriendNews
             end
           when /(?i)article/
           when /(?i)list/
+            puts "yes!list!"
             tag = File.open("#{$fns_path}/etc/fnstags.conf")
             while line = tag.gets
               @socket.puts(line)
