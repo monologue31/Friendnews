@@ -79,13 +79,15 @@ module FriendNews
             end
           when /(?i)article/
           when /(?i)list/
-            puts "yes!list!"
             tag = File.open("#{$fns_path}/etc/fnstags.conf")
             @socket.puts(215)
             while line = tag.gets
+              puts "nntpserver:Response Tag [#{line}]"
               @socket.puts(line)
             end
             @socket.puts(".")
+          when /(?i)group/
+            @socket.puts("211 1 0 1 com")
           when /(?i)quit/
 			      puts "nntpserver:connection closed #{sock.addr[2]}"
             @socket.close
