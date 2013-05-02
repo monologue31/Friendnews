@@ -61,7 +61,7 @@ module FriendNews
             #user check
             if true
               stat_code += 300
-              @socket.puts(stat_code)
+              @socket.puts(stat_code.to_s)
               @socket.puts(self.rcv_msg("post",msg_id = nil))
             else
               stat_code += 400
