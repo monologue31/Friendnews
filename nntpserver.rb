@@ -236,7 +236,7 @@ module FriendNews
 				unless line[i] == ""
           header_field,field_value = line[i].split(/\s*:\s*/)
           if header_field == "Newsgroups"
-            message["tag"] = field_value
+            message["Tag"] = field_value
           else
 					  message[header_field] = field_value
           end
