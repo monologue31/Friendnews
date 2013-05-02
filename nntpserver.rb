@@ -61,9 +61,7 @@ module FriendNews
             #user check
             if true
               stat_code += 300
-              p stat_code
               @socket.puts(stat_code)
-              puts "------"
               @socket.puts(self.rcv_msg("post",msg_id = nil))
             else
               stat_code += 400
@@ -112,7 +110,7 @@ module FriendNews
       msg_str = ""
       while line = @socket.gets
         p line
-        break if line == ".\n"
+        break if line == ".\r\n"
         msg_str += line
       end
 
