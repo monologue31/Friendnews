@@ -57,7 +57,7 @@ module FriendNews
           cmd,param = line.split(/\s+/,2)
           case cmd
           when /(?i)post/
-            stat_code += 30
+            stat_code += 40
             #user check
             if true
               stat_code += 300
