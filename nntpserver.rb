@@ -61,7 +61,7 @@ module FriendNews
             #user check
             if true
               stat_code += 300
-              @socket.puts(stat_code.to_s)
+              @socket.puts(stat_code)
               @socket.puts(self.rcv_msg("post",msg_id = nil))
             else
               stat_code += 400
@@ -87,7 +87,7 @@ module FriendNews
             end
             @socket.puts(".")
           when /(?i)group/
-            res = "211 2 00000 00002 #{param.chomp} group selected"
+            res = "211 2 00000 00001 #{param.chomp} group selected"
             p res
             @socket.puts(res)
           when /(?i)quit/
@@ -140,8 +140,6 @@ module FriendNews
 
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
-
-        p message
 
         File.open("#{$fns_path}/article/#{message["Tag"]}/#{message["Message_id"]}","w") do |f|
           f.write self.to_str(message)
