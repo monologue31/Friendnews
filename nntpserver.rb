@@ -234,7 +234,7 @@ module FriendNews
       line = string.split("\r\n")
       while i < line.length
 				unless line[i] == ""
-          header_field,field_value = line[i].split(/\s*:\s*/)
+          header_field,field_value = line[i].split(/\s*:\s*/,2)
           if header_field == "Newsgroups"
             message["Tag"] = field_value
           else
