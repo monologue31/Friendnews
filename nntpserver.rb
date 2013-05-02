@@ -87,7 +87,7 @@ module FriendNews
             end
             @socket.puts(".")
           when /(?i)group/
-            res = "211 1 0 1 #{param} group selected"
+            res = "211 1 0 1 #{param.chomp} group selected"
             p res
             @socket.puts(res)
           when /(?i)quit/
