@@ -255,7 +255,7 @@ module FriendNews
         i += 1 
       end
 
-      message["line"] = msg_line
+      message["Lines"] = msg_line
 	  	return message
   	end
 
