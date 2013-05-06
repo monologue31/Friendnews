@@ -87,13 +87,10 @@ module FriendNews
             end
             @socket.puts(".")
           when /(?i)group/
+            #group option
             res = "211 2 00000 00001 #{param.chomp} group selected"
             p res
             @socket.puts(res)
-            loop do
-            while line = @socket.gets
-              p line
-            end
             end
           when /(?i)quit/
 			      puts "nntpserver:connection closed #{@socket.addr[2]}"
