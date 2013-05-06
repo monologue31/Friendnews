@@ -56,12 +56,10 @@ module FriendNews
           next unless line
           cmd,param = line.split(/\s+/,2)
           case cmd
-          when "MODE READER"
+          when "MODE"
             p cmd
-            if true
+            if pararm == "READER"
               @socket.puts("200 Hello,you can post")
-            else
-              @socket.puts("201 Hello,you can't post")
             end
           when /(?i)post/
             stat_code += 40
