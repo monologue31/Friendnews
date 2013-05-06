@@ -91,13 +91,12 @@ module FriendNews
             @socket.puts(".")
           when /(?i)group/
             #group option
-            res = "211 2 10011 10012 #{param.chomp} group selected"
+            res = "211 3 10011 10013 #{param.chomp} group selected"
             gpsel = true
             @socket.puts(res)
           when /(?i)xover/
             #find message
             if gpsel
-              puts "gpsel"
               @socket.puts("224 overview information follows")
               @socket.puts("10011 test")
               @socket.puts("10012 test")
