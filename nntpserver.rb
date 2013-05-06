@@ -56,6 +56,13 @@ module FriendNews
           next unless line
           cmd,param = line.split(/\s+/,2)
           case cmd
+          when /(?i)mode\sreader/
+            if true
+              @socket.puts("200 Hello,you can post")
+            else
+              @socket.puts("201 Hello,you can't post")
+            end
+            p cmd
           when /(?i)post/
             stat_code += 40
             #user check
@@ -71,7 +78,7 @@ module FriendNews
             stat_code += 30
             if self.chk_hist?(param)
               stat_code += 305
-              @socekt.puts(stat_code)
+              @socket.puts(stat_code)
               @socket.puts(self.rcv_msg("ihave",msg_id = param))
             else
               stat_code += 400
@@ -91,14 +98,12 @@ module FriendNews
             res = "211 2 00000 00001 #{param.chomp} group selected"
             p res
             @socket.puts(res)
-            end
           when /(?i)quit/
 			      puts "nntpserver:connection closed #{@socket.addr[2]}"
             @socket.close
             return
           else
-            #stat_code += 500
-            @socket.puts(200)
+            stat_code += 500
           end
         end
 	  	rescue => e
