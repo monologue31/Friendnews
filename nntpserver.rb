@@ -91,7 +91,7 @@ module FriendNews
             @socket.puts(".")
           when /(?i)group/
             #group option
-            res = "211 2 00000 00001 #{param.chomp} group selected"
+            res = "211 104 10011 10125 #{param.chomp} group selected"
             p res
             @socket.puts(res)
           when /(?i)stat/
