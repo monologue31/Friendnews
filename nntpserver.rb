@@ -58,7 +58,7 @@ module FriendNews
           case cmd
           when "MODE"
             p cmd
-            if pararm == "READER"
+            if param == "READER"
               @socket.puts("200 Hello,you can post")
             end
           when /(?i)post/
