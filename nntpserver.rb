@@ -94,7 +94,7 @@ module FriendNews
             res = "211 2 00000 00001 #{param.chomp} group selected"
             p res
             @socket.puts(res)
-          when /(?)stat/
+          when /(?i)stat/
             puts  "STAT"
           when /(?i)article/
             puts "ARTICLE"
