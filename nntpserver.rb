@@ -56,10 +56,6 @@ module FriendNews
           next unless line
           cmd,param = line.split(/\s+/,2)
           case cmd
-          when "MODE"
-            if param.chomp == "READER"
-              @socket.puts("200 Hello,you can post")
-            end
           when /(?i)post/
             stat_code += 40
             #user check
@@ -81,13 +77,16 @@ module FriendNews
               stat_code += 400
               @socket.puts(stat_code)
             end
-          when /(?i)article/
+          when "MODE"
+            if param.chomp == "READER"
+              @socket.puts("200 news server ready - posting ok")
+            end
           when /(?i)list/
             tag = File.open("#{$fns_path}/etc/fnstags.conf")
             @socket.puts("215 list of newsgroups follows")
             while line = tag.gets
               puts "nntpserver:Response Tag [#{line.chomp}]"
-              @socket.puts(line)
+              @socket.puts(line.chomp)
             end
             @socket.puts(".")
           when /(?i)group/
@@ -95,6 +94,10 @@ module FriendNews
             res = "211 2 00000 00001 #{param.chomp} group selected"
             p res
             @socket.puts(res)
+          when /(?)stat/
+            puts  "STAT"
+          when /(?i)article/
+            puts "ARTICLE"
           when /(?i)quit/
 			      puts "nntpserver:connection closed #{@socket.addr[2]}"
             @socket.close
