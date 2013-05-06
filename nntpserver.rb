@@ -108,8 +108,17 @@ module FriendNews
             puts  "STAT"
           when /(?i)article/
             puts "ARTICLE"
-            message = File.open("")
-            @socket.puts("220 #{param.chome} ")
+            message = File.open("#{$fns_path}/article/music/a53d8f2c-8409-4edd-aca9-fd407140ae88@xiaokunyao <xiaokunyao@softlab.cs.tsukuba.ac.jp>")
+            @socket.puts("220 #{param.chome} a53d8f2c-8409-4edd-aca9-fd407140ae88@xiaokunyao Article retrieved, text follows")
+            while line = message.gets
+              header_field,field_value = line[i].split(/\s*:\s*/,2)
+              if header_field == "Tag"
+                @socket.puts("Newsgroups: fns.#{header_field}")
+              else
+                @socket.puts(line)
+              end
+              @socket.puts(".")
+            end
           when /(?i)quit/
 			      puts "nntpserver:connection closed #{@socket.addr[2]}"
             @socket.close
