@@ -97,10 +97,10 @@ module FriendNews
           when /(?i)xover/
             #find message
             if gpsel
-              puts "xover"
+              puts "gpsel"
               @socket.puts("224 overview information follows")
-              @socket.puts("10011")
-              @socket.puts("10012")
+              @socket.puts("10011 test")
+              @socket.puts("10012 test")
               @socket.puts(".")
             else
             end
