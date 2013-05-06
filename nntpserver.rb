@@ -111,6 +111,7 @@ module FriendNews
             message = File.open("#{$fns_path}/article/music/a53d8f2c-8409-4edd-aca9-fd407140ae88@xiaokunyao <xiaokunyao@softlab.cs.tsukuba.ac.jp>")
             @socket.puts("220 #{param.chomp} a53d8f2c-8409-4edd-aca9-fd407140ae88@xiaokunyao Article retrieved, text follows")
             while line = message.gets
+              p line
               header_field,field_value = line.split(/\s*:\s*/,2)
               if header_field == "Tag"
                 @socket.puts("Newsgroups: fns.#{header_field}")
