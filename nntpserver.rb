@@ -99,8 +99,8 @@ module FriendNews
             if gpsel
               puts "xover"
               @socket.puts("224 overview information follows")
-              @socket.puts("10011 test messsage  tittle  time  from")
-              @socket.puts("10012 ok")
+              @socket.puts("10011")
+              @socket.puts("10012")
               @socket.puts(".")
             else
             end
@@ -108,6 +108,8 @@ module FriendNews
             puts  "STAT"
           when /(?i)article/
             puts "ARTICLE"
+            message = File.open("")
+            @socket.puts("220 #{param.chome} ")
           when /(?i)quit/
 			      puts "nntpserver:connection closed #{@socket.addr[2]}"
             @socket.close
@@ -251,7 +253,8 @@ module FriendNews
 				unless line[i] == ""
           header_field,field_value = line[i].split(/\s*:\s*/,2)
           if header_field == "Newsgroups"
-            message["Tag"] = field_value
+            tag = field_value.split(".")
+            message["Tag"] = tag[1]
           else
 					  message[header_field] = field_value
           end
