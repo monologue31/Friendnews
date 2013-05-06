@@ -57,9 +57,7 @@ module FriendNews
           cmd,param = line.split(/\s+/,2)
           case cmd
           when "MODE"
-            p cmd
             if param.chomp == "READER"
-              p param
               @socket.puts("200 Hello,you can post")
             end
           when /(?i)post/
@@ -86,9 +84,9 @@ module FriendNews
           when /(?i)article/
           when /(?i)list/
             tag = File.open("#{$fns_path}/etc/fnstags.conf")
-            @socket.puts(215)
+            @socket.puts("215 list of newsgroups follows")
             while line = tag.gets
-              puts "nntpserver:Response Tag [#{line}]"
+              puts "nntpserver:Response Tag [#{line.chomp}]"
               @socket.puts(line)
             end
             @socket.puts(".")
