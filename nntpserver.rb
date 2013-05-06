@@ -99,7 +99,7 @@ module FriendNews
             if gpsel
               puts "xover"
               @socket.puts("224 overview information follows")
-              @socket.puts("10011 ok")
+              @socket.puts("10011 test messsage  tittle  time  from")
               @socket.puts("10012 ok")
               @socket.puts(".")
             else
