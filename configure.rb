@@ -13,7 +13,7 @@ header["1"] = "Date"
 header["2"] = "From"
 header["3"] = "Message_id"
 header["4"] = "Subject"
-header["5"] = "Tag"
+header["5"] = "Newsgroups"
 header["6"] = "Path"
 header["7"] = "Expires"
 header["8"] = "Organization"
@@ -30,3 +30,8 @@ header["18"] = "MIME-Version"
 header["19"] = "Content-Type"
 header["20"] = "Content-Transfer-Encoding"
 header["21"] = "Body"
+
+
+fnstag = DBM::open("db/fnstags",0666)
+fnstag["music"] = "0000000000,0000000000,#{p},0"
+fnstag.close
