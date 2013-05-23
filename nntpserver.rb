@@ -123,7 +123,7 @@ module FriendNews
                 while f <= l
                   if art.key?(f.to_s)
                     fields = history[art[f.to_s]].split(",")
-                    res = "#{f.to_s} #{fields[0]} #{fields[1]} #{fields[2]} #{art[f.to_s]}"
+                    res = "#{f.to_s}\t#{fields[0]}\t#{fields[1]}\t#{fields[2]}\t#{art[f.to_s]}\t#{fields[3]}\t#{fields[4]}#{fields[5]}"
                     self.response(res)
                   end
                   f += 1
@@ -290,7 +290,8 @@ module FriendNews
       #append history
       art[num.to_s] = message["Message_id"]
       art.close
-      history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{message["Tag"]}"
+      history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["line"]},#{message["Xref"]},#{message["Newsgroups"]}"
+      p histroy[message["Message_id"]]
       history.close
       fnstags[message["Message_id"]] = la + "," + fa + "," +  p + "," + n
       fnstags.close
