@@ -91,7 +91,7 @@ module FriendNews
               self.response("215 list of newsgroups follows")
               fnstags = DBM.open("#{$fns_path}/db/fnstags",0666)
               fnstags.each_key{|s|
-                fa,la,p = s.split(",")
+                fa,la,p = fnstags[s].split(",")
                 res = s + "\s" + la + "\s" + fa + "\s" + p
                 self.response(res)
               } 
