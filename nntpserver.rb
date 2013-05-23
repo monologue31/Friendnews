@@ -179,7 +179,7 @@ module FriendNews
 		end
 
     def response(res)
-      put res
+      puts res
       @socket.puts(res)
     end
 
