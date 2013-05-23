@@ -29,7 +29,8 @@ header["17"] = "User-Agent"
 header["18"] = "MIME-Version"
 header["19"] = "Content-Type"
 header["20"] = "Content-Transfer-Encoding"
-header["21"] = "Body"
+header["21"] = "Xref"
+header["22"] = "Body"
 
 
 fnstag = DBM::open("db/fnstags",0666)
