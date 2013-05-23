@@ -89,7 +89,7 @@ module FriendNews
               end
             when /(?i)list/
               self.response("215 list of newsgroups follows")
-              fnstags = DBM.open("#{$fns_path}/db/fnstags")
+              fnstags = DBM.open("#{$fns_path}/db/fnstags",0666)
               fnstags.each_key{|s|
                 fa,la,p = s.split(",")
                 res = s + "\s" + la + "\s" + fa + "\s" + p
@@ -98,7 +98,7 @@ module FriendNews
               self.response(".")
               fnstags.close
             when /(?i)group/
-              fnstags = DBM.open("#{$fns_path}/db/fnstags")
+              fnstags = DBM.open("#{$fns_path}/db/fnstags",0666)
               fa,la,p,n = fnstags[param]
               res = "211 #{n} #{fa} #{la} #{param} group selected"
               gpsel = param.chomp
@@ -112,7 +112,7 @@ module FriendNews
                 if l
                   l = l.to_i
                 else
-                  fnstags = DBM.open("#{$fns_path}/db/fnstags")
+                  fnstags = DBM.open("#{$fns_path}/db/fnstags",0666)
                   a = fnstags[gpsel].split(",")
                   l = a[0].to_i
                   fnstags.close
@@ -203,7 +203,7 @@ module FriendNews
 
 	  		#add Signature
 	  		#unless message.key?("Signature")
-	  		#	option = DBM::open("#{$fns_path}/db/option",0066)
+	  		#	option = DBM::open("#{$fns_path}/db/option",0666)
 	  		#	message["Signature"] = option["Signature"]
 	  		#	option.close
 	  		#end
@@ -314,7 +314,7 @@ module FriendNews
   	def to_str(message_hash)
 	  	string = ""
   		i=1
-  		header = DBM::open("#{$fns_path}/db/header",0066)
+  		header = DBM::open("#{$fns_path}/db/header",0666)
 
   		while i<=header.length
   			unless header[i.to_s] == "Body"
@@ -362,7 +362,7 @@ module FriendNews
     def creat_tag(tagname,p)
       FileUtils.mkpath("article/#{tagname}")
       FileUtils.mkpath("tmp/#{tagname}")
-      fnstag = DBM::open("#{$fns_path}/db/fnstag",0066)
+      fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
       fnstag[tagname] = "0000000000,0000000000,#{p},0"
       fnstag.close
     end
