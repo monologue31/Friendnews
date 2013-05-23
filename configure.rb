@@ -33,6 +33,7 @@ header["21"] = "Xref"
 header["22"] = "Body"
 
 
-fnstag = DBM::open("db/fnstags",0666)
+fnstag = DBM::open("db/fnstags",0066)
 fnstag["music"] = "0000000000,0000000000,y,0"
+p fnstag["music"]
 fnstag.close
