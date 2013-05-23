@@ -34,5 +34,5 @@ header["22"] = "Body"
 
 
 fnstag = DBM::open("db/fnstags",0666)
-fnstag["music"] = "0000000000,0000000000,#{p},0"
+fnstag["music"] = "0000000000,0000000000,y,0"
 fnstag.close
