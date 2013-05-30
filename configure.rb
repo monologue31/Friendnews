@@ -7,7 +7,7 @@ FileUtils.mkpath("tmp/music")
 FileUtils.mkpath("db")
 
 #set header
-header = DBM::open("db/header",0066)
+header = DBM::open("db/header",0666)
 header.clear
 header["1"] = "Date"
 header["2"] = "From"
@@ -33,7 +33,7 @@ header["21"] = "Xref"
 header["22"] = "Body"
 
 
-fnstag = DBM::open("db/fnstags",0066)
+fnstag = DBM::open("db/fnstags",0666)
 fnstag["music"] = "0000000000,0000000000,y,0"
 p fnstag["music"]
 fnstag.close
