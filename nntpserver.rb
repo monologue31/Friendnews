@@ -55,7 +55,7 @@ module FriendNews
   
   	  	begin
           while line = @socket.gets
-            puts line
+            puts "nntpserver:received command #{line.chomp}"
             next unless line
             cmd,param = line.split(/\s+/,2)
             param = param.chomp
@@ -100,7 +100,6 @@ module FriendNews
               fnstags.close
             when /(?i)group/
               fnstags = DBM.open("#{$fns_path}/db/fnstags",0666)
-              p param
               fa,la,p,n = fnstags[param].split(",")
               res = "211 #{n} #{fa} #{la} #{param} group selected"
               gpsel = param
@@ -181,7 +180,7 @@ module FriendNews
 		end
 
     def response(res)
-      puts res
+      puts "nntpserver:response #{res}"
       @socket.puts(res)
     end
 
@@ -296,10 +295,8 @@ module FriendNews
       art[la.to_s] = message["Message_id"]
       art.close
       history[message["Message_id"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
-      p history[message["Message_id"]]
       history.close
       fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
-      p fnstags[message["Newsgroups"]] 
       fnstags.close
     end
 
