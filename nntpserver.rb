@@ -124,7 +124,7 @@ module FriendNews
                 while f <= l
                   if art.key?(f.to_s)
                     fields = history[art[f.to_s]].split("!")
-                    res = "#{f.to_s}\t#{fields[0]}\t#{fields[1]}\t#{fields[2]}\t#{art[f.to_s]}\t#{fields[3]}\t#{fields[4]}#{fields[5]}"
+                    res = "#{f.to_s}\t#{fields[0]}\t#{fields[1]}\t#{fields[2]}\t#{art[f.to_s]}\t#{fields[3]}\t#{fields[4]}\t#{fields[5]}"
                     self.response(res)
                   end
                   f += 1
