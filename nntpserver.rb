@@ -192,6 +192,7 @@ module FriendNews
         msg_str += line
       end
 
+      case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
     
