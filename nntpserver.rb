@@ -55,7 +55,7 @@ module FriendNews
   
   	  	begin
           while line = @socket.gets
-            puts "nntpserver:received command #{line.chomp}"
+            puts "nntpserver:received command [#{line.chomp}]"
             next unless line
             cmd,param = line.split(/\s+/,2)
             param = param.chomp
@@ -169,7 +169,7 @@ module FriendNews
               @socket.close
               return
             else
-              stat_code += 500
+              self.response("500 command not recognized")
             end
           end
 	  	  rescue => e
@@ -180,7 +180,7 @@ module FriendNews
 		end
 
     def response(res)
-      puts "nntpserver:response #{res}"
+      puts "nntpserver:sent response [#{res}]"
       @socket.puts(res)
     end
 
@@ -230,7 +230,7 @@ module FriendNews
         puts "nntpserver:Receive messsage[#{message["Message_id"]}] successful"
         #feed message
         #self.feed(message["Message_id"],message["Newsgroups"])
-        code = 240
+        code = "240 article posted ok"
 	  		return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
@@ -290,7 +290,6 @@ module FriendNews
       end
       n = (n.to_i + 1).to_s
 
-      p fa,la,p,n
       #append history
       art[la.to_s] = message["Message_id"]
       art.close
@@ -360,7 +359,6 @@ module FriendNews
 
       message["Lines"] = msg_line.to_s
 
-      p message
 	  	return message
   	end
 
