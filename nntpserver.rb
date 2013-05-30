@@ -142,7 +142,7 @@ module FriendNews
               end
 
               if param
-                art = DBM.open("#{$fns_path}/#{gpsel}/article_number",0666)
+                art = DBM.open("#{$fns_path}/article/#{gpsel}/article_number",0666)
                 if /<.*>/ =~ param
                   num = art.key(param)
                   msg_id = param
