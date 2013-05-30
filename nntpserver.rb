@@ -188,11 +188,13 @@ module FriendNews
     def rcv_msg(cmd,msg_id = nil)
       msg_str = ""
       while line = @socket.gets
-        p line
         break if line == ".\r\n"
         msg_str += line
       end
 
+      p "------"
+      p msg_str
+      p "------"
       case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
@@ -219,6 +221,8 @@ module FriendNews
 
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
+
+        p message
 
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}","w") do |f|
           f.write self.to_str(message)
