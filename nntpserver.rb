@@ -124,7 +124,7 @@ module FriendNews
                 history = DBM::open("#{$fns_path}/db/history",0666)
                 while f <= l
                   if art.key?(f.to_s)
-                    fields = history[art[f.to_s]].split(",")
+                    fields = history[art[f.to_s]].split("!")
                     res = "#{f.to_s}\t#{fields[0]}\t#{fields[1]}\t#{fields[2]}\t#{art[f.to_s]}\t#{fields[3]}\t#{fields[4]}#{fields[5]}"
                     self.response(res)
                   end
@@ -295,7 +295,7 @@ module FriendNews
       #append history
       art[la.to_s] = message["Message_id"]
       art.close
-      history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["Lines"]},#{message["Xref"]},#{message["Newsgroups"]}"
+      history[message["Message_id"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       p history[message["Message_id"]]
       history.close
       fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
