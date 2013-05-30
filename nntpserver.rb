@@ -292,6 +292,7 @@ module FriendNews
       end
       n = (n.to_i + 1).to_s
 
+      p fa,la,p,n
       #append history
       art[num.to_s] = message["Message_id"]
       art.close
