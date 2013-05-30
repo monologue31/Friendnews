@@ -297,7 +297,7 @@ module FriendNews
       history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["Lines"]},#{message["Xref"]},#{message["Newsgroups"]}"
       p history[message["Message_id"]]
       history.close
-      fnstags[message["Message_id"]] = la + "," + fa + "," +  p + "," + n
+      fnstags[message["Newsgroups"]] = la + "," + fa + "," +  p + "," + n
       fnstags.close
     end
 
