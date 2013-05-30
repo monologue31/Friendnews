@@ -285,7 +285,6 @@ module FriendNews
         if art.key?(la.to_s)
           la += (la.to_i + 1)
         end
-        la = num.to_s
       else
         fa = (fa.to_i + 1).to_s
         la = (fa.to_i + 1).to_s
