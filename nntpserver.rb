@@ -278,7 +278,7 @@ module FriendNews
       history = DBM::open("#{$fns_path}/db/history",0666)
       art = DBM::open("#{$fns_path}/#{message["Tag"]}/article_number",0666)
       fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
-      fa,la,p,n = fnstags[tag].split(",")
+      fa,la,p,n = fnstags[message["Newsgroups"]].split(",")
       unless n.to_i == 0 
         num = la.to_i + 1
   
