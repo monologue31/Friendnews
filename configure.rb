@@ -40,6 +40,6 @@ art.clear
 #creat tag
 fnstag = DBM::open("db/fnstags",0666)
 fnstag.clear
-fnstag["music"] = "0,0,y,0"
+fnstag["music"] = "1,1,y,1"
 p fnstag["music"]
 fnstag.close
