@@ -58,6 +58,7 @@ module FriendNews
             puts line
             next unless line
             cmd,param = line.split(/\s+/,2)
+            param = param.chomp
             case cmd
             when /(?i)post/
             #user check
@@ -102,7 +103,7 @@ module FriendNews
               p param
               fa,la,p,n = fnstags[param].split(",")
               res = "211 #{n} #{fa} #{la} #{param} group selected"
-              gpsel = param.chomp
+              gpsel = param
               self.response(res)
               fnstags.close
             when /(?i)xover/
