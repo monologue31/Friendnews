@@ -280,6 +280,7 @@ module FriendNews
       art = DBM::open("#{$fns_path}/article/#{message["Newsgroups"]}/article_number",0666)
       fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
       fa,la,p,n = fnstags[message["Newsgroups"]].split(",")
+      p fnstags[message["Newsgroups"]] 
       unless n.to_i == 0 
         num = la.to_i + 1
   
@@ -296,7 +297,7 @@ module FriendNews
       history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["Lines"]},#{message["Xref"]},#{message["Newsgroups"]}"
       p history[message["Message_id"]]
       history.close
-      fnstags[message["Newsgroups"]] = la + "," + fa + "," +  p + "," + n
+      fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
       p fnstags[message["Newsgroups"]] 
       fnstags.close
     end
