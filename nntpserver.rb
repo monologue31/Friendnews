@@ -197,11 +197,13 @@ module FriendNews
         message = self.to_hash(msg_str)
     
   			#add Message_id
-  			message["Message_id"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"] unless message.key?("Message_id")
+  			message["Message_id"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"]
 
 	  		#add Path
 	  		message["Path"] = @socket.addr[2] unless message.key?("Path")
 
+        #add Xref
+        message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
 	  		#add Signature
 	  		#unless message.key?("Signature")
 	  		#	option = DBM::open("#{$fns_path}/db/option",0666)
@@ -291,7 +293,7 @@ module FriendNews
       #append history
       art[num.to_s] = message["Message_id"]
       art.close
-      history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["line"]},#{message["Xref"]},#{message["Newsgroups"]}"
+      history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["Lines"]},#{message["Xref"]},#{message["Newsgroups"]}"
       p history[message["Message_id"]]
       history.close
       fnstags[message["Message_id"]] = la + "," + fa + "," +  p + "," + n
