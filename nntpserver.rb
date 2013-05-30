@@ -287,13 +287,13 @@ module FriendNews
         end
       else
         fa = (fa.to_i + 1).to_s
-        la = (fa.to_i + 1).to_s
+        la = (la.to_i + 1).to_s
       end
       n = (n.to_i + 1).to_s
 
       p fa,la,p,n
       #append history
-      art[num.to_s] = message["Message_id"]
+      art[la.to_s] = message["Message_id"]
       art.close
       history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["Lines"]},#{message["Xref"]},#{message["Newsgroups"]}"
       p history[message["Message_id"]]
