@@ -33,13 +33,12 @@ header["21"] = "Xref"
 header["22"] = "Body"
 
 #clear history
-history = DBM::open("#{$fns_path}/db/history",0666)
-art = DBM::open("#{$fns_path}/#{message["Tag"]}/article_number",0666)
+history = DBM::open("db/history",0666)
 history.clear
-art.clear
 
 #creat tag
 fnstag = DBM::open("db/fnstags",0666)
-fnstag["music"] = "0000000000,0000000000,y,0"
+fnstag.clear
+fnstag["music"] = "0,0,y,0"
 p fnstag["music"]
 fnstag.close
