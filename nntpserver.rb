@@ -281,15 +281,12 @@ module FriendNews
       fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
       fa,la,p,n = fnstags[message["Newsgroups"]].split(",")
       p fnstags[message["Newsgroups"]] 
-      unless n.to_i == 0 
-        num = la.to_i + 1
-        p num
-        if art.key?(num.to_s)
-          num += 1 
-        end
-        la = num.to_s
-      end
+      num = la.to_i + 1
       p num
+      if art.key?(num.to_s)
+        num += 1 
+      end
+      la = num.to_s
       n = (n.to_i + 1).to_s
 
       #append history

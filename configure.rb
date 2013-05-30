@@ -35,11 +35,12 @@ header["22"] = "Body"
 #clear history
 history = DBM::open("db/history",0666)
 history.clear
-art = DBM::open("article/music/article_number",0666)
-art.clear
 #creat tag
 fnstag = DBM::open("db/fnstags",0666)
 fnstag.clear
 fnstag["music"] = "1,1,y,1"
 p fnstag["music"]
 fnstag.close
+art = DBM::open("article/music/article_number",0666)
+art.clear
+art["1"] = "hellow.new"
