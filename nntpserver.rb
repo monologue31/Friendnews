@@ -228,7 +228,7 @@ module FriendNews
 
         puts "nntpserver:Receive messsage[#{message["Message_id"]}] successful"
         #feed message
-        self.feed(message["Message_id"],message["Newsgroups"])
+        #self.feed(message["Message_id"],message["Newsgroups"])
         code = 240
 	  		return code
       when /(?i)ihave/
