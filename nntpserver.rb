@@ -99,7 +99,7 @@ module FriendNews
               fnstags.close
             when /(?i)group/
               fnstags = DBM.open("#{$fns_path}/db/fnstags",0666)
-              fa,la,p,n = fnstags[param]
+              fa,la,p,n = fnstags[param].split(",")
               res = "211 #{n} #{fa} #{la} #{param} group selected"
               gpsel = param.chomp
               self.response(res)
