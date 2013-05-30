@@ -291,7 +291,7 @@ module FriendNews
       #append history
       art[num.to_s] = message["Message_id"]
       art.close
-      history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["line"]},#{message["Xref"]},#{message["Newsgroups"]}"
+      history[message["Message_id"]] = "#{message["Subject"]},#{message["From"]},#{message["Date"]},#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")},#{message["line"]},#{message["Xref"]},#{message["Newsgroups"]}"
       p histroy[message["Message_id"]]
       history.close
       fnstags[message["Message_id"]] = la + "," + fa + "," +  p + "," + n
@@ -338,7 +338,6 @@ module FriendNews
       message["Body"] = ""
       line = string.split("\r\n")
       while i < line.length
-        p line[i]
 				unless line[i] == ""
           header_field,field_value = line[i].split(/\s*:\s*/,2)
 					message[header_field] = field_value
@@ -349,8 +348,6 @@ module FriendNews
 				end
       end
 
-      p message
-
       msg_line = 0
       while i < line.length
 		   	message["Body"] += "#{line[i]}\r\n"
@@ -360,6 +357,8 @@ module FriendNews
       end
 
       message["Lines"] = msg_line.to_s
+
+      p message
 	  	return message
   	end
 
