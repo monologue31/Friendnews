@@ -219,8 +219,6 @@ module FriendNews
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
-        p message
-
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}","w") do |f|
           f.write self.to_str(message)
         end
@@ -341,7 +339,7 @@ module FriendNews
       line = string.split("\r\n")
       p line
       while i < line.length
-				unless line[i] == "\r\n"
+				unless line[i] == nil
           header_field,field_value = line[i].split(/\s*:\s*/,2)
 					message[header_field] = field_value
           i += 1
