@@ -120,7 +120,7 @@ module FriendNews
                   fnstags.close
                 end
                 self.response("224 #{param} fields follow")
-                art = DBM.open("#{$fns_path}/#{gpsel}/article_number")
+                art = DBM.open("#{$fns_path}/article/#{gpsel}/article_number")
                 history = DBM::open("#{$fns_path}/db/history",0666)
                 while f <= l
                   if art.key?(f.to_s)
@@ -192,10 +192,6 @@ module FriendNews
         msg_str += line
       end
 
-      p "------"
-      p msg_str
-      p "------"
-      case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
     
@@ -280,7 +276,7 @@ module FriendNews
 
     def append_history(message)
       history = DBM::open("#{$fns_path}/db/history",0666)
-      art = DBM::open("#{$fns_path}/#{message["Tag"]}/article_number",0666)
+      art = DBM::open("#{$fns_path}/article/#{message["Newsgroups"]}/article_number",0666)
       fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
       fa,la,p,n = fnstags[message["Newsgroups"]].split(",")
       unless n.to_i == 0 
