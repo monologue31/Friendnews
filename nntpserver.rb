@@ -337,6 +337,7 @@ module FriendNews
       message = Hash.new
       message["Body"] = ""
       line = string.split("\r\n")
+      p line
       while i < line.length
         p line[i]
 				unless line[i] 
