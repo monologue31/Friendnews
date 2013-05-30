@@ -337,9 +337,9 @@ module FriendNews
       message = Hash.new
       message["Body"] = ""
       line = string.split("\r\n")
-      p line
       while i < line.length
-				unless line[i] == nil
+        p line[i]
+				unless line[i] 
           header_field,field_value = line[i].split(/\s*:\s*/,2)
 					message[header_field] = field_value
           i += 1
