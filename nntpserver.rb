@@ -234,6 +234,7 @@ module FriendNews
 
         #sign msg
         self.openssl(message["Message-ID"],message["Newsgroups"],"private","sign")
+        self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
         #self.feed(message["Message-ID"],message["Newsgroups"])
 	  		return code
       when /(?i)ihave/
@@ -405,7 +406,6 @@ module FriendNews
 
         message["Msg-Sign"] = sign
 
-        p message
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
         end
