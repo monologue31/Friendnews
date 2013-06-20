@@ -208,10 +208,7 @@ module FriendNews
         message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
 
 	  		#add Signature
-	  		sign = DBM::open("#{$fns_path}/db/option",0666)
-	  		message["Signature"] = sign["Signature"]
-	  		option.close
-
+	  		message["Signature"] = "From,Subject,Message_id" 
 
 		  	#add Expires
 
