@@ -402,7 +402,7 @@ module FriendNews
 
 			case action
 			when "sign"
-				sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")))
+				sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp"))).chomp
 
         message["Msg-Sign"] = sign
 
@@ -415,7 +415,7 @@ module FriendNews
 #				p Base64.decode64(@message["Msg_sig"])
 				puts message["Msg-Sign"]
 
-				if key.verify(digest,Base64.decode64(@message["Msg-Sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
+				if key.verify(digest,Base64.decode64(message["Msg-Sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
 					return 1
 				else
 					puts "bad sign"
