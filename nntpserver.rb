@@ -385,7 +385,7 @@ module FriendNews
 
 	def openssl(msg_id,tag,rsakey,action)
 		begin
-		  tmpfile = File.open("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp","w+")
+		  tmpfile = File.open("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp","w+")
       message = self.to_hash(File.read("#{$fns_path}/article/#{tag}/#{msg_id}")) 
 		  sign_headers = message["Signature"].split(",")
 	
@@ -402,25 +402,21 @@ module FriendNews
 
 			case action
 			when "sign"
-        p "-----"
-        p key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp"))
-				message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp"))).delete("\n")
-        p "---"
+				message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))).delete("\n")
 
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
         end
 
+        tmpfile.close
 				return 1
 			when "verify"
-        p "----"
-        p message["Msg-Sign"]
-        p Base64.decode64(message["Msg-Sign"])
-        p "----"
-				if key.verify(digest,Base64.decode64(message["Msg-Sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
+				if key.verify(digest,Base64.decode64(message["Msg-Sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp")
+          tmpfile.close
 					return 1
 				else
 					puts "bad sign"
+          tmpfile.close
 					return nil
 				end
 			else
