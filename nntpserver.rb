@@ -403,10 +403,9 @@ module FriendNews
 			when "sign"
 				sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")))
 
-        p sign
-
         message["Msg-Sign"] = sign
 
+        p message
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
         end
