@@ -199,8 +199,8 @@ module FriendNews
       when /(?i)post/
         message = self.to_hash(msg_str)
     
-  			#add Message_id
-  			message["Message_id"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"]
+  			#add Message-ID
+  			message["Message-ID"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"]
 
 	  		#add Path
 	  		message["Path"] = @socket.addr[2] unless message.key?("Path")
@@ -209,21 +209,21 @@ module FriendNews
         message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
 
 	  		#add Signature
-	  		message["Signature"] = "From,Subject,Message_id" 
+	  		message["Signature"] = "From,Subject,Message-ID" 
 
 		  	#add Expires
 
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
-        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}","w") do |f|
+        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
         end
 
         #append history
         self.append_history(message)
 
-        puts "nntpserver:Receive messsage[#{message["Message_id"]}] successful"
+        puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
         #feed message
         code = "240 article posted ok"
 
@@ -233,8 +233,8 @@ module FriendNews
         end
 
         #sign msg
-        self.openssl(message["Message_id"],message["Newsgroups"],"private","sign")
-        #self.feed(message["Message_id"],message["Newsgroups"])
+        self.openssl(message["Message-ID"],message["Newsgroups"],"private","sign")
+        #self.feed(message["Message-ID"],message["Newsgroups"])
 	  		return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
@@ -244,26 +244,26 @@ module FriendNews
 
         p message
 
-        File.open("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message_id"]}.tmp","w") do |f| 
+        File.open("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp","w") do |f| 
           f.write self.to_str(message)
         end
 
         #check verify
-        self.openssl(message["Message_id"],message["Newsgroups"],"public","verify")
+        self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
 
         #save file
-        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}","w") do |f| 
-          f.write File.read("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message_id"]}.tmp")
+        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f| 
+          f.write File.read("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
         end
 
         #del tmp file
-        File.delete("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message_id"]}.tmp")
+        File.delete("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
         
         #append history
         self.append_history(message)
 
         #feed message
-        self.feed(message["Message_id"],message["Newsgroups"])
+        self.feed(message["Message-ID"],message["Newsgroups"])
         return code
       end
     end
@@ -310,9 +310,9 @@ module FriendNews
       n = (n.to_i + 1).to_s
 
       #append history
-      art[la.to_s] = message["Message_id"]
+      art[la.to_s] = message["Message-ID"]
       art.close
-      history[message["Message_id"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
+      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
       fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
       fnstags.close
@@ -405,18 +405,18 @@ module FriendNews
 
         p sign
 
-        message["Message_sign"] = sign
+        message["Msg-Sign"] = sign
 
-        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}","w") do |f|
+        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
         end
 
 				return 1
 			when "verify"
 #				p Base64.decode64(@message["Msg_sig"])
-				puts message["Message_sign"]
+				puts message["Msg-Sign"]
 
-				if key.verify(digest,Base64.decode64(@message["Message_sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
+				if key.verify(digest,Base64.decode64(@message["Msg-Sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
 					return 1
 				else
 					puts "bad sign"
