@@ -404,13 +404,14 @@ module FriendNews
 			when "sign"
 				message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp"))).chomp
 
+        p Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")))
+
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
         end
 
 				return 1
 			when "verify"
-#				p Base64.decode64(@message["Msg_sig"])
 				p message["Msg-Sign"]
 
 				if key.verify(digest,Base64.decode64("#{message["Msg-Sign"]}\n"),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
