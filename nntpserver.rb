@@ -403,6 +403,7 @@ module FriendNews
 			case action
 			when "sign"
         p "-----"
+        p key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp"))
 				message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp"))).delete("\n")
         p "---"
 
@@ -414,6 +415,7 @@ module FriendNews
 			when "verify"
         p "----"
         p message["Msg-Sign"]
+        p Base64.decode64(message["Msg-Sign"])
         p "----"
 				if key.verify(digest,Base64.decode64(message["Msg-Sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
 					return 1
