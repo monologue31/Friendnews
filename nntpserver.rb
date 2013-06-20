@@ -411,7 +411,7 @@ module FriendNews
         tmpfile.close
 				return 1
 			when "verify"
-				if key.verify(digest,Base64.decode64(message["Msg-Sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp")
+				if key.verify(digest,Base64.decode64(message["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))
           tmpfile.close
 					return 1
 				else
