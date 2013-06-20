@@ -402,7 +402,9 @@ module FriendNews
 
 			case action
 			when "sign"
+        p "-----"
 				message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp"))).chomp
+        p "---"
 
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
@@ -410,6 +412,9 @@ module FriendNews
 
 				return 1
 			when "verify"
+        p "----"
+        p message["Msg-Sign"]
+        p "----"
 				if key.verify(digest,Base64.decode64(message["Msg-Sign"].delete("\n")),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
 					return 1
 				else
