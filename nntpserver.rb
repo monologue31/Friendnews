@@ -157,7 +157,8 @@ module FriendNews
                   self.response("220 #{num} #{msg_id} article retrieved - head and boy follow")
                   msg = File.open("#{$fns_path}/article/#{gpsel}/#{msg_id}")
                   while line = msg.gets
-                    self.response(line)
+                    #self.response(line)
+                    @socket.puts(line)
                   end
                   self.response(".")
                 else
@@ -400,9 +401,9 @@ module FriendNews
 
 			case action
 			when "sign"
-				self.creat_tmpfile(msg_id,tag)
-
 				sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")))
+
+        p sign
 
         message["Message_sign"] = sign
 
@@ -412,8 +413,6 @@ module FriendNews
 
 				return 1
 			when "verify"
-				self.creat_tmpfile(msg_id,tag)
-
 #				p Base64.decode64(@message["Msg_sig"])
 				puts message["Message_sign"]
 
