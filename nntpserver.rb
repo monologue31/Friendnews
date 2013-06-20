@@ -3,6 +3,8 @@ require 'dbm'
 require 'rubygems'
 require 'uuidtools'
 require "fileutils"
+require 'openssl'
+require 'base64'
 
 module FriendNews
 
@@ -44,6 +46,7 @@ module FriendNews
   	end
 
   	def run
+      #initialize
       stat_code = 0
       gpsel = nil
       post_a = nil
@@ -64,15 +67,15 @@ module FriendNews
             #user check
             if true
               self.response("340 sent article to be posted.end with <.>")
-              self.response(self.rcv_msg("post",msg_id = nil))
+              self.response(self.rcv_msg("post",msg_id = nil,contrl = gpsel))
             else
               self.response("440 posting not allowed")
             end
             when /(?i)ihave/
               unless true #check tag
-              self.response("435 article not wanted - do not send it")
-              next
-            end
+                self.response("435 article not wanted - do not send it")
+                next
+              end
 
               if self.chk_hist?(param)
                 self.response("335 send article to be transferred.end with <.>")
@@ -184,7 +187,7 @@ module FriendNews
       @socket.puts(res)
     end
 
-    def rcv_msg(cmd,msg_id = nil)
+    def rcv_msg(cmd,msg_id = nil,contrl = nil)
       msg_str = ""
       while line = @socket.gets
         break if line == ".\r\n"
@@ -203,19 +206,14 @@ module FriendNews
 
         #add Xref
         message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
-	  		#add Signature
-	  		#unless message.key?("Signature")
-	  		#	option = DBM::open("#{$fns_path}/db/option",0666)
-	  		#	message["Signature"] = option["Signature"]
-	  		#	option.close
-	  		#end
 
-        #sign msg
+	  		#add Signature
+	  		sign = DBM::open("#{$fns_path}/db/option",0666)
+	  		message["Signature"] = sign["Signature"]
+	  		option.close
+
 
 		  	#add Expires
-
-	  		#add Lines
-	  		#message["Lines"] = (msg_line -= 1).to_s unless message.key?("Lines")
 
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
@@ -229,8 +227,16 @@ module FriendNews
 
         puts "nntpserver:Receive messsage[#{message["Message_id"]}] successful"
         #feed message
-        #self.feed(message["Message_id"],message["Newsgroups"])
         code = "240 article posted ok"
+
+        #parse contrl message
+        if contrl == "Contrl"
+          self.contrl(message["Subject"],message["Body"])
+        end
+
+        #sign msg
+        self.openssl(message["Message_id"],message["Newsgroups"],"private","sign")
+        #self.feed(message["Message_id"],message["Newsgroups"])
 	  		return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
@@ -245,6 +251,7 @@ module FriendNews
         end
 
         #check verify
+        self.openssl(message["Message_id"],message["Newsgroups"],"public","verify")
 
         #save file
         File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}","w") do |f| 
@@ -263,13 +270,27 @@ module FriendNews
       end
     end
 
-    def feed(message_id,tag)
+    def contrl(type,command)
+      case type
+      when "Delet messgae"
+      when "New tag"
+        FileUtils.mkpath("article/#{tagname}")
+        FileUtils.mkpath("tmp/#{tagname}")
+        fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
+        fnstag[tagname] = "0,0,#{p},0"
+        fnstag.close
+      when "Delete tag"
+      else
+      end
+    end
+
+    def feed(msg_id,tag)
       feed = File.open("#{$fns_path}/etc/fnsfeed.conf")
       while line = feed.gets
         host,host_id,host_tag = line.split("!")
         if /#{tag}/ =~ host_tag
-          puts "nntpserver:Feed message[#{message_id}]"
-          $fns_queue.push("#{host_id}!#{message_id},#{tag}")
+          puts "nntpserver:Feed message[#{msg_id}]"
+          $fns_queue.push("#{host_id}!#{msg_id},#{tag}")
         end
       end
     end
@@ -362,13 +383,57 @@ module FriendNews
 	  	return message
   	end
 
-    def creat_tag(tagname,p)
-      FileUtils.mkpath("article/#{tagname}")
-      FileUtils.mkpath("tmp/#{tagname}")
-      fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
-      fnstag[tagname] = "0,0,#{p},0"
-      fnstag.close
-    end
-  end
+
+	def openssl(msg_id,tag,rsakey,action)
+		begin
+		  tmpfile = File.open("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp","w+")
+      message = self.to_hash(File.read("#{$fns_path}/article/#{tag}/#{msg_id}")) 
+		  sign_headers = message["Signature"].split(",")
+	
+		  i = 0
+		  while i<=sign_headers.length-1
+			  tmpfile.puts(sign_headers[i] + ":\s" + message[sign_headers[i]])
+			  i+=1
+		  end
+
+		  tmpfile.puts(message["Body"])
+
+			key = OpenSSL::PKey::RSA.new(File.read("#{$fns_path}/openssl/#{rsakey}.key"))	
+	 	  digest = OpenSSL::Digest::SHA1.new()
+
+			case action
+			when "sign"
+				self.creat_tmpfile(msg_id,tag)
+
+				sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")))
+
+        message["Message_sign"] = sign
+
+        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message_id"]}","w") do |f|
+          f.write self.to_str(message)
+        end
+
+				return 1
+			when "verify"
+				self.creat_tmpfile(msg_id,tag)
+
+#				p Base64.decode64(@message["Msg_sig"])
+				puts message["Message_sign"]
+
+				if key.verify(digest,Base64.decode64(@message["Message_sign"]),"#{$fns_path}/tmp/#{tag}/#{msg_id}.tmp")
+					return 1
+				else
+					puts "bad sign"
+					return nil
+				end
+			else
+			end
+		rescue => e
+			puts e.to_s
+			return 1
+		end
+	end
+
+end
 
 end
