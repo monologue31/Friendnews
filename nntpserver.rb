@@ -216,14 +216,12 @@ module FriendNews
         message["Xref"] = self.append_tag(message)
 
         tag = message["Newsgroups"].split(",")
-        p tag
         tag.each do |t|
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
             f.write self.to_str(message)
           end
         end
 
-        p "his"
         #append history
         self.append_history(message)
 
@@ -330,7 +328,7 @@ module FriendNews
 
     def append_history(message)
       history = DBM::open("#{$fns_path}/db/history",0666)
-      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
+      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"].split(",")[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
     end
     def chk_hist?(message_id)
