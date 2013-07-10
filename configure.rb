@@ -8,6 +8,8 @@ FileUtils.mkpath("tmp/music")
 FileUtils.mkpath("db")
 =end
 
+FileUtils.mkpath("article/comp")
+FileUtils.mkpath("tmp/comp")
 #set header
 header = DBM::open("db/header",0666)
 header.clear
