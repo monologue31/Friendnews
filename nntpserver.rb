@@ -197,32 +197,33 @@ module FriendNews
       case cmd
       when /(?i)post/
         message = self.to_hash(msg_str)
-    
-  			#add Message-ID
-  			message["Message-ID"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"]
 
-	  		#add Path
-	  		message["Path"] = @socket.addr[2] unless message.key?("Path")
+        #add Message-ID
+        message["Message-ID"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"]
+
+        #add Path
+        message["Path"] = @socket.addr[2] unless message.key?("Path")
+
+        #add Signature
+        message["Signature"] = "From,Subject,Message-ID"
+
+        #add Expires
+
+        #add Date
+        message["Date"] = Time.now.to_s unless message.key?("Date")
 
         #add Xref
-        #message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
-
-	  		#add Signature
-	  		message["Signature"] = "From,Subject,Message-ID"
-
-		  	#add Expires
-
-	  		#add Date
-	  		message["Date"] = Time.now.to_s unless message.key?("Date")
+        message["Xref"] = self.append_tag(message)
 
         tag = message["Newsgroups"].split(",")
         tag.each do |t|
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
-            #append history
-            message["Xref"] = self.append_history(message)
             f.write self.to_str(message)
           end
         end
+
+        #append history
+        self.append_history(messsage)
 
         puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
         #feed message
@@ -298,9 +299,8 @@ module FriendNews
       end
     end
 
-    def append_history(message)
+    def append_tag(message)
       msg_xref = @socket.addr[2]
-      history = DBM::open("#{$fns_path}/db/history",0666)
       tag = message["Newsgroups"].split(",")
       tag.each do |t|
         art = DBM::open("#{$fns_path}/article/#{t}/article_number",0666)
@@ -326,11 +326,14 @@ module FriendNews
         fnstags.close
         msg_xref += "\s" + t + ":" + la
       end
-      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{msg_xref}!#{message["Newsgroups"]}"
-      history.close
       return msg_xref
     end
 
+    def append_history(message)
+      history = DBM::open("#{$fns_path}/db/history",0666)
+      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
+      history.close
+    end
     def chk_hist?(message_id)
 			history = DBM::open("#{$fns_path}/db/history",0666)
 			
