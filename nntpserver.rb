@@ -215,6 +215,9 @@ module FriendNews
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
+        #append history
+        message["Xref"] = self.append_history(message)
+
         tag = message["Newsgroups"].split(",")
         tag.each do |t|
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
@@ -222,8 +225,6 @@ module FriendNews
           end
         end
 
-        #append history
-        self.append_history(message)
 
         puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
         #feed message
@@ -234,10 +235,13 @@ module FriendNews
           self.contrl(message["Subject"],message["Body"])
         end
 
-        #sign msg
-        self.openssl(message["Message-ID"],message["Newsgroups"],"private","sign")
-        self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
-        #self.feed(message["Message-ID"],message["Newsgroups"])
+        tag = message["Newsgroups"].split(",")
+        tag.each do |t|
+          #sign msg
+          self.openssl(message["Message-ID"],t,"private","sign")
+          #self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
+          #self.feed(message["Message-ID"],message["Newsgroups"])
+        end
 	  		return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
@@ -324,6 +328,7 @@ module FriendNews
       end
       history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
+      return msg_xref
     end
 
     def chk_hist?(message_id)
