@@ -325,8 +325,9 @@ module FriendNews
         fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
         fnstags.close
         msg_xref += t + ":" + la.to_s
+        p msg_xref
       end
-      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
+      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{msg_xref}!#{message["Newsgroups"]}"
       history.close
       return msg_xref
     end
