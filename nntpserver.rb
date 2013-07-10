@@ -302,7 +302,6 @@ module FriendNews
 
     def append_history(message)
       msg_xref = @socket.addr[2]
-      p msg_xref
       history = DBM::open("#{$fns_path}/db/history",0666)
       tag = message["Newsgroups"].split(",")
       tag.each do |t|
@@ -311,8 +310,8 @@ module FriendNews
         fa,la,p,n = fnstags[t].split(",")
         unless n == "0"
           la = (la.to_i + 1).to_s
-          if art.key?(la.to_s)
-            la += (la.to_i + 1)
+          if art.key?(la)
+            la = (la.to_i + 1).to_s
           end
         else
           fa = (fa.to_i + 1).to_s
@@ -321,11 +320,11 @@ module FriendNews
         n = (n.to_i + 1).to_s
 
         #append history
-        art[la.to_s] = message["Message-ID"]
+        art[la] = message["Message-ID"]
         art.close
         fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
         fnstags.close
-        msg_xref += t + ":" + la.to_s
+        msg_xref += t + ":" + la
         p msg_xref
       end
       history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{msg_xref}!#{message["Newsgroups"]}"
