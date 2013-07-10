@@ -321,7 +321,7 @@ module FriendNews
         #append history
         art[la] = message["Message-ID"]
         art.close
-        fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
+        fnstags[t] = fa + "," + la + "," +  p + "," + n
         fnstags.close
         msg_xref += "\r" + t + ":" + la
       end
