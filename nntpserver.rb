@@ -224,7 +224,6 @@ module FriendNews
           end
         end
 
-        p message
         puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
         #feed message
         code = "240 article posted ok"
@@ -322,8 +321,10 @@ module FriendNews
         art[la] = message["Message-ID"]
         art.close
         fnstags[t] = fa + "," + la + "," +  p + "," + n
+        p t
+        p fnstags[t]
         fnstags.close
-        msg_xref += "\r" + t + ":" + la
+        msg_xref += "\s" + t + ":" + la
       end
       history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{msg_xref}!#{message["Newsgroups"]}"
       history.close
