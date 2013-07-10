@@ -48,3 +48,9 @@ fnstag.close
 art = DBM::open("article/music/article_number",0666)
 art.clear
 =end
+#creat tag
+fnstag = DBM::open("db/fnstags",0666)
+fnstag["comp"] = "0,0,y,0"
+p fnstag["comp"]
+fnstag.close
+a

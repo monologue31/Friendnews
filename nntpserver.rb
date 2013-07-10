@@ -15,23 +15,22 @@ module FriendNews
 
     def start
       puts "nntpserver:NNTP Server Started"
-	  	loop do
-		  	conn = @socket.accept
-	
-		  	puts "nntpserver:accepted #{conn.addr[2]}"
+      loop do
+		    conn = @socket.accept
+
+		    puts "nntpserver:accepted #{conn.addr[2]}"
 
         #check 127.0.0.1
         if true
-		  	  Thread.start do
+			    Thread.start do
             conn.puts(200)
-		  	    process = NNTPProcess.new(conn)
-		  	    process.run
-		  	    puts "nntpserver:#{conn.addr[2]} done"
+			      process = NNTPProcess.new(conn)
+			      process.run
+			      puts "nntpserver:#{conn.addr[2]} done"
 			    end
         else
-          
         end
-	  	end
+      end
     end
 
     def log
@@ -39,24 +38,24 @@ module FriendNews
   end
 
   class NNTPProcess
-  	def initialize(socket)
-	  	@socket = socket
+	  def initialize(socket)
+		  @socket = socket
       @stat_code = 0
       @message = Hash.new
-  	end
+	  end
 
-  	def run
+    def run
       #initialize
       stat_code = 0
       gpsel = nil
       post_a = nil
       loop do
-  	  	if @socket.eof?
-  		  	@socket.close
-  			  puts "nntpserver:connection closed #{sock.addr[2]}"
-  		  end
-  
-  	  	begin
+        if @socket.eof?
+          @socket.close
+          puts "nntpserver:connection closed #{sock.addr[2]}"
+        end
+        
+        begin
           while line = @socket.gets
             puts "nntpserver:received command [#{line.chomp}]"
             next unless line
@@ -206,7 +205,7 @@ module FriendNews
 	  		message["Path"] = @socket.addr[2] unless message.key?("Path")
 
         #add Xref
-        message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
+        #message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
 
 	  		#add Signature
 	  		message["Signature"] = "From,Subject,Message-ID" 
@@ -216,8 +215,11 @@ module FriendNews
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
-        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
-          f.write self.to_str(message)
+        tag = message["Newsgroups"].split(",")
+        tag.each do |t|
+          File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
+            f.write self.to_str(message)
+          end
         end
 
         #append history
@@ -295,28 +297,33 @@ module FriendNews
     end
 
     def append_history(message)
+      msg_xref = @socket.addr[2]
       history = DBM::open("#{$fns_path}/db/history",0666)
-      art = DBM::open("#{$fns_path}/article/#{message["Newsgroups"]}/article_number",0666)
-      fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
-      fa,la,p,n = fnstags[message["Newsgroups"]].split(",")
-      unless n == "0"
-        la = (la.to_i + 1).to_s
-        if art.key?(la.to_s)
-          la += (la.to_i + 1)
+      tag = message["Newsgroups"].split(",")
+      tag.each do |t|
+        art = DBM::open("#{$fns_path}/article/#{t}/article_number",0666)
+        fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
+        fa,la,p,n = fnstags[t].split(",")
+        unless n == "0"
+          la = (la.to_i + 1).to_s
+          if art.key?(la.to_s)
+            la += (la.to_i + 1)
+          end
+        else
+          fa = (fa.to_i + 1).to_s
+          la = (la.to_i + 1).to_s
         end
-      else
-        fa = (fa.to_i + 1).to_s
-        la = (la.to_i + 1).to_s
-      end
-      n = (n.to_i + 1).to_s
+        n = (n.to_i + 1).to_s
 
-      #append history
-      art[la.to_s] = message["Message-ID"]
-      art.close
-      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
+        #append history
+        art[la.to_s] = message["Message-ID"]
+        art.close
+        fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
+        fnstags.close
+        msg_xref += t + ":" + la.to_s
+      end
+      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
-      fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
-      fnstags.close
     end
 
     def chk_hist?(message_id)
