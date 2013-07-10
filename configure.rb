@@ -53,4 +53,4 @@ fnstag = DBM::open("db/fnstags",0666)
 fnstag["comp"] = "0,0,y,0"
 p fnstag["comp"]
 fnstag.close
-a
+
