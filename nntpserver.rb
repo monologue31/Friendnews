@@ -224,6 +224,7 @@ module FriendNews
           end
         end
 
+        p message
         puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
         #feed message
         code = "240 article posted ok"
@@ -233,7 +234,6 @@ module FriendNews
           self.contrl(message["Subject"],message["Body"])
         end
 
-        tag = message["Newsgroups"].split(",")
         tag.each do |t|
           #sign msg
           self.openssl(message["Message-ID"],t,"private","sign")
