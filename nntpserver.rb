@@ -302,6 +302,7 @@ module FriendNews
 
     def append_history(message)
       msg_xref = @socket.addr[2]
+      p msg_xref
       history = DBM::open("#{$fns_path}/db/history",0666)
       tag = message["Newsgroups"].split(",")
       tag.each do |t|
