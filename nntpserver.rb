@@ -236,6 +236,7 @@ module FriendNews
 
         tag.each do |t|
           #sign msg
+          p t
           self.openssl(message["Message-ID"],t,"private","sign")
           #self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
           #self.feed(message["Message-ID"],message["Newsgroups"])
@@ -414,7 +415,7 @@ module FriendNews
 			when "sign"
 				message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))).delete("\n")
 
-        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f|
+        File.open("#{$fns_path}/article/#{tag}/#{message["Message-ID"]}","w") do |f|
           f.write self.to_str(message)
         end
 
