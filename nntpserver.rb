@@ -208,23 +208,18 @@ module FriendNews
         #message["Xref"] = @socket.addr[2] + "\t" + message["Newsgroups"]
 
 	  		#add Signature
-	  		message["Signature"] = "From,Subject,Message-ID" 
+	  		message["Signature"] = "From,Subject,Message-ID"
 
 		  	#add Expires
 
 	  		#add Date
 	  		message["Date"] = Time.now.to_s unless message.key?("Date")
 
-        p "---------"
-        #append history
-        message["Xref"] = self.append_history(message)
-
-        p "---------"
-        p message
         tag = message["Newsgroups"].split(",")
         tag.each do |t|
-        p "---------"
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
+            #append history
+            message["Xref"] = self.append_history(message)
             f.write self.to_str(message)
           end
         end
