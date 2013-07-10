@@ -218,13 +218,13 @@ module FriendNews
         #append history
         message["Xref"] = self.append_history(message)
 
+        p message
         tag = message["Newsgroups"].split(",")
         tag.each do |t|
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
             f.write self.to_str(message)
           end
         end
-
 
         puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
         #feed message
@@ -324,7 +324,7 @@ module FriendNews
         art.close
         fnstags[message["Newsgroups"]] = fa + "," + la + "," +  p + "," + n
         fnstags.close
-        msg_xref += t + ":" + la
+        msg_xref += "\r" + t + ":" + la
         p msg_xref
       end
       history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{tag[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{msg_xref}!#{message["Newsgroups"]}"
