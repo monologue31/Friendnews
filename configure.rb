@@ -8,8 +8,6 @@ FileUtils.mkpath("tmp/music")
 FileUtils.mkpath("db")
 =end
 
-FileUtils.mkpath("article/comp")
-FileUtils.mkpath("tmp/comp")
 #set header
 header = DBM::open("db/header",0666)
 header.clear
@@ -52,6 +50,9 @@ art.clear
 =end
 #creat tag
 fnstag = DBM::open("db/fnstags",0666)
+fnstag.clear
+fnstag["music"] = "0,0,y,0"
+p fnstag["music"]
 fnstag["comp"] = "0,0,y,0"
 p fnstag["comp"]
 fnstag.close
