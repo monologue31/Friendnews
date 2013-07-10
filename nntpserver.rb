@@ -215,14 +215,15 @@ module FriendNews
         #add Xref
         message["Xref"] = self.append_tag(message)
 
-        p "-------"
         tag = message["Newsgroups"].split(",")
+        p tag
         tag.each do |t|
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
             f.write self.to_str(message)
           end
         end
 
+        p "his"
         #append history
         self.append_history(message)
 
