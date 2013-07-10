@@ -215,6 +215,7 @@ module FriendNews
         #add Xref
         message["Xref"] = self.append_tag(message)
 
+        p "-------"
         tag = message["Newsgroups"].split(",")
         tag.each do |t|
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
@@ -236,17 +237,16 @@ module FriendNews
 
         tag.each do |t|
           #sign msg
-          p t
           self.openssl(message["Message-ID"],t,"private","sign")
           #self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
           #self.feed(message["Message-ID"],message["Newsgroups"])
         end
-	  		return code
+        return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
-        
-	  		#add Path
-	  		message["Path"] += "!#{@socket.addr[2]}"
+
+        #add Path
+        message["Path"] += "!#{@socket.addr[2]}"
 
         p message
 
@@ -264,7 +264,7 @@ module FriendNews
 
         #del tmp file
         File.delete("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
-        
+
         #append history
         self.append_history(message)
 
