@@ -97,7 +97,7 @@ module FriendNews
                 fa,la,p = fnstags[s].split(",")
                 res = s + "\s" + la + "\s" + fa + "\s" + p
                 self.response(res)
-              } 
+              }
               self.response(".")
               fnstags.close
             when /(?i)group/
@@ -175,9 +175,9 @@ module FriendNews
               self.response("500 command not recognized")
             end
           end
-	  	  rescue => e
-		  	  puts e.to_s
-		  	  @socket.close
+		    rescue => e
+		      puts e.to_s
+          @socket.close
         end
       end
 		end
@@ -223,7 +223,7 @@ module FriendNews
         end
 
         #append history
-        self.append_history(messsage)
+        self.append_history(message)
 
         puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
         #feed message
@@ -321,8 +321,6 @@ module FriendNews
         art[la] = message["Message-ID"]
         art.close
         fnstags[t] = fa + "," + la + "," +  p + "," + n
-        p t
-        p fnstags[t]
         fnstags.close
         msg_xref += "\s" + t + ":" + la
       end
