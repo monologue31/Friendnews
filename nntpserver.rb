@@ -301,7 +301,12 @@ module FriendNews
         if self.chkhis?(parm)
           tag = message["Newsgroups"].split(",")
           tag.each do |t|
-            File.exist?("#{$fns_path}/article/#{t}/#{message[Message-ID]"})
+            if File.exist?("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
+              delmsg = self.to_hash(File.read("#{$fns_path}/article/#{t}/#{message["Message-ID"]}"))
+              if message["From"] == delmsg["From"]
+                FileUtils.rm("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
+              end
+            end
           end
         else
         end
