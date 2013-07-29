@@ -18,10 +18,11 @@ module FriendNews
       loop do
 		    conn = @socket.accept
 
-		    puts "nntpserver:Accepted #{conn.addr[2]}"
+		    puts "nntpserver:Connection from #{conn.addr[2]} IP:#{conn.addr[3]}"
 
         #check 127.0.0.1
         if conn.addr[3] == "127.0.0.1"
+          puts "nntpserver:Accepted connection from #{conn.addr[2]}"
 			    Thread.start do
             conn.puts(200)
 			      process = NNTPProcess.new(conn)
@@ -30,6 +31,8 @@ module FriendNews
 			    end
         else
           conn.puts("Refuse")
+          conn.close
+          puts "nntpserver:Refuse connection from #{conn.addr[2]}"
         end
       end
     end
