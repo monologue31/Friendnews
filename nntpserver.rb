@@ -21,15 +21,15 @@ module FriendNews
 		    puts "nntpserver:Accepted #{conn.addr[2]}"
 
         #check 127.0.0.1
-        if true
+        if conn.addr[3] == "127.0.0.1"
 			    Thread.start do
             conn.puts(200)
-             p conn.addr
 			      process = NNTPProcess.new(conn)
 			      process.run
 			      puts "nntpserver:#{conn.addr[2]} done"
 			    end
         else
+          conn.puts("Refuse")
         end
       end
     end
