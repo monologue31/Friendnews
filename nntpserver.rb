@@ -80,7 +80,7 @@ module FriendNews
                 next
               end
 
-              if self.chk_hist?(param)
+              unless self.chkhist?(param)
                 self.response("335 Send article to be transferred.end with <.>")
                 self.response(self.rcv_msg("ihave",msg_id = param))
               else
@@ -245,21 +245,27 @@ module FriendNews
           self.openssl(message["Message-ID"],t,"private","sign")
         end
 
-        #self.feed(message["Message-ID"],message["Newsgroups"])
+        self.feed(message["Message-ID"],message["Newsgroups"])
         return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
 
-        #Control message
-        if message.has_key("Control") 
-          unless self.parse_cmsg(message)
-            code = ""
-            return code
+        #check verify
+        unless self.openssl(message["Message-ID"],t,"public","verify")
+          message["Body"] = "Bad Sign\r\n\r\n#{message["Body"]}"
+          message["Msg-sign"] = "Bad Sign"
+        else
+          #Control message
+          if message.has_key("Control") 
+            unless self.parse_cmsg(message)
+              code = ""
+              return code
+            end
           end
+          
+          #add Path
+          message["Path"] = "#{@socket.addr[2]}!#{message["Path"]}"
         end
-
-        #add Path
-        message["Path"] = "#{@socket.addr[2]}!#{message["Path"]}"
 
         #add Xref
         message["Xref"] = self.append_tag(message)
@@ -267,10 +273,6 @@ module FriendNews
         #save file
         tag = message["Newsgroups"].split(",")
         tag.each do |t|
-          #check verify
-          unless self.openssl(message["Message-ID"],t,"public","verify")
-            message["Body"] = "Bad Sign\r\n\r\n#{message["Body"]}"
-          end
           File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
             f.write self.to_str(message)
           end
@@ -286,24 +288,39 @@ module FriendNews
 
         code = "235 Article transferred successfully.Thanks"
         #feed message
-        self.feed(message["Message-ID"],message["Newsgroups"])
+        self.feed(message["Message-ID"],message["Newsgroups"]) if message["Msg-sign"] != "Bad Sign"
         return code
       end
     end
 
     #Control message parese
     def parse_cms(message)
-
-      case type
-      when "Delet messgae"
-      when "New tag"
-        FileUtils.mkpath("article/#{tagname}")
-        FileUtils.mkpath("tmp/#{tagname}")
+      cmd,parm = message["Control"].split(" ",2)
+      case cmd
+      when "cancel"
+        if self.chkhis?(parm)
+          tag = message["Newsgroups"].split(",")
+          tag.each do |t|
+            File.exist?("#{$fns_path}/article/#{t}/#{message[Message-ID]"})
+          end
+        else
+        end
+      when "newtag"
+        FileUtils.mkpath("article/#{parm}")
+        FileUtils.mkpath("tmp/#{parm}")
         fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
-        fnstag[tagname] = "0,0,#{p},0"
+        fnstag[param] = "0,0,#{p},0"
         fnstag.close
-      when "Delete tag"
+        return 1
+      when "rmtag"
+        FileUtils.rm("article/#{parm}")
+        FileUtils.rm("tmp/#{parm}")
+        fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
+        fnstag.delete(parm)
+        fnstag.close
+        return 1
       else
+        return nil
       end
     end
 
@@ -352,17 +369,18 @@ module FriendNews
       history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"].split(",")[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
     end
-    def chk_hist?(message_id)
+
+    def chkhist?(message_id)
 			history = DBM::open("#{$fns_path}/db/history",0666)
 			
 			if history.value?(message_id)
-				puts "nntpserver:message_id<#{message_id}> already in history..."
-				history.close
-				return nil
-			else
-				puts "nntpserver:message_id<#{message_id}> not in history..."
+				puts "nntpserver:message_id<#{message_id}> already in history"
 				history.close
 				return 1
+			else
+				puts "nntpserver:message_id<#{message_id}> not in history"
+				history.close
+				return nil
 			end
     end
 
