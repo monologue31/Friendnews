@@ -241,6 +241,7 @@ module FriendNews
           #sign msg
           self.openssl(message["Message-ID"],t,"private","sign")
         end
+
         #self.feed(message["Message-ID"],message["Newsgroups"])
         return code
       when /(?i)ihave/
