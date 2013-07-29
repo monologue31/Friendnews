@@ -202,7 +202,7 @@ module FriendNews
         message = self.to_hash(msg_str)
 
         #add Message-ID
-        message["Message-ID"] = UUIDTools::UUID.random_create().to_s + "@" + message["From"]
+        message["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{message["From"].split(" ")[0]}>"
 
         #add Path
         message["Path"] = @socket.addr[2] unless message.key?("Path")
