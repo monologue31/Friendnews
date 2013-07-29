@@ -30,9 +30,9 @@ module FriendNews
 			      puts "nntpserver:#{conn.addr[2]} done"
 			    end
         else
-          conn.puts("Refuse")
-          conn.close
           puts "nntpserver:Refuse connection from #{conn.addr[2]}"
+          conn.puts("You do not have the premision to connect this server!")
+          conn.close
         end
       end
     end
