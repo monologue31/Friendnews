@@ -1,12 +1,13 @@
 require "fileutils"
 require "dbm"
-=begin
+
 #make dir
 FileUtils.mkpath("log")
 FileUtils.mkpath("article/music")
 FileUtils.mkpath("tmp/music")
+FileUtils.mkpath("article/comp")
+FileUtils.mkpath("tmp/comp")
 FileUtils.mkpath("db")
-=end
 
 #set header
 header = DBM::open("db/header",0666)
@@ -36,19 +37,9 @@ header["22"] = "Xref"
 header["23"] = "Msg-Sign"
 header["24"] = "Body"
 
-=begin
 #clear history
 history = DBM::open("db/history",0666)
 history.clear
-#creat tag
-fnstag = DBM::open("db/fnstags",0666)
-fnstag.clear
-fnstag["music"] = "0,0,y,0"
-p fnstag["music"]
-fnstag.close
-art = DBM::open("article/music/article_number",0666)
-art.clear
-=end
 #creat tag
 fnstag = DBM::open("db/fnstags",0666)
 fnstag.clear
