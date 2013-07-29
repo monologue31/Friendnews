@@ -31,9 +31,10 @@ header["17"] = "User-Agent"
 header["18"] = "MIME-Version"
 header["19"] = "Content-Type"
 header["20"] = "Content-Transfer-Encoding"
-header["21"] = "Xref"
-header["22"] = "Msg-Sign"
-header["23"] = "Body"
+header["21"] = "Control"
+header["22"] = "Xref"
+header["23"] = "Msg-Sign"
+header["24"] = "Body"
 
 =begin
 #clear history

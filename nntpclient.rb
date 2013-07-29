@@ -60,24 +60,6 @@ module FriendNews
       end
     end
 
-    def stat_res(code)
-      case code[0]
-      when 1
-      when 2
-      when 3
-        case code[1]
-        when 3
-          return 1
-        when 4
-          return 1
-        end
-      when 4
-      when 5
-      else
-        return 1
-      end
-    end
-
     def text_res
       res = ""
       while line = @socket.gets

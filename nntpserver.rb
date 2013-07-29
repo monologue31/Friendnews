@@ -18,12 +18,13 @@ module FriendNews
       loop do
 		    conn = @socket.accept
 
-		    puts "nntpserver:accepted #{conn.addr[2]}"
+		    puts "nntpserver:Accepted #{conn.addr[2]}"
 
         #check 127.0.0.1
         if true
 			    Thread.start do
             conn.puts(200)
+             p conn.addr
 			      process = NNTPProcess.new(conn)
 			      process.run
 			      puts "nntpserver:#{conn.addr[2]} done"
@@ -52,12 +53,12 @@ module FriendNews
       loop do
         if @socket.eof?
           @socket.close
-          puts "nntpserver:connection closed #{sock.addr[2]}"
+          puts "nntpserver:Connection closed by #{sock.addr[2]}"
         end
         
         begin
           while line = @socket.gets
-            puts "nntpserver:received command [#{line.chomp}]"
+            puts "nntpserver:Received request [#{line.chomp}]"
             next unless line
             cmd,param = line.split(/\s+/,2)
             param = param.chomp
@@ -65,33 +66,33 @@ module FriendNews
             when /(?i)post/
             #user check
             if true
-              self.response("340 sent article to be posted.end with <.>")
+              self.response("340 Sent article to be posted.end with <.>")
               self.response(self.rcv_msg("post",msg_id = nil,contrl = gpsel))
             else
-              self.response("440 posting not allowed")
+              self.response("440 Posting not allowed")
             end
             when /(?i)ihave/
               unless true #check tag
-                self.response("435 article not wanted - do not send it")
+                self.response("435 Article not wanted - do not send it")
                 next
               end
 
               if self.chk_hist?(param)
-                self.response("335 send article to be transferred.end with <.>")
+                self.response("335 Send article to be transferred.end with <.>")
                 self.response(self.rcv_msg("ihave",msg_id = param))
               else
-                self.response("437 article rejected - do not try again")
+                self.response("437 Article rejected - do not try again")
               end
             when "MODE"
               if param.chomp == "READER"
                 post_a = true
-                self.response("200 news server ready - posting ok")
+                self.response("200 News server ready - posting ok")
               else
                 post_a = nil
-                self.response("201 news server ready - posting not allowed")
+                self.response("201 News server ready - posting not allowed")
               end
             when /(?i)list/
-              self.response("215 list of newsgroups follows")
+              self.response("215 List of newsgroups follows")
               fnstags = DBM.open("#{$fns_path}/db/fnstags",0666)
               fnstags.each_key{|s|
                 fa,la,p = fnstags[s].split(",")
@@ -132,13 +133,13 @@ module FriendNews
                   f += 1
                 end
               else
-                self.response("412 no news group current selected")
+                self.response("412 No news group current selected")
                 next
               end
               self.response(".")
             when /(?i)article/
               unless gpsel
-                self.response("412 no newsgroup has been selected")
+                self.response("412 No newsgroup has been selected")
                 next
               end
 
@@ -161,18 +162,18 @@ module FriendNews
                   end
                   self.response(".")
                 else
-                  self.response("423 no such article number in this group")
+                  self.response("423 No such article number in this group")
                   next
                 end
               else
-                self.response("420 no current article has been selected")
+                self.response("420 No current article has been selected")
               end
             when /(?i)quit/
-			        puts "nntpserver:connection closed #{@socket.addr[2]}"
+			        puts "nntpserver:Connection closed by #{@socket.addr[2]}"
               @socket.close
               return
             else
-              self.response("500 command not recognized")
+              self.response("500 Command not recognized")
             end
           end
 		    rescue => e
@@ -182,11 +183,13 @@ module FriendNews
       end
 		end
 
+    #Response
     def response(res)
-      puts "nntpserver:sent response [#{res}]"
+      puts "nntpserver:Sent response [#{res}]"
       @socket.puts(res)
     end
 
+    #Response message
     def rcv_msg(cmd,msg_id = nil,contrl = nil)
       msg_str = ""
       while line = @socket.gets
@@ -225,9 +228,9 @@ module FriendNews
         #append history
         self.append_history(message)
 
-        puts "nntpserver:Receive messsage[#{message["Message-ID"]}] successful"
+        puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
         #feed message
-        code = "240 article posted ok"
+        code = "240 Article posted ok"
 
         #parse contrl message
         if contrl == "Contrl"
@@ -237,28 +240,36 @@ module FriendNews
         tag.each do |t|
           #sign msg
           self.openssl(message["Message-ID"],t,"private","sign")
-          #self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
-          #self.feed(message["Message-ID"],message["Newsgroups"])
         end
+        #self.feed(message["Message-ID"],message["Newsgroups"])
         return code
       when /(?i)ihave/
         message = self.to_hash(msg_str)
 
-        #add Path
-        message["Path"] += "!#{@socket.addr[2]}"
-
-        p message
-
-        File.open("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp","w") do |f| 
-          f.write self.to_str(message)
+        #Control message
+        if message.has_key("Control") 
+          unless self.parse_cmsg(message)
+            code = ""
+            return code
+          end
         end
 
-        #check verify
-        self.openssl(message["Message-ID"],message["Newsgroups"],"public","verify")
+        #add Path
+        message["Path"] = "#{@socket.addr[2]}!#{message["Path"]}"
+
+        #add Xref
+        message["Xref"] = self.append_tag(message)
 
         #save file
-        File.open("#{$fns_path}/article/#{message["Newsgroups"]}/#{message["Message-ID"]}","w") do |f| 
-          f.write File.read("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
+        tag = message["Newsgroups"].split(",")
+        tag.each do |t|
+          #check verify
+          unless self.openssl(message["Message-ID"],t,"public","verify")
+            message["Body"] = "Bad Sign\r\n\r\n#{message["Body"]}"
+          end
+          File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
+            f.write self.to_str(message)
+          end
         end
 
         #del tmp file
@@ -267,13 +278,18 @@ module FriendNews
         #append history
         self.append_history(message)
 
+        puts "nntpserver:Article <#{message["Message-ID"]}> transferred ok"
+
+        code = "235 Article transferred successfully.Thanks"
         #feed message
         self.feed(message["Message-ID"],message["Newsgroups"])
         return code
       end
     end
 
-    def contrl(type,command)
+    #Control message parese
+    def parse_cms(message)
+
       case type
       when "Delet messgae"
       when "New tag"
@@ -287,6 +303,7 @@ module FriendNews
       end
     end
 
+    #News feeds
     def feed(msg_id,tag)
       feed = File.open("#{$fns_path}/etc/fnsfeed.conf")
       while line = feed.gets
@@ -298,6 +315,7 @@ module FriendNews
       end
     end
 
+    #Append xref header and tag file
     def append_tag(message)
       msg_xref = @socket.addr[2]
       tag = message["Newsgroups"].split(",")
@@ -316,7 +334,6 @@ module FriendNews
         end
         n = (n.to_i + 1).to_s
 
-        #append history
         art[la] = message["Message-ID"]
         art.close
         fnstags[t] = fa + "," + la + "," +  p + "," + n
@@ -345,6 +362,7 @@ module FriendNews
 			end
     end
 
+    #Covert hash table to sring
   	def to_str(message_hash)
 	  	string = ""
   		i=1
@@ -365,6 +383,7 @@ module FriendNews
   		return string
   	end
 
+    #Covert string to hash table
   	def to_hash(string)
       i = 0
       message = Hash.new
@@ -394,49 +413,53 @@ module FriendNews
 	  	return message
   	end
 
-
-	def openssl(msg_id,tag,rsakey,action)
-		begin
-		  tmpfile = File.open("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp","w+")
-      message = self.to_hash(File.read("#{$fns_path}/article/#{tag}/#{msg_id}")) 
-		  sign_headers = message["Signature"].split(",")
+    #Digital sign
+	  def openssl(msg_id,tag,rsakey,action)
+		  begin
+		    tmpfile = File.open("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp","w+")
+        message = self.to_hash(File.read("#{$fns_path}/article/#{tag}/#{msg_id}")) 
+		    sign_headers = message["Signature"].split(",")
 	
-		  i = 0
-		  while i<=sign_headers.length-1
-			  tmpfile.puts(sign_headers[i] + ":\s" + message[sign_headers[i]])
-			  i+=1
+		    i = 0
+		    while i<=sign_headers.length-1
+			    tmpfile.puts(sign_headers[i] + ":\s" + message[sign_headers[i]])
+			    i+=1
+		    end
+
+		    tmpfile.puts(message["Body"])
+
+			  key = OpenSSL::PKey::RSA.new(File.read("#{$fns_path}/openssl/#{rsakey}.key"))	
+	 	    digest = OpenSSL::Digest::SHA1.new()
+
+			  case action
+			  when "sign"
+          puts "nntpserver:Starting sign message<#{message["Message-ID"]}> with private key"
+				  message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))).delete("\n")
+
+          File.open("#{$fns_path}/article/#{tag}/#{message["Message-ID"]}","w") do |f|
+            f.write self.to_str(message)
+          end
+
+          tmpfile.close
+          puts "nntpserver:Sign ok"
+				  return 1
+			  when "verify"
+          print "nntpserver:Starting verify message<#{message["Message-ID"]}>..."
+				  if key.verify(digest,Base64.decode64(message["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))
+            tmpfile.close
+            puts "OK"
+					  return 1
+				  else
+            tmpfile.close
+					  puts "Bad sign"
+					  return nil
+				  end
+			  else
+			  end
+		  rescue => e
+			  puts e.to_s
+			  return nil
 		  end
-
-		  tmpfile.puts(message["Body"])
-
-			key = OpenSSL::PKey::RSA.new(File.read("#{$fns_path}/openssl/#{rsakey}.key"))	
-	 	  digest = OpenSSL::Digest::SHA1.new()
-
-			case action
-			when "sign"
-				message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))).delete("\n")
-
-        File.open("#{$fns_path}/article/#{tag}/#{message["Message-ID"]}","w") do |f|
-          f.write self.to_str(message)
-        end
-
-        tmpfile.close
-				return 1
-			when "verify"
-				if key.verify(digest,Base64.decode64(message["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))
-          tmpfile.close
-					return 1
-				else
-					puts "bad sign"
-          tmpfile.close
-					return nil
-				end
-			else
-			end
-		rescue => e
-			puts e.to_s
-			return 1
-		end
 	end
 
 end
