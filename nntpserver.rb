@@ -224,7 +224,7 @@ module FriendNews
           #sign msg
           message = self.openssl(message,"private","sign")
           p message
-          tag =messgae["Xref"].split("\s",2).split("\s")
+          tag =message["Xref"].split("\s",2).split("\s")
           #tag = message["Newsgroups"].split(",")
           tag.each do |t|
             tags,art_num = t.split(":") 
@@ -270,7 +270,7 @@ module FriendNews
           message["Xref"] = self.append_tag(message)
 
           #save file
-          tag =messgae["Xref"].split("\s",2).split("\s")
+          tag =message["Xref"].split("\s",2).split("\s")
           #tag = message["Newsgroups"].split(",")
           tag.each do |t|
             tags,art_num = t.split(":") 
