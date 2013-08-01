@@ -277,7 +277,6 @@ module FriendNews
             f.write self.to_str(message)
           end
         end
-
         #del tmp file
         File.delete("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
 
@@ -299,16 +298,25 @@ module FriendNews
       case cmd
       when "cancel"
         if self.chkhis?(parm)
-          tag = message["Newsgroups"].split(",")
+          history = DBM::open("#{$fns_path}/db/history",0666)
+          tag = history[message["Message-ID"]].split("!") [7]
           tag.each do |t|
             if File.exist?("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
               delmsg = self.to_hash(File.read("#{$fns_path}/article/#{t}/#{message["Message-ID"]}"))
               if message["From"] == delmsg["From"]
                 FileUtils.rm("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
+              else
+                #wrong auther
+                return nil
               end
+              return 1
             end
           end
         else
+          #add contrl 
+          ctl_hist = DBM::open("#{$fns_path}/db/ctl_hist",0666)
+          ctl_hist[message["Message-ID"]] = "param"
+          retrun 1
         end
       when "newtag"
         FileUtils.mkpath("article/#{parm}")
