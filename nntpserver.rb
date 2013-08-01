@@ -302,15 +302,15 @@ module FriendNews
         if self.chkhist?(param)
           history = DBM::open("#{$fns_path}/db/history",0666)
           return "Alreday canceled" if history[param] == "Canceled"
+          p history[param]
           tag = history[param].split("!")[5].split("\s",2)[1].split("\s")
+          p tag
           tag.each do |t|
             tags,art_num = t.split(":") 
             if File.exist?("#{$fns_path}/article/#{tags}/#{art_num}")
               delmsg = self.to_hash(File.read("#{$fns_path}/article/#{tags}/#{art_num}"))
               if message["From"] == delmsg["From"]
-                p "des msg"
                 FileUtils.rm("#{$fns_path}/article/#{t}/#{param}")
-                p "des ok"
               else
                 #wrong auther
                 return "Wrong auther"
