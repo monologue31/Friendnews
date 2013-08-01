@@ -294,7 +294,7 @@ module FriendNews
       rescue =>e
         puts e.to_s
         code = "441 Posting failed"
-        return 
+        return code 
       end
     end
 
@@ -304,13 +304,17 @@ module FriendNews
       case cmd
       when "cancel"
         if self.chkhis?(parm)
+          p "in hist"
           history = DBM::open("#{$fns_path}/db/history",0666)
           tag = history[message["Message-ID"]].split("!") [7]
           tag.each do |t|
             if File.exist?("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
               delmsg = self.to_hash(File.read("#{$fns_path}/article/#{t}/#{message["Message-ID"]}"))
               if message["From"] == delmsg["From"]
+                delmsg.close
+                p "des msg"
                 FileUtils.rm("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
+                p "des ok"
               else
                 #wrong auther
                 return nil
