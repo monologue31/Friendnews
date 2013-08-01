@@ -398,7 +398,7 @@ module FriendNews
     def chkhist?(message_id)
 			history = DBM::open("#{$fns_path}/db/history",0666)
 			
-			if history.value?(message_id)
+			if history.has_key?(message_id)
 				puts "nntpserver:message_id<#{message_id}> already in history"
 				history.close
 				return 1
