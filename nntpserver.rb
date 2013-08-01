@@ -300,9 +300,8 @@ module FriendNews
       case cmd
       when "cancel"
         if self.chkhist?(param)
-          p "in hist"
-          return "Alreday canceled"if history[param] == "Canceled"
           history = DBM::open("#{$fns_path}/db/history",0666)
+          return "Alreday canceled" if history[param] == "Canceled"
           tag = history[param].split("!") [6].split("\s",2).split("\s")
           tag.each do |t|
             tags,art_num = t.split(":") 
