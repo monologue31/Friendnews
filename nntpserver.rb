@@ -302,7 +302,7 @@ module FriendNews
         if self.chkhist?(param)
           history = DBM::open("#{$fns_path}/db/history",0666)
           return "Alreday canceled" if history[param] == "Canceled"
-          tag = history[param].split("!")[6].split("\s",2)[1].split("\s")
+          tag = history[param].split("!")[5].split("\s",2)[1].split("\s")
           tag.each do |t|
             tags,art_num = t.split(":") 
             if File.exist?("#{$fns_path}/article/#{tags}/#{art_num}")
