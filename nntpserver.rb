@@ -296,6 +296,7 @@ module FriendNews
 
     #Control message parese
     def parse_cms(message)
+      p "cmsg"
       cmd,param = message["Control"].split(" ",2)
       case cmd
       when "cancel"
