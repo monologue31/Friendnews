@@ -233,7 +233,7 @@ module FriendNews
           end
 
           #append history
-          self.append_history(message)
+          self.append_history(message,)
 
           puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
           #feed message
@@ -242,7 +242,7 @@ module FriendNews
           tag.each do |t|
           end
 
-          self.feed(message["Message-ID"],message["Newsgroups"])
+          #self.feed(message["Message-ID"],message["Newsgroups"])
           return code
         when /(?i)ihave/
           message = self.to_hash(msg_str)
@@ -391,7 +391,7 @@ module FriendNews
 
     def append_history(message)
       history = DBM::open("#{$fns_path}/db/history",0666)
-      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"].split(",")[0]}/#{message["Message-ID"]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
+      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"].split(",")[0]}/#{message["Xref"].split("\s")[1].split(":")[2]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
     end
 
