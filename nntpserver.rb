@@ -308,7 +308,7 @@ module FriendNews
             if File.exist?("#{$fns_path}/article/#{tags}/#{art_num}")
               delmsg = self.to_hash(File.read("#{$fns_path}/article/#{tags}/#{art_num}"))
               if message["From"] == delmsg["From"]
-                File.delete("#{$fns_path}/article/#{tags}/#{param}")
+                File.delete("#{$fns_path}/article/#{tags}/#{art_num}")
               else
                 #wrong auther
                 return "Wrong auther"
