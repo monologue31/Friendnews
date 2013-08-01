@@ -233,7 +233,7 @@ module FriendNews
           end
 
           #append history
-          self.append_history(message,)
+          self.append_history(message)
 
           puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
           #feed message
