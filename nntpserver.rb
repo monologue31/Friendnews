@@ -147,18 +147,9 @@ module FriendNews
               end
 
               if param
-                art = DBM.open("#{$fns_path}/article/#{gpsel}/article_number",0666)
-                if /<.*>/ =~ param
-                  num = art.key(param)
-                  msg_id = param
-                else
-                  num = param
-                  msg_id = art[num]
-                end
-                art.close
-                if File.exist?("#{$fns_path}/article/#{gpsel}/#{msg_id}")
+                if File.exist?("#{$fns_path}/article/#{gpsel}/#{param}")
                   self.response("220 #{num} #{msg_id} article retrieved - head and boy follow")
-                  msg = File.open("#{$fns_path}/article/#{gpsel}/#{msg_id}")
+                  msg = File.open("#{$fns_path}/article/#{gpsel}/#{param}")
                   while line = msg.gets
                     #self.response(line)
                     @socket.puts(line)
@@ -222,9 +213,23 @@ module FriendNews
           #add Xref
           message["Xref"] = self.append_tag(message)
 
-          tag = message["Newsgroups"].split(",")
+          #Control message
+          if message.has_key("Control") 
+            unless self.parse_cmsg(message)
+              code = ""
+              return code
+            end
+          end
+
+          #sign msg
+          message = self.openssl(message,"private","sign")
+          p message
+          tag =messgae["Xref"].split("\s",2).split("\s")
+          #tag = message["Newsgroups"].split(",")
           tag.each do |t|
-            File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
+            tags,art_num = t.split(":") 
+            p tags,art_num
+            File.open("#{$fns_path}/article/#{tags}/#{art_num}","w") do |f|
               f.write self.to_str(message)
             end
           end
@@ -236,14 +241,7 @@ module FriendNews
           #feed message
           code = "240 Article posted ok"
 
-          #parse contrl message
-          if contrl == "Contrl"
-            self.contrl(message["Subject"],message["Body"])
-          end
-
           tag.each do |t|
-            #sign msg
-            self.openssl(message["Message-ID"],t,"private","sign")
           end
 
           self.feed(message["Message-ID"],message["Newsgroups"])
@@ -252,7 +250,7 @@ module FriendNews
           message = self.to_hash(msg_str)
 
           #check verify
-          unless self.openssl(message["Message-ID"],t,"public","verify")
+          unless self.openssl(message,"public","verify")
             message["Body"] = "Bad Sign\r\n\r\n#{message["Body"]}"
             message["Msg-sign"] = "Bad Sign"
           else
@@ -272,14 +270,14 @@ module FriendNews
           message["Xref"] = self.append_tag(message)
 
           #save file
-          tag = message["Newsgroups"].split(",")
+          tag =messgae["Xref"].split("\s",2).split("\s")
+          #tag = message["Newsgroups"].split(",")
           tag.each do |t|
-            File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
+            tags,art_num = t.split(":") 
+            File.open("#{$fns_path}/article/#{tags}/#{art_num}","w") do |f|
               f.write self.to_str(message)
             end
           end
-          #del tmp file
-          File.delete("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
 
           #append history
           self.append_history(message)
@@ -300,33 +298,39 @@ module FriendNews
 
     #Control message parese
     def parse_cms(message)
-      cmd,parm = message["Control"].split(" ",2)
+      cmd,param = message["Control"].split(" ",2)
       case cmd
       when "cancel"
-        if self.chkhis?(parm)
+        if self.chkhis?(param)
           p "in hist"
+          return "Alreday canceled"if history[param] == "Canceled"
           history = DBM::open("#{$fns_path}/db/history",0666)
-          tag = history[message["Message-ID"]].split("!") [7]
+          tag = history[param].split("!") [6].split("\s",2).split("\s")
           tag.each do |t|
-            if File.exist?("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
-              delmsg = self.to_hash(File.read("#{$fns_path}/article/#{t}/#{message["Message-ID"]}"))
+            tags,art_num = t.split(":") 
+            if File.exist?("#{$fns_path}/article/#{tags}/#{art_num}")
+              delmsg = self.to_hash(File.read("#{$fns_path}/article/#{tags}/#{art_num}"))
               if message["From"] == delmsg["From"]
                 delmsg.close
                 p "des msg"
-                FileUtils.rm("#{$fns_path}/article/#{t}/#{message["Message-ID"]}")
+                FileUtils.rm("#{$fns_path}/article/#{t}/#{param}")
                 p "des ok"
               else
                 #wrong auther
-                return nil
+                return "Wrong auther"
               end
+              #change history file
+              history[param] = "Canceled"
+              #change tag file
+
               return 1
             end
           end
         else
           #add contrl 
           ctl_hist = DBM::open("#{$fns_path}/db/ctl_hist",0666)
-          ctl_hist[message["Message-ID"]] = "param"
-          retrun 1
+          ctl_hist[param] = "param"
+          return 1
         end
       when "newtag"
         FileUtils.mkpath("article/#{parm}")
@@ -459,10 +463,9 @@ module FriendNews
   	end
 
     #Digital sign
-	  def openssl(msg_id,tag,rsakey,action)
+	  def openssl(message,rsakey,action)
 		  begin
-		    tmpfile = File.open("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp","w+")
-        message = self.to_hash(File.read("#{$fns_path}/article/#{tag}/#{msg_id}")) 
+		    tmpfile = File.open("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp","w+")
 		    sign_headers = message["Signature"].split(",")
 	
 		    i = 0
@@ -478,25 +481,24 @@ module FriendNews
 
 			  case action
 			  when "sign"
-          puts "nntpserver:Starting sign message<#{message["Message-ID"]}> with private key"
-				  message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))).delete("\n")
+          puts "nntpserver:Starting sign message#{message["Message-ID"]} with private key"
+				  message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))).delete("\n")
 
-          File.open("#{$fns_path}/article/#{tag}/#{message["Message-ID"]}","w") do |f|
-            f.write self.to_str(message)
-          end
-
-          tmpfile.close
-          puts "nntpserver:Sign ok"
-				  return 1
+          #del tmp file
+          File.delete("#{$fns_path}/tmp/#{message["Nessage-ID"]}#{action}.tmp")
+          puts "nntpserver:Sign message#{message["Message-ID"]} with private key ok"
+				  return message
 			  when "verify"
           print "nntpserver:Starting verify message<#{message["Message-ID"]}>..."
-				  if key.verify(digest,Base64.decode64(message["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{tag}/#{msg_id}#{action}.tmp"))
-            tmpfile.close
-            puts "OK"
+				  if key.verify(digest,Base64.decode64(message["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))
+            #del tmp file
+            File.delete("#{$fns_path}/tmp/#{message["Nessage-ID"]}#{action}.tmp")
+            puts "nntpserver:Verify message#{message["Message-ID"]} with public key ok"
 					  return 1
 				  else
-            tmpfile.close
-					  puts "Bad sign"
+            #del tmp file
+            File.delete("#{$fns_path}/tmp/#{message["Nessage-ID"]}#{action}.tmp")
+					  puts "nntpserver:Bad sign"
 					  return nil
 				  end
 			  else
