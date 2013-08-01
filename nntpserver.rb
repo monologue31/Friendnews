@@ -479,6 +479,7 @@ module FriendNews
 
 			  key = OpenSSL::PKey::RSA.new(File.read("#{$fns_path}/openssl/#{rsakey}.key"))	
 	 	    digest = OpenSSL::Digest::SHA1.new()
+        tmpfile.close
 
 			  case action
 			  when "sign"
