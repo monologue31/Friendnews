@@ -209,10 +209,10 @@ module FriendNews
 
           #add Date
           message["Date"] = Time.now.to_s unless message.key?("Date")
-
+p "1"
           #add Xref
           message["Xref"] = self.append_tag(message)
-
+p "2"
           #Control message
           if message.has_key?("Control") 
             unless self.parse_cmsg(message)
@@ -295,7 +295,7 @@ module FriendNews
     end
 
     #Control message parese
-    def parse_cms(message)
+    def parse_cmsg(message)
       p "cmsg"
       cmd,param = message["Control"].split(" ",2)
       case cmd
