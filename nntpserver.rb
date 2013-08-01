@@ -214,7 +214,7 @@ module FriendNews
           message["Xref"] = self.append_tag(message)
 
           #Control message
-          if message.has_key("Control") 
+          if message.has_key?("Control") 
             unless self.parse_cmsg(message)
               code = ""
               return code
@@ -255,7 +255,7 @@ module FriendNews
             message["Msg-sign"] = "Bad Sign"
           else
             #Control message
-            if message.has_key("Control") 
+            if message.has_key?("Control") 
               unless self.parse_cmsg(message)
                 code = ""
                 return code
