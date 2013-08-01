@@ -194,101 +194,107 @@ module FriendNews
 
     #Response message
     def rcv_msg(cmd,msg_id = nil,contrl = nil)
-      msg_str = ""
-      while line = @socket.gets
-        break if line == ".\r\n"
-        msg_str += line
-      end
-
-      case cmd
-      when /(?i)post/
-        message = self.to_hash(msg_str)
-
-        #add Message-ID
-        message["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{message["From"].split(" ")[0]}>"
-
-        #add Path
-        message["Path"] = @socket.addr[2] unless message.key?("Path")
-
-        #add Signature
-        message["Signature"] = "From,Subject,Message-ID"
-
-        #add Expires
-
-        #add Date
-        message["Date"] = Time.now.to_s unless message.key?("Date")
-
-        #add Xref
-        message["Xref"] = self.append_tag(message)
-
-        tag = message["Newsgroups"].split(",")
-        tag.each do |t|
-          File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
-            f.write self.to_str(message)
-          end
+      begin
+        msg_str = ""
+        while line = @socket.gets
+          break if line == ".\r\n"
+          msg_str += line
         end
 
-        #append history
-        self.append_history(message)
+        case cmd
+        when /(?i)post/
+          message = self.to_hash(msg_str)
 
-        puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
-        #feed message
-        code = "240 Article posted ok"
+          #add Message-ID
+          message["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{message["From"].split(" ")[0]}>"
 
-        #parse contrl message
-        if contrl == "Contrl"
-          self.contrl(message["Subject"],message["Body"])
-        end
+          #add Path
+          message["Path"] = @socket.addr[2] unless message.key?("Path")
 
-        tag.each do |t|
-          #sign msg
-          self.openssl(message["Message-ID"],t,"private","sign")
-        end
+          #add Signature
+          message["Signature"] = "From,Subject,Message-ID"
 
-        self.feed(message["Message-ID"],message["Newsgroups"])
-        return code
-      when /(?i)ihave/
-        message = self.to_hash(msg_str)
+          #add Expires
 
-        #check verify
-        unless self.openssl(message["Message-ID"],t,"public","verify")
-          message["Body"] = "Bad Sign\r\n\r\n#{message["Body"]}"
-          message["Msg-sign"] = "Bad Sign"
-        else
-          #Control message
-          if message.has_key("Control") 
-            unless self.parse_cmsg(message)
-              code = ""
-              return code
+          #add Date
+          message["Date"] = Time.now.to_s unless message.key?("Date")
+
+          #add Xref
+          message["Xref"] = self.append_tag(message)
+
+          tag = message["Newsgroups"].split(",")
+          tag.each do |t|
+            File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
+              f.write self.to_str(message)
             end
           end
-          
-          #add Path
-          message["Path"] = "#{@socket.addr[2]}!#{message["Path"]}"
-        end
 
-        #add Xref
-        message["Xref"] = self.append_tag(message)
+          #append history
+          self.append_history(message)
 
-        #save file
-        tag = message["Newsgroups"].split(",")
-        tag.each do |t|
-          File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
-            f.write self.to_str(message)
+          puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
+          #feed message
+          code = "240 Article posted ok"
+
+          #parse contrl message
+          if contrl == "Contrl"
+            self.contrl(message["Subject"],message["Body"])
           end
+
+          tag.each do |t|
+            #sign msg
+            self.openssl(message["Message-ID"],t,"private","sign")
+          end
+
+          self.feed(message["Message-ID"],message["Newsgroups"])
+          return code
+        when /(?i)ihave/
+          message = self.to_hash(msg_str)
+
+          #check verify
+          unless self.openssl(message["Message-ID"],t,"public","verify")
+            message["Body"] = "Bad Sign\r\n\r\n#{message["Body"]}"
+            message["Msg-sign"] = "Bad Sign"
+          else
+            #Control message
+            if message.has_key("Control") 
+              unless self.parse_cmsg(message)
+                code = ""
+                return code
+              end
+            end
+          
+            #add Path
+            message["Path"] = "#{@socket.addr[2]}!#{message["Path"]}"
+          end
+
+          #add Xref
+          message["Xref"] = self.append_tag(message)
+
+          #save file
+          tag = message["Newsgroups"].split(",")
+          tag.each do |t|
+            File.open("#{$fns_path}/article/#{t}/#{message["Message-ID"]}","w") do |f|
+              f.write self.to_str(message)
+            end
+          end
+          #del tmp file
+          File.delete("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
+
+          #append history
+          self.append_history(message)
+
+          puts "nntpserver:Article <#{message["Message-ID"]}> transferred ok"
+
+          code = "235 Article transferred successfully.Thanks"
+          #feed message
+          self.feed(message["Message-ID"],message["Newsgroups"]) if message["Msg-sign"] != "Bad Sign"
+          return code
         end
-        #del tmp file
-        File.delete("#{$fns_path}/tmp/#{message["Newsgroups"]}/#{message["Message-ID"]}.tmp")
-
-        #append history
-        self.append_history(message)
-
-        puts "nntpserver:Article <#{message["Message-ID"]}> transferred ok"
-
-        code = "235 Article transferred successfully.Thanks"
-        #feed message
-        self.feed(message["Message-ID"],message["Newsgroups"]) if message["Msg-sign"] != "Bad Sign"
-        return code
+      rescue =>e
+        puts e.to_s
+        code = "441 Posting failed"
+        return 
       end
     end
 
