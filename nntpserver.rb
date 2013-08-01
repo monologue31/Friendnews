@@ -148,7 +148,7 @@ module FriendNews
 
               if param
                 if File.exist?("#{$fns_path}/article/#{gpsel}/#{param}")
-                  self.response("220 #{num} #{msg_id} article retrieved - head and boy follow")
+                  self.response("220 #{param} #{msg_id} article retrieved - head and boy follow")
                   msg = File.open("#{$fns_path}/article/#{gpsel}/#{param}")
                   while line = msg.gets
                     #self.response(line)
