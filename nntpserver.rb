@@ -487,14 +487,14 @@ module FriendNews
 				  message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))).delete("\n")
           p message
           #del tmp file
-          File.delete("#{$fns_path}/tmp/#{message["Nessage-ID"]}#{action}.tmp")
+          File.delete("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp")
           puts "nntpserver:Sign message#{message["Message-ID"]} with private key ok"
 				  return message
 			  when "verify"
           print "nntpserver:Starting verify message<#{message["Message-ID"]}>..."
 				  if key.verify(digest,Base64.decode64(message["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))
             #del tmp file
-            File.delete("#{$fns_path}/tmp/#{message["Nessage-ID"]}#{action}.tmp")
+            File.delete("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp")
             puts "nntpserver:Verify message#{message["Message-ID"]} with public key ok"
 					  return 1
 				  else
