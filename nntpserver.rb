@@ -221,10 +221,11 @@ module FriendNews
             end
           end
 
+          p message
           #sign msg
           message = self.openssl(message,"private","sign")
           p message
-          tag =message["Xref"].split("\s",2).split("\s")
+          tag = message["Xref"].split("\s",2).split("\s")
           #tag = message["Newsgroups"].split(",")
           tag.each do |t|
             tags,art_num = t.split(":") 
@@ -483,7 +484,7 @@ module FriendNews
 			  when "sign"
           puts "nntpserver:Starting sign message#{message["Message-ID"]} with private key"
 				  message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))).delete("\n")
-
+          p message
           #del tmp file
           File.delete("#{$fns_path}/tmp/#{message["Nessage-ID"]}#{action}.tmp")
           puts "nntpserver:Sign message#{message["Message-ID"]} with private key ok"
