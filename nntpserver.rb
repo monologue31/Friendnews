@@ -209,10 +209,10 @@ module FriendNews
 
           #add Date
           message["Date"] = Time.now.to_s unless message.key?("Date")
-p "1"
+
           #add Xref
           message["Xref"] = self.append_tag(message)
-p "2"
+
           #Control message
           if message.has_key?("Control") 
             unless self.parse_cmsg(message)
@@ -296,11 +296,10 @@ p "2"
 
     #Control message parese
     def parse_cmsg(message)
-      p "cmsg"
       cmd,param = message["Control"].split(" ",2)
       case cmd
       when "cancel"
-        if self.chkhis?(param)
+        if self.chkhist?(param)
           p "in hist"
           return "Alreday canceled"if history[param] == "Canceled"
           history = DBM::open("#{$fns_path}/db/history",0666)
