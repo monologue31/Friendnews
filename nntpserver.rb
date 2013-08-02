@@ -327,8 +327,8 @@ module FriendNews
           return 1
         end
       when "newtag"
-        FileUtils.mkpath("article/#{parm}")
-        FileUtils.mkpath("tmp/#{parm}")
+        FileUtils.mkpath("article/#{param}")
+        FileUtils.mkpath("tmp/#{param}")
         fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
         fnstag[param] = "0,0,#{p},0"
         fnstag.close
