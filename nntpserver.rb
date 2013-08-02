@@ -329,16 +329,16 @@ module FriendNews
       when "newtag"
         FileUtils.mkpath("article/#{param}")
         FileUtils.mkpath("tmp/#{param}")
-        fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
-        fnstag[param] = "0,0,#{p},0"
-        fnstag.close
+        fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
+        fnstags[param] = "0,0,#{p},0"
+        fnstags.close
         return 1
       when "rmtag"
         FileUtils.rm("article/#{parm}")
         FileUtils.rm("tmp/#{parm}")
-        fnstag = DBM::open("#{$fns_path}/db/fnstag",0666)
-        fnstag.delete(parm)
-        fnstag.close
+        fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
+        fnstags.delete(parm)
+        fnstags.close
         return 1
       else
         return nil
