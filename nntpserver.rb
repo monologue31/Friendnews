@@ -227,18 +227,17 @@ module FriendNews
           end
           #caculate main article number
           art_num = self.calc_artnum("all")
-p art_num
+
           #save file
           File.open("#{$fns_path}/article/#{art_num}","w") do |f|
             f.write self.to_str(message)
           end
-p "hist"
           #append history
           self.append_history(message,art_num)
-p "tag"
+
           #add tag file
           self.add_artnum(tag,art_num)
-p "ok"
+
           puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
           #feed message
           code = "240 Article posted ok"
@@ -388,21 +387,18 @@ p "ok"
       fa,la,p,n = fnstags["all"].split(",")
       if n == "0"
         fa = (fa.to_i + 1).to_s
-        la = (la.to_i + 1).to_s
       end
       n = (n.to_i + 1).to_s
       la = main_num
       fnstags["all"] = fa + "," + la + "," +  p + "," + n
       
+      p "main ok"
       #add tag article number
       tag.each do |t|
         tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
         fa,la,p,n = fnstags[tag].split(",")
         unless n == "0"
           la = (la.to_i + 1).to_s
-          if art.key?(la)
-            la = (la.to_i + 1).to_s
-          end
         else
           fa = (fa.to_i + 1).to_s
           la = (la.to_i + 1).to_s
