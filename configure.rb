@@ -3,10 +3,8 @@ require "dbm"
 
 #make dir
 FileUtils.mkpath("log")
-FileUtils.mkpath("article/music")
-FileUtils.mkpath("tmp/music")
-FileUtils.mkpath("article/comp")
-FileUtils.mkpath("tmp/comp")
+FileUtils.mkpath("article")
+FileUtils.mkpath("tmp")
 FileUtils.mkpath("db")
 
 #set header
@@ -43,9 +41,13 @@ history.clear
 #creat tag
 fnstag = DBM::open("db/fnstags",0666)
 fnstag.clear
-fnstag["music"] = "0,0,y,0"
-p fnstag["music"]
-fnstag["comp"] = "0,0,y,0"
-p fnstag["comp"]
-fnstag.close
+fnstag["all"] = "0,0,y,0"
+p fnstag["all"]
+fnstag["junk"] = "0,0,y,0"
+p fnstag["junk"]
+fnstag["test"] = "0,0,y,0"
+p fnstag["test"]
+#creat article
+fnsarts = DBM::open("db/fnsarts")
+fnsarts.clear
 

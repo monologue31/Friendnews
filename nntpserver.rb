@@ -21,7 +21,7 @@ module FriendNews
 		    puts "nntpserver:Connection from #{conn.addr[2]} IP:#{conn.addr[3]}"
 
         #check 127.0.0.1
-        if conn.addr[3] == "127.0.0.1"
+#        if conn.addr[3] == "127.0.0.1"
           puts "nntpserver:Accepted connection from #{conn.addr[2]}"
 			    Thread.start do
             conn.puts(200)
@@ -29,11 +29,11 @@ module FriendNews
 			      process.run
 			      puts "nntpserver:#{conn.addr[2]} done"
 			    end
-        else
-          puts "nntpserver:Refuse connection from #{conn.addr[2]}"
-          conn.puts("You do not have the premision to connect this server!")
-          conn.close
-        end
+#        else
+#          puts "nntpserver:Refuse connection from #{conn.addr[2]}"
+#          conn.puts("You do not have the premision to connect this server!")
+#          conn.close
+#        end
       end
     end
 
@@ -125,12 +125,12 @@ module FriendNews
                   fnstags.close
                 end
                 self.response("224 #{param} fields follow")
-                art = DBM.open("#{$fns_path}/article/#{gpsel}/article_number")
+                tag_db = DBM.open("#{$fns_path}/db/#{gpsel}",0666)
                 history = DBM::open("#{$fns_path}/db/history",0666)
                 while f <= l
-                  if art.key?(f.to_s)
+                  if tag_db.has_key?(f.to_s)
                     fields = history[art[f.to_s]].split("!")
-                    res = "#{f.to_s}\t#{fields[0]}\t#{fields[1]}\t#{fields[2]}\t#{art[f.to_s]}\t#{fields[3]}\t#{fields[4]}\t#{fields[5]}"
+                    res = "#{f.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{tag_db[f.to_s]}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
                     self.response(res)
                   end
                   f += 1
@@ -147,9 +147,10 @@ module FriendNews
               end
 
               if param
-                if File.exist?("#{$fns_path}/article/#{gpsel}/#{param}")
+                tag_db = DBM.open("#{$fns_path}/db/#{gpsel}",0666)
+                if File.exist?("#{$fns_path}/article/#{tag_db[param]}")
                   self.response("220 #{param} #{msg_id} article retrieved - head and boy follow")
-                  msg = File.open("#{$fns_path}/article/#{gpsel}/#{param}")
+                  msg = File.open("#{$fns_path}/article/#{tag_db[param]}")
                   while line = msg.gets
                     #self.response(line)
                     @socket.puts(line)
@@ -196,23 +197,6 @@ module FriendNews
         when /(?i)post/
           message = self.to_hash(msg_str)
 
-          #add Message-ID
-          message["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{message["From"].split(" ")[0]}>"
-
-          #add Path
-          message["Path"] = @socket.addr[2] unless message.key?("Path")
-
-          #add Signature
-          message["Signature"] = "From,Subject,Message-ID"
-
-          #add Expires
-
-          #add Date
-          message["Date"] = Time.now.to_s unless message.key?("Date")
-
-          #add Xref
-          message["Xref"] = self.append_tag(message)
-
           #Control message
           if message.has_key?("Control") 
             unless self.parse_cmsg(message)
@@ -221,26 +205,43 @@ module FriendNews
             end
           end
 
-          #sign msg
-          message = self.openssl(message,"private","sign")
-          tag = message["Xref"].split("\s",2)[1].split("\s")
-          #tag = message["Newsgroups"].split(",")
+          #get tag
+          tag = message["Newsgroups"].split(",")
+          fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
+          cnt = 0
           tag.each do |t|
-            tags,art_num = t.split(":") 
-            File.open("#{$fns_path}/article/#{tags}/#{art_num}","w") do |f|
-              f.write self.to_str(message)
-            end
+            cnt += 1 if fnstags.has_key(t)
+          end
+          tag = "junk" if cnt == 0
+
+          message["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{message["From"].split(" ")[0]}>" #add message id
+          message["Path"] = @socket.addr[2] unless message.key?("Path") #add path
+          message["Signature"] = "From,Subject,Message-ID" #add which header should be signed
+          #add Expires
+          message["Date"] = Time.now.to_s unless message.key?("Date") #add date
+          message["Msg_Sign"] = self.digtal_sign(message,"private","sign") #add digital sign
+          #add Xref
+          message["Xref"] = @socket.addr[2]
+          tag.each do |t|
+            message["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
+          end
+          #caculate main article number
+          art_num = self.calc("all")
+
+          #save file
+          File.open("#{$fns_path}/article/#{art_num}","w") do |f|
+            f.write self.to_str(message)
           end
 
           #append history
-          self.append_history(message)
+          self.append_history(message,art_num)
+
+          #add tag file
+          self.add_artnum(tag,art_num)
 
           puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
           #feed message
           code = "240 Article posted ok"
-
-          tag.each do |t|
-          end
 
           #self.feed(message["Message-ID"],message["Newsgroups"])
           return code
@@ -248,7 +249,7 @@ module FriendNews
           message = self.to_hash(msg_str)
 
           #check verify
-          unless self.openssl(message,"public","verify")
+          unless self.digital_sign(message,"public","verify")
             message["Body"] = "Bad Sign\r\n\r\n#{message["Body"]}"
             message["Msg-sign"] = "Bad Sign"
           else
@@ -264,21 +265,32 @@ module FriendNews
             message["Path"] = "#{@socket.addr[2]}!#{message["Path"]}"
           end
 
-          #add Xref
-          message["Xref"] = self.append_tag(message)
-
-          #save file
-          tag =message["Xref"].split("\s",2).split("\s")
-          #tag = message["Newsgroups"].split(",")
+          #get tag
+          tag = message["Newsgroups"].split(",")
+          fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
+          cnt = 0
           tag.each do |t|
-            tags,art_num = t.split(":") 
-            File.open("#{$fns_path}/article/#{tags}/#{art_num}","w") do |f|
-              f.write self.to_str(message)
-            end
+            cnt += 1 if fnstags.has_key(t)
+          end
+          tag = "junk" if cnt == 0
+
+          #add Xref
+          message["Xref"] = @socket.addr[2]
+          tag.each do |t|
+            message["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
+          end
+          #caculate main article number
+          art_num = self.calc("all")
+          #save file
+          File.open("#{$fns_path}/article/#{art_num}","w") do |f|
+            f.write self.to_str(message)
           end
 
           #append history
-          self.append_history(message)
+          self.append_history(message,art_num)
+
+          #add tag file
+          self.add_artnum(tag,art_num)
 
           puts "nntpserver:Article <#{message["Message-ID"]}> transferred ok"
 
@@ -357,14 +369,35 @@ module FriendNews
       end
     end
 
-    #Append xref header and tag file
-    def append_tag(message)
-      msg_xref = @socket.addr[2]
-      tag = message["Newsgroups"].split(",")
+    def calc_artnum(tag)
+      fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
+      num = (fntags[tag].split(",")[1].to_i + 1).to_s # first article number,last article number,post,number
+      return num
+    end
+
+    def sach_main_artnum(tag,tag_num)
+      tag_db = DBM::open("#{$fns_path}/db/#{tag}",0666)
+      return tag_db[tag_num]
+    end
+
+    def add_artnum(tag,main_num)
+      fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
+      fnsarts = DBM::open("#{$fns_path}/db/fnsarts",0666)
+
+      #add main article number
+      fa,la,p,n = fnstags["all"].split(",")
+      if n == "0"
+        fa = (fa.to_i + 1).to_s
+        la = (la.to_i + 1).to_s
+      end
+      n = (n.to_i + 1).to_s
+      la = main_num
+      fnstags[tag] = fa + "," + la + "," +  p + "," + n
+
+      #add tag article number
       tag.each do |t|
-        art = DBM::open("#{$fns_path}/article/#{t}/article_number",0666)
-        fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
-        fa,la,p,n = fnstags[t].split(",")
+        tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
+        fa,la,p,n = fnstags[tag].split(",")
         unless n == "0"
           la = (la.to_i + 1).to_s
           if art.key?(la)
@@ -375,19 +408,17 @@ module FriendNews
           la = (la.to_i + 1).to_s
         end
         n = (n.to_i + 1).to_s
-
-        art[la] = message["Message-ID"]
-        art.close
-        fnstags[t] = fa + "," + la + "," +  p + "," + n
-        fnstags.close
-        msg_xref += "\s" + t + ":" + la
+        tag_db[la] = main_num
+        tag_db.close
+        fnsarts[main_num] = ""
+        fnsarts[main_num] += "," + la
+        fnstags[tag] = fa + "," + la + "," +  p + "," + n
       end
-      return msg_xref
     end
 
-    def append_history(message)
+    def append_history(message,art_num)
       history = DBM::open("#{$fns_path}/db/history",0666)
-      history[message["Message-ID"]] = "#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{message["Newsgroups"].split(",")[0]}/#{message["Xref"].split("\s")[1].split(":")[2]}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
+      history[message["Message-ID"]] = "#{art_num}!#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{art_num}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
     end
 
@@ -457,7 +488,7 @@ module FriendNews
   	end
 
     #Digital sign
-	  def openssl(message,rsakey,action)
+	  def digital_sign(message,rsakey,action)
 		  begin
 		    tmpfile = File.open("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp","w+")
 		    sign_headers = message["Signature"].split(",")
@@ -477,11 +508,11 @@ module FriendNews
 			  case action
 			  when "sign"
           puts "nntpserver:Starting sign message#{message["Message-ID"]} with private key"
-				  message["Msg-Sign"] = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))).delete("\n")
+				  msg_sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))).delete("\n")
           #del tmp file
           File.delete("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp")
           puts "nntpserver:Sign message#{message["Message-ID"]} with private key ok"
-				  return message
+				  return msg_sign
 			  when "verify"
           print "nntpserver:Starting verify message<#{message["Message-ID"]}>..."
 				  if key.verify(digest,Base64.decode64(message["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{message["Message-ID"]}#{action}.tmp"))
