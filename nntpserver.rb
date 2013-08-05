@@ -219,7 +219,7 @@ module FriendNews
           message["Signature"] = "From,Subject,Message-ID" #add which header should be signed
           #add Expires
           message["Date"] = Time.now.to_s unless message.key?("Date") #add date
-          message["Msg_Sign"] = self.digtal_sign(message,"private","sign") #add digital sign
+          message["Msg_Sign"] = self.digital_sign(message,"private","sign") #add digital sign
           #add Xref
           message["Xref"] = @socket.addr[2]
           tag.each do |t|
