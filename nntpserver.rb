@@ -210,7 +210,7 @@ module FriendNews
           fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
           cnt = 0
           tag.each do |t|
-            cnt += 1 if fnstags.has_key(t)
+            cnt += 1 if fnstags.has_key?(t)
           end
           tag = "junk" if cnt == 0
 
@@ -270,7 +270,7 @@ module FriendNews
           fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
           cnt = 0
           tag.each do |t|
-            cnt += 1 if fnstags.has_key(t)
+            cnt += 1 if fnstags.has_key?(t)
           end
           tag = "junk" if cnt == 0
 
