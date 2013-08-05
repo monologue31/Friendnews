@@ -131,7 +131,7 @@ module FriendNews
                 while f <= l
                   if tag_db.has_key?(f.to_s)
                     fields = history[id[f.to_s]].split("!")
-                    res = "#{f.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{tag_db[f.to_s]}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
+                    res = "#{f.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{id[f.to_s]}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
                     self.response(res)
                   end
                   f += 1
