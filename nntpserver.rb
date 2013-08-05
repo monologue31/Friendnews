@@ -388,6 +388,7 @@ module FriendNews
       fnsarts = DBM::open("#{$fns_path}/db/fnsarts",0666)
 
       #add main article number
+      tag_db = DBM::open("#{$fns_path}/db/all",0666)
       fa,la,p,n = fnstags["all"].split(",")
       if n == "0"
         fa = (fa.to_i + 1).to_s
@@ -395,6 +396,8 @@ module FriendNews
       n = (n.to_i + 1).to_s
       la = main_num
       fnstags["all"] = fa + "," + la + "," +  p + "," + n
+      tag_db[la] = main_num
+      tag_db.close
       
       tag.each do |t|
         tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
