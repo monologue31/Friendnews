@@ -227,7 +227,7 @@ module FriendNews
           end
           #caculate main article number
           art_num = self.calc_artnum("all")
-p artnum
+p art_num
           #save file
           File.open("#{$fns_path}/article/#{art_num}","w") do |f|
             f.write self.to_str(message)
