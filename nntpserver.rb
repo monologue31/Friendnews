@@ -392,10 +392,9 @@ module FriendNews
       la = main_num
       fnstags["all"] = fa + "," + la + "," +  p + "," + n
       
-      p tag
       tag.each do |t|
         tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
-        fa,la,p,n = fnstags[tag].split(",")
+        fa,la,p,n = fnstags[t].split(",")
         p fa,la,p,n
         unless n == "0"
           la = (la.to_i + 1).to_s
@@ -403,15 +402,12 @@ module FriendNews
           fa = (fa.to_i + 1).to_s
           la = (la.to_i + 1).to_s
         end
-        p "---"
         n = (n.to_i + 1).to_s
         tag_db[la] = main_num
         tag_db.close
-        p "---"
         fnsarts[main_num] = ""
         fnsarts[main_num] += "," + la
-        fnstags[tag] = fa + "," + la + "," +  p + "," + n
-        p "---"
+        fnstags[t] = fa + "," + la + "," +  p + "," + n
       end
     end
 
