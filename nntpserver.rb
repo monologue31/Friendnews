@@ -227,18 +227,18 @@ module FriendNews
           end
           #caculate main article number
           art_num = self.calc_artnum("all")
-
+p artnum
           #save file
           File.open("#{$fns_path}/article/#{art_num}","w") do |f|
             f.write self.to_str(message)
           end
-
+p "hist"
           #append history
           self.append_history(message,art_num)
-
+p "tag"
           #add tag file
           self.add_artnum(tag,art_num)
-
+p "ok"
           puts "nntpserver:Article <#{message["Message-ID"]}> posted ok"
           #feed message
           code = "240 Article posted ok"
@@ -287,10 +287,8 @@ module FriendNews
             f.write self.to_str(message)
           end
 
-          p "hits"
           #append history
           self.append_history(message,art_num)
-p"tag"
           #add tag file
           self.add_artnum(tag,art_num)
 
@@ -373,7 +371,6 @@ p"tag"
 
     def calc_artnum(tag)
       fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
-      p "calc_artnum"
       num = ((fnstags[tag].split(",")[1]).to_i + 1).to_s # first article number,last article number,post,number
       return num
     end
@@ -395,8 +392,8 @@ p"tag"
       end
       n = (n.to_i + 1).to_s
       la = main_num
-      fnstags[tag] = fa + "," + la + "," +  p + "," + n
-
+      fnstags["all"] = fa + "," + la + "," +  p + "," + n
+      
       #add tag article number
       tag.each do |t|
         tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
@@ -413,9 +410,11 @@ p"tag"
         n = (n.to_i + 1).to_s
         tag_db[la] = main_num
         tag_db.close
+        p "---"
         fnsarts[main_num] = ""
         fnsarts[main_num] += "," + la
         fnstags[tag] = fa + "," + la + "," +  p + "," + n
+        p "---"
       end
     end
 
