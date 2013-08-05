@@ -127,14 +127,18 @@ module FriendNews
                 self.response("224 #{param} fields follow")
                 tag_db = DBM.open("#{$fns_path}/db/#{gpsel}",0666)
                 history = DBM::open("#{$fns_path}/db/history",0666)
+                id = DBM::open ("#{$fns_path}/db/id",0666)
                 while f <= l
                   if tag_db.has_key?(f.to_s)
-                    fields = history[art[f.to_s]].split("!")
+                    fields = history[id[f.to_s]].split("!")
                     res = "#{f.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{tag_db[f.to_s]}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
                     self.response(res)
                   end
                   f += 1
                 end
+                tag_db.close
+                history.close
+                id.close
               else
                 self.response("412 No news group current selected")
                 next
@@ -415,6 +419,9 @@ module FriendNews
       history = DBM::open("#{$fns_path}/db/history",0666)
       history[message["Message-ID"]] = "#{art_num}!#{message["Subject"]}!#{message["From"]}!#{message["Date"]}!#{File.size("#{$fns_path}/article/#{art_num}")}!#{message["Lines"]}!#{message["Xref"]}!#{message["Newsgroups"]}"
       history.close
+      id = DBM::open("#{$fns_path}/db/id",0666)
+      id[art_num] = message["Message-ID"]
+      id.close
     end
 
     def chkhist?(message_id)
