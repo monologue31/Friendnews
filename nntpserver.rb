@@ -226,7 +226,7 @@ module FriendNews
             message["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
           end
           #caculate main article number
-          art_num = self.calc("all")
+          art_num = self.calc_artnum("all")
 
           #save file
           File.open("#{$fns_path}/article/#{art_num}","w") do |f|
