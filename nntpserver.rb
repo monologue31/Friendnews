@@ -371,7 +371,7 @@ module FriendNews
 
     def calc_artnum(tag)
       fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
-      num = (fntags[tag].split(",")[1].to_i + 1).to_s # first article number,last article number,post,number
+      num = (fnstags[tag].split(",")[1].to_i + 1).to_s # first article number,last article number,post,number
       return num
     end
 
