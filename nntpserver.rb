@@ -354,6 +354,7 @@ module FriendNews
         n = 0 #article number
         history.each_key do |k|
           tags = history[k].split("!")[7].split(",")
+          p tags
           art_num = history[k].split("!")[0]
           tags.each do |t|
             if t == param
