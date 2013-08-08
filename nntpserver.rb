@@ -353,7 +353,7 @@ module FriendNews
         tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
         n = 0 #article number
         history.each_key do |k|
-          tags = history[k].split("!")[7].split(,)
+          tags = history[k].split("!")[7].split(",")
           art_num = history[k].split("!")[0]
           tags.each do |t|
             if t == param
@@ -363,7 +363,7 @@ module FriendNews
             end
           end
         end
-        if n = 0
+        if n == 0
           fnstag[param] = "0,0,y,0"
         else
           fnstag[param] = "1,#{n},y,#{n}"
