@@ -358,8 +358,8 @@ module FriendNews
           tags.each do |t|
             if t == param
               n++
-              tag_db[n.to_s] = history[k].split("!")[0]
               p art_num
+              tag_db[n.to_s] = art_num
               fnsarts[art_num] += "," + n.to_s
               p fnsarts[art_num]
             end
