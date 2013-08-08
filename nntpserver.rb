@@ -209,6 +209,7 @@ module FriendNews
             end
           end
 
+          p "get tag"
           #get tag
           tag = message["Newsgroups"].split(",")
           fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
@@ -222,6 +223,7 @@ module FriendNews
           end
           tag = "junk" if cnt == 0
 
+          p "add header"
           message["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{message["From"].split(" ")[0]}>" #add message id
           message["Path"] = @socket.addr[2] unless message.key?("Path") #add path
           message["Signature"] = "From,Subject,Message-ID" #add which header should be signed
