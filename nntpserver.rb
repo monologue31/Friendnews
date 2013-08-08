@@ -209,7 +209,6 @@ module FriendNews
             end
           end
 
-          p "get tag"
           #get tag
           tag = message["Newsgroups"].split(",")
           fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
@@ -221,7 +220,6 @@ module FriendNews
               tag.delete(t)
             end
           end
-          tag = "junk" if cnt == 0
 
           p "add header"
           message["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{message["From"].split(" ")[0]}>" #add message id
@@ -352,7 +350,7 @@ module FriendNews
         return nil if fnstags.has_key?(param)
         history = DBM::open("#{$fns_path}/db/history",0666)
         fnsarts = DBM::open("#{$fns_path}/db/fnsarts",0666)
-        tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
+        tag_db = DBM::open("#{$fns_path}/db/#{param}",0666)
         n = 0 #article number
         history.each_key do |k|
           tags = history[k].split("!")[7].split(",")
