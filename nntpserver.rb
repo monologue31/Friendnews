@@ -214,7 +214,11 @@ module FriendNews
           fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
           cnt = 0
           tag.each do |t|
-            cnt += 1 if fnstags.has_key?(t)
+            if fnstags.has_key?(t)
+              cnt += 1
+            else
+              tag.delete(t)
+            end
           end
           tag = "junk" if cnt == 0
 
@@ -342,11 +346,28 @@ module FriendNews
           return 1
         end
       when "newtag"
-        FileUtils.mkpath("article/#{param}")
-        FileUtils.mkpath("tmp/#{param}")
         fnstags = DBM::open("#{$fns_path}/db/fnstags",0666)
-        fnstags[param] = "0,0,#{p},0"
-        fnstags.close
+        return nil if fnstags.has_key?(param)
+        history = DBM::open("#{$fns_path}/db/history",0666)
+        fnsarts = DBM::open("#{$fns_path}/db/fnsarts",0666)
+        tag_db = DBM::open("#{$fns_path}/db/#{t}",0666)
+        n = 0 #article number
+        history.each_key do |k|
+          tags = history[k].split("!")[7].split(,)
+          art_num = history[k].split("!")[0]
+          tags.each do |t|
+            if t == param
+              n++
+              tag_db[n] = history[k].split("!")[0]
+              fnsarts[art_num] += "," + n.to_s
+            end
+          end
+        end
+        if n = 0
+          fnstag[param] = "0,0,y,0"
+        else
+          fnstag[param] = "1,#{n},y,#{n}"
+        end
         return 1
       when "rmtag"
         FileUtils.rm("article/#{parm}")
@@ -412,7 +433,7 @@ module FriendNews
         n = (n.to_i + 1).to_s
         tag_db[la] = main_num
         tag_db.close
-        fnsarts[main_num] = ""
+        fnsarts[main_num] = main_num
         fnsarts[main_num] += "," + la
         fnstags[t] = fa + "," + la + "," +  p + "," + n
       end

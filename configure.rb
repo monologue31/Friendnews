@@ -45,8 +45,8 @@ fnstag["all"] = "0,0,y,0"
 p fnstag["all"]
 fnstag["junk"] = "0,0,y,0"
 p fnstag["junk"]
-fnstag["test"] = "0,0,y,0"
-p fnstag["test"]
+fnstag["control"] = "0,0,y,0"
+p fnstag["control"]
 #creat article
 fnsarts = DBM::open("db/fnsarts")
 fnsarts.clear
