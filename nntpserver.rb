@@ -354,12 +354,11 @@ module FriendNews
         n = 0 #article number
         history.each_key do |k|
           tags = history[k].split("!")[7].split(",")
-          p tags
           art_num = history[k].split("!")[0]
           tags.each do |t|
             if t == param
               n++
-              tag_db[n] = history[k].split("!")[0]
+              tag_db[n.to_s] = history[k].split("!")[0]
               fnsarts[art_num] += "," + n.to_s
             end
           end
@@ -367,7 +366,7 @@ module FriendNews
         if n == 0
           fnstag[param] = "0,0,y,0"
         else
-          fnstag[param] = "1,#{n},y,#{n}"
+          fnstag[param] = "1,#{n.to_s},y,#{n.to_s}"
         end
         return 1
       when "rmtag"
