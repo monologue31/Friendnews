@@ -356,12 +356,12 @@ module FriendNews
           tags = history[k].split("!")[7].split(",")
           art_num = history[k].split("!")[0]
           tags.each do |t|
-            p t
             if t == param
-              p "has"
               n++
               tag_db[n.to_s] = history[k].split("!")[0]
+              p art_num
               fnsarts[art_num] += "," + n.to_s
+              p fnsarts[art_num]
             end
           end
         end
