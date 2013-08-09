@@ -351,16 +351,16 @@ module FriendNews
         history = DBM::open("#{$fns_path}/db/history",0666)
         fnsarts = DBM::open("#{$fns_path}/db/fnsarts",0666)
         tag_db = DBM::open("#{$fns_path}/db/#{param}",0666)
-        n = 0 #article number
+        cnt = 0 #article number
         history.each_key do |k|
           tags = history[k].split("!")[7].split(",")
           art_num = history[k].split("!")[0]
           tags.each do |t|
             if t == param
-              n++
-              p (n.to_s)
-              tag_db[n.to_s] = art_num
-              fnsarts[art_num] += ",#{n.to_s}"
+              cnt++
+              put cnt.to_S
+              tag_db[cnt.to_s] = art_num
+              fnsarts[art_num] += ",#{cnt.to_s}"
             end
           end
         end
