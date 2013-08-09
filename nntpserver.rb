@@ -366,9 +366,9 @@ module FriendNews
         end
 
         if cnt == 0
-          fnstag[param] = "0,0,y,0"
+          fnstags[param] = "0,0,y,0"
         else
-          fnstag[param] = "1,#{cnt.to_s},y,#{cnt.to_s}"
+          fnstags[param] = "1,#{cnt.to_s},y,#{cnt.to_s}"
         end
         return 1
       when "rmtag"
