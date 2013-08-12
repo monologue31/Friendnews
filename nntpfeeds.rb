@@ -26,8 +26,9 @@ module FriendNews
 
         #feeds news
         loop do
-          p "nntpfeeds:Ready"
           artnum,tag = $fns_queue.pop().split(",")
+          p artnum
+          p tag
           if tag == "control"
             path = "#{$fns_path}/article/control"
           else

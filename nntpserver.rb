@@ -142,7 +142,7 @@ module FriendNews
                 sub_artnum.close
               end
               p path
-              if File.exist?(path)
+              unless File.exist?(path)
                 self.response("423 No such article number in this group")
                 next
               end
@@ -205,8 +205,7 @@ module FriendNews
       msg["Signature"] = "From,Subject,Newsgroups,Message-ID" #Which header should be signed
 #      msg["Expires"] = $expires
       msg["Date"] = Time.now.to_s unless msg.key?("Date")
-      msg["Msg_Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
-      p msg["Msg_Sign"]
+      msg["Msg-Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
       if msg["Newsgroups"] == "control"
         main_artnum = self.calc_artnum("control")
         path =  "#{$fns_path}/article/control/#{main_artnum}"
@@ -241,9 +240,9 @@ module FriendNews
       #Verify Sign
       unless self.digital_sign(msg,"public","verify")
         msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
-        msg["Msg-sign"] = "Bad Sign"
+        msg["Msg-Sign"] = "Bad Sign"
       end
-      if msg.has_key?("Control") && msg["Msg-sign"] != "Bad Sign"
+      if msg.has_key?("Control") && msg["Msg-Sign"] != "Bad Sign"
         unless self.parse_cmsg(msg)
           self.response("437 Article rejected - do not try again")
         end
@@ -342,7 +341,6 @@ module FriendNews
 
     def calc_artnum(tag)
       active = DBM::open("#{$fns_path}/db/active",0666)
-      p active[tag]
       num = (active[tag].split(",")[1].to_i + 1).to_s # first article number,last article number,post,number
       return num
     end
