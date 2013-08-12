@@ -196,7 +196,6 @@ module FriendNews
         tags << t if active.has_key?(t)
       end
       tags << "all" unless tags.nil?
-      p tags
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])

@@ -3,7 +3,7 @@ require "dbm"
 
 #make dir
 FileUtils.mkpath("log")
-FileUtils.mkpath("article")
+FileUtils.mkpath("article/control")
 FileUtils.mkpath("tmp")
 FileUtils.mkpath("db/tags")
 #set header
