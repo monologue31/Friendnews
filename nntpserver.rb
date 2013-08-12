@@ -196,6 +196,7 @@ module FriendNews
       msg["Newsgroups"].split(",").each do |t|
         tags << t if active.has_key?(t)
       end
+      tags << "all" unless tags
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -205,10 +206,7 @@ module FriendNews
 #      msg["Expires"] = $expires
       msg["Date"] = Time.now.to_s unless msg.key?("Date")
       msg["Msg_Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
-      msg["Xref"] = @socket.addr[2]
-      tags.each do |t|
-        msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
-      end
+      p msg["Msg_Sign"]
       if msg["Newsgroups"] == "control"
         main_artnum = self.calc_artnum("control")
         path =  "#{$fns_path}/article/control/#{main_artnum}"
@@ -216,7 +214,10 @@ module FriendNews
         main_artnum = self.calc_artnum("all")
         path =  "#{$fns_path}/article/#{main_artnum}"
       end
-      p to_str(msg)
+      msg["Xref"] = @socket.addr[2]
+      tags.each do |t|
+        msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
+      end
       File.open(path,"w") do |f|
         f.write self.to_str(msg)
       end

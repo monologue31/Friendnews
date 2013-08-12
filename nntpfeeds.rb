@@ -28,13 +28,13 @@ module FriendNews
         loop do
           p "nntpfeeds:Ready"
           artnum,tag = $fns_queue.pop().split(",")
-          puts "nntpfeeds:Transfer message #{msg["Message-ID"]}"
           if tag == "control"
             path = "#{$fns_path}/article/control"
           else
             path = "#{$fns_path}/article"
           end
           msg = self.to_hash(File.read("#{path}/#{artnum}"))
+          puts "nntpfeeds:Transfer message #{msg["Message-ID"]}"
           if msg.has_key?("Distribution")
             hosts = @fnsgroup[msg["Distribuliton"]].split(",")
           else
