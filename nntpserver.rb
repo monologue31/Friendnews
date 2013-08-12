@@ -128,7 +128,6 @@ module FriendNews
               self.response(".")
               sub_artnum.close
               history.close
-              msg_id.close
             when /(?i)article/
               unless tag
                 self.response("412 No newsgroup has been selected")
@@ -144,6 +143,7 @@ module FriendNews
                 path = "#{$fns_path}/article/#{sub_artnum[param]}"
                 sub_artnum.close
               end
+              p path
               if File.exist?(path)
                 self.response("423 No such article number in this group")
                 next

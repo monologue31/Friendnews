@@ -19,7 +19,7 @@ fnstags.each_key{|k|
 }
 p "---------------"
 
-all = DBM::open("db/all",0666)
+all = DBM::open("db/tags/all",0666)
 p "---------------"
 all.each_key{|k|
   p k
@@ -27,7 +27,7 @@ all.each_key{|k|
 }
 p "---------------"
 
-test = DBM::open("db/control",0666)
+test = DBM::open("db/tags/control",0666)
 p "---------------"
 test.each_key{|k|
   p k
