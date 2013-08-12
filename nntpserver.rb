@@ -195,13 +195,9 @@ module FriendNews
         end
         msg["Newsgroups"] = "control"
       end
-      tags = msg["Newsgroups"].split(",")
       active = DBM::open("#{$fns_path}/db/active",0666)
-      p tags
-      tags.each do |t|
-        p t
-        p active.has_key?(t)
-        tags.delete(t) unless active.has_key?(t)
+      msg["Newsgroups"].split(",").each do |t|
+        tags << t if active.has_key?(t)
       end
       p tags
       while 1
