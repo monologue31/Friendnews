@@ -199,9 +199,9 @@ module FriendNews
       active = DBM::open("#{$fns_path}/db/active",0666)
       p tags
       tags.each do |t|
-        unless active.has_key?(t)
-          tags.delete(t)
-        end
+        p t
+        p active.has_key?(t)
+        tags.delete(t) unless active.has_key?(t)
       end
       p tags
       while 1
