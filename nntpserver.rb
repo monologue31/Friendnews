@@ -53,14 +53,12 @@ module FriendNews
             when /(?i)post/
               #user check
               if @socket.addr[3] == "127.0.0.1"
-                self.response("340 Sent article to be posted.end with <.>")
                 self.parse_post
               else
                 self.response("440 Posting not allowed")
               end
             when /(?i)ihave/
               unless self.chk_hist?(param)
-                self.response("335 Send article to be transferred.end with <.>")
                 self.parse_ihave(param)
               else
                 self.response("437 Article rejected - do not try again")
@@ -196,7 +194,7 @@ module FriendNews
         msg["Newsgroups"] = "control"
       end
       active = DBM::open("#{$fns_path}/db/active",0666)
-      tags = Arrary.new
+      tags = Array.new
       msg["Newsgroups"].split(",").each do |t|
         tags << t if active.has_key?(t)
       end
