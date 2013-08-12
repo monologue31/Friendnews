@@ -141,7 +141,6 @@ module FriendNews
                 path = "#{$fns_path}/article/#{sub_artnum[param]}"
                 sub_artnum.close
               end
-              p path
               unless File.exist?(path)
                 self.response("423 No such article number in this group")
                 next
@@ -197,6 +196,7 @@ module FriendNews
         tags << t if active.has_key?(t)
       end
       tags << "all" unless tags
+      p tags
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -225,7 +225,7 @@ module FriendNews
       puts "nntpserver:Article <#{msg["Message-ID"]}> posted ok"
       self.response("240 Article posted ok")
       #Feed message  
-      $fns_queue.push("#{msg["Message-ID"]},#{msg["Newsgroups"]}")
+      $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
       return
     end
     
