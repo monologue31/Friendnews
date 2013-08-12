@@ -369,7 +369,7 @@ module FriendNews
         sub_artnum.close
         active[t] = min_artnum + "," + max_artnum + "," +  p + "," + num
       end
-      self.create_artnum("all",main_num) unless tags.include?("control")
+      self.create_artnum("all",main_num) unless tags.include?("control") && !tags.include?("all")
     end
 
     def append_hist(msg,art_num)
