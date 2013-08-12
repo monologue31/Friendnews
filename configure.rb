@@ -39,15 +39,10 @@ header["24"] = "Body"
 history = DBM::open("db/history",0666)
 history.clear
 #creat tag
-fnstag = DBM::open("db/fnstags",0666)
+fnstag = DBM::open("db/active",0666)
 fnstag.clear
 fnstag["all"] = "0,0,y,0"
 p fnstag["all"]
-fnstag["junk"] = "0,0,y,0"
-p fnstag["junk"]
 fnstag["control"] = "0,0,y,0"
 p fnstag["control"]
-#creat article
-fnsarts = DBM::open("db/fnsarts")
-fnsarts.clear
 
