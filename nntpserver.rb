@@ -374,7 +374,7 @@ module FriendNews
       self.create_artnum("all",main_num) unless tags.includ("control")
     end
 
-    def append_history(msg,art_num)
+    def append_hist(msg,art_num)
       history = DBM::open("#{$fns_path}/db/history",0666)
       history[msg["Message-ID"]] = "#{art_num}!#{msg["Subject"]}!#{msg["From"]}!#{msg["Date"]}!#{File.size("#{$fns_path}/article/#{art_num}")}!#{msg["Lines"]}!#{msg["Xref"]}!#{msg["Newsgroups"]}"
       history.close
