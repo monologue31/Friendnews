@@ -121,7 +121,7 @@ module FriendNews
                 msg_id = artnum_msg_id[artnum]
                 #files->[article number][subject][from][date][message size][lines][xref][newsgroups]
                 fields = history[msg_id].split("!")
-                res = "#{min.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{msg_id[sub_artnum[f.to_s]]}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
+                res = "#{min.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{msg_id}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
                 self.response(res)
                 min += 1
               end
