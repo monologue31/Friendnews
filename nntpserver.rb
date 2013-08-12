@@ -466,7 +466,7 @@ module FriendNews
 			  case action
 			  when "sign"
           puts "nntpserver:Starting sign message #{msg["Message-ID"]} with private key"
-				  msg_sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}#{action}.tmp"))).delete("\n")
+				  msg_sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))).delete("\n")
           #del tmp file
           File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
           puts "nntpserver:Sign message#{msg["Message-ID"]} with private key ok"
@@ -480,7 +480,7 @@ module FriendNews
 					  return true
 				  else
             #del tmp file
-            File.delete("#{$fns_path}/tmp/#{msg["Nessage-ID"]}#{action}.tmp")
+            File.delete("#{$fns_path}/tmp/#{msg["Nessage-ID"]}.#{action}")
 					  puts "nntpserver:Bad sign"
 					  return nil
 				  end
