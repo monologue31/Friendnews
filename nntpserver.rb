@@ -126,8 +126,6 @@ module FriendNews
                 min += 1
               end
               self.response(".")
-              sub_artnum.close
-              history.close
             when /(?i)article/
               unless tag
                 self.response("412 No newsgroup has been selected")
@@ -218,7 +216,7 @@ module FriendNews
         main_artnum = self.calc_artnum("all")
         path =  "#{$fns_path}/article/#{main_artnum}"
       end
-      p msg
+      p to_str(msg)
       File.open(path,"w") do |f|
         f.write self.to_str(msg)
       end
