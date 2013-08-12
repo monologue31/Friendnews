@@ -198,7 +198,6 @@ module FriendNews
       msg["Newsgroups"].split(",").each do |t|
         tags << t if active.has_key?(t)
       end
-      p tags
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -357,19 +356,18 @@ module FriendNews
     def create_artnum(tags,main_num)
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags.each do |t|
-        flag == 1 if t == "control"
         sub_artnum = DBM::open("#{$fns_path}/db/tags/#{t}",0666)
         min_artnum,max_artnum,p,num = active[t].split(",")
-        unless n == "0"
+        unless num == "0"
           max_artnum = (max_artnum.to_i + 1).to_s
         else
           min_artnum = (min_artnum.to_i + 1).to_s
           max_artnum = (max_artnum.to_i + 1).to_s
         end
-        n = (n.to_i + 1).to_s
+        num = (num.to_i + 1).to_s
         sub_artnum[max_artnum] = main_num
         sub_artnum.close
-        active[t] = min_artnum + "," + max_artnum + "," +  p + "," + n
+        active[t] = min_artnum + "," + max_artnum + "," +  p + "," + num
       end
       self.create_artnum("all",main_num) unless tags.include?("control")
     end
