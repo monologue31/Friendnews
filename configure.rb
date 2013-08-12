@@ -2,8 +2,8 @@ require "fileutils"
 require "dbm"
 
 #make dir
-FileUtils.delete("db/*")
-FileUtile.delete("etc/*")
+FileUtils.rm("db/*")
+FileUtile.rm("etc/*")
 FileUtils.mkpath("log")
 FileUtils.mkpath("article")
 FileUtils.mkpath("tmp")
