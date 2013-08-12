@@ -11,19 +11,11 @@ p "---------------"
 
 p "show tag"
 
-fnstags = DBM::open("db/fnstags",0666)
+fnstags = DBM::open("db/active",0666)
 p "---------------"
 fnstags.each_key{|k|
   p k
   p fnstags[k]
-}
-p "---------------"
-
-junk = DBM::open("db/junk",0666)
-p "---------------"
-junk.each_key{|k|
-  p k
-  p junk[k]
 }
 p "---------------"
 
@@ -35,7 +27,7 @@ all.each_key{|k|
 }
 p "---------------"
 
-test = DBM::open("db/test",0666)
+test = DBM::open("db/control",0666)
 p "---------------"
 test.each_key{|k|
   p k
