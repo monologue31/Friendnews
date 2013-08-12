@@ -14,18 +14,19 @@ module FriendNews
 	  	  #load feeds history
 	  	  Thread.start do
 	  	  	loop do
-	  	  		feed_list = DBM::open("#{$fns_path}/db/feeds_hist",0666)
-		    		feed_list.each_key{|host|
-			    	  list = File.read("#{$fns_path}/feeds/#{host}")
-              $fns_queue.push("#{host}!#{list}")
-            }
-			  	  feeds_list.close
-			  	  sleep(3600) #sleep 1 hour
+#	  	  		feed_list = DBM::open("#{$fns_path}/db/feeds_hist",0666)
+#		    		feed_list.each_key{|host|
+#			    	  list = File.read("#{$fns_path}/feeds/#{host}")
+ #             $fns_queue.push("#{host}!#{list}")
+  #          }
+	#		  	  feeds_list.close
+	#		  	  sleep(3600) #sleep 1 hour
   		  	end
   		  end
 
         #feeds news
         loop do
+          p "nntpfeeds:Ready"
           artnum,tag = $fns_queue.pop().split(",")
           puts "nntpfeeds:Transfer message #{msg["Message-ID"]}"
           if tag == "control"
