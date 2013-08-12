@@ -42,7 +42,7 @@ module FriendNews
         loop do
           if @socket.eof?
             @socket.close
-            puts "nntpserver:Connection closed by #{sock.addr[2]}"
+            puts "nntpserver:Connection closed by #{@socket.addr[2]}"
           end
         
           while line = @socket.gets
@@ -426,7 +426,7 @@ module FriendNews
       i = 0
       msg = Hash.new
       msg["Body"] = ""
-      line = string.split("\r\n")
+      line = str.split("\r\n")
       while i < line.length
 				unless line[i] == ""
           header_field,field_value = line[i].split(/\s*:\s*/,2)
