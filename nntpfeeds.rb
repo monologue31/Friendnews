@@ -60,7 +60,8 @@ module FriendNews
             client.disconnect
           end
         end
-      rescue e
+      rescue => e
+        puts "error"
         puts e
       end
     end
