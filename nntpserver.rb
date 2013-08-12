@@ -202,7 +202,6 @@ module FriendNews
           tags.delete(t)
         end
       end
-      p tags
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -213,6 +212,7 @@ module FriendNews
       msg["Date"] = Time.now.to_s unless msg.key?("Date")
       msg["Msg_Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
       msg["Xref"] = @socket.addr[2]
+      p msg
       tags.each do |t|
         msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       end
@@ -226,6 +226,7 @@ module FriendNews
       File.open(path,"w") do |f|
         f.write self.to_str(msg)
       end
+      p "hist"
       self.append_hist(msg,main_artnum)
       self.create_artnum(tags,main_artnum)
       puts "nntpserver:Article <#{msg["Message-ID"]}> posted ok"
