@@ -207,8 +207,8 @@ module FriendNews
         break unless chk_hist?(msg["Message-ID"])
       end
       msg["Path"] = @socket.addr[2]
-      msg["Signature"] = $signheaders #Which header should be signed
-      msg["Expires"] = $expires
+      msg["Signature"] = "From,Subject,Newsgroups,Message-ID" #Which header should be signed
+#      msg["Expires"] = $expires
       msg["Date"] = Time.now.to_s unless msg.key?("Date")
       msg["Msg_Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
       msg["Xref"] = @socket.addr[2]
