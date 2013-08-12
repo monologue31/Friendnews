@@ -197,11 +197,13 @@ module FriendNews
       end
       tags = msg["Newsgroups"].split(",")
       active = DBM::open("#{$fns_path}/db/active",0666)
+      p tags
       tags.each do |t|
         unless active.has_key?(t)
           tags.delete(t)
         end
       end
+      p tags
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -212,7 +214,6 @@ module FriendNews
       msg["Date"] = Time.now.to_s unless msg.key?("Date")
       msg["Msg_Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
       msg["Xref"] = @socket.addr[2]
-      p msg
       tags.each do |t|
         msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       end
@@ -223,10 +224,10 @@ module FriendNews
         main_artnum = self.calc_artnum("all")
         path =  "#{$fns_path}/article/#{main_artnum}"
       end
+      p msg
       File.open(path,"w") do |f|
         f.write self.to_str(msg)
       end
-      p "hist"
       self.append_hist(msg,main_artnum)
       self.create_artnum(tags,main_artnum)
       puts "nntpserver:Article <#{msg["Message-ID"]}> posted ok"
@@ -261,7 +262,6 @@ module FriendNews
           tags.delete(t)
         end
       end
-      p tags
       msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
       msg["Xref"] = @socket.addr[2]
       tag.each do |t|
@@ -349,6 +349,7 @@ module FriendNews
 
     def calc_artnum(tag)
       active = DBM::open("#{$fns_path}/db/active",0666)
+      p active[tag]
       num = (active[tag].split(",")[1].to_i + 1).to_s # first article number,last article number,post,number
       return num
     end
