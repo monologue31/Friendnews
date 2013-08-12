@@ -5,7 +5,7 @@ require "dbm"
 FileUtils.mkpath("log")
 FileUtils.mkpath("article")
 FileUtils.mkpath("tmp")
-FileUtils.mkpath("db")
+FileUtils.mkpath("db/tags")
 
 #set header
 header = DBM::open("db/header",0666)
