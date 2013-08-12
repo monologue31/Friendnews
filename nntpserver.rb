@@ -99,7 +99,7 @@ module FriendNews
                 max = self.calc_artnum(tag).to_i - 1
               end
               self.response("224 #{param} fields follow")
-              hist = DBM::open("#{$fns_path}/db/history",0666)
+              history = DBM::open("#{$fns_path}/db/history",0666)
               if tag == "control"
                 artnum_msg_id = DBM::open("#{$fns_path}/db/artnum_msg_id_ctl",0666)
               else
