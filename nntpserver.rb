@@ -196,6 +196,7 @@ module FriendNews
         msg["Newsgroups"] = "control"
       end
       active = DBM::open("#{$fns_path}/db/active",0666)
+      tags = Arrary.new
       msg["Newsgroups"].split(",").each do |t|
         tags << t if active.has_key?(t)
       end
