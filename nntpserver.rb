@@ -186,9 +186,21 @@ module FriendNews
       msg = self.to_hash(msg_str)
       if msg.has_key?("Control")
         unless self.parse_cmsg(msg)
-          self.response("441 Posting failed - Can't parse control message") 
+          self.response("441 Posting failed - Can't parse control message")
+          return
         end
         msg["Newsgroups"] = "control"
+      end
+
+      if msg.has_key?("Distribution")
+        msg["Distribution"] = self.parse_distro(msg["Distribution"])
+        if msg["Destribution"] = ""
+          self.response("441 Posting failed - Can't parse distribution")
+          return
+        end
+        msg["Signature"] = "From,Subject,Newsgroups,Message-ID,Distribution" #Which header should be signed
+      else
+          msg["Signature"] = "From,Subject,Newsgroups,Message-ID" #Which header should be signed
       end
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags = Array.new
@@ -201,7 +213,6 @@ module FriendNews
         break unless chk_hist?(msg["Message-ID"])
       end
       msg["Path"] = @socket.addr[2]
-      msg["Signature"] = "From,Subject,Newsgroups,Message-ID" #Which header should be signed
 #      msg["Expires"] = $expires
       msg["Date"] = Time.now.to_s unless msg.key?("Date")
       msg["Msg-Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
@@ -336,6 +347,22 @@ module FriendNews
       else
         return nil
       end
+    end
+
+    def parse_ditsro(ditro)
+      list = ""
+      gp = DBM::open("#{$fns_path}/etc/groups",0666)
+      groups = ditro.split(",")
+      groups.each do |g|
+        host = gp[g].split(",")
+        host.each do |h|
+          unless list.inclued("h")
+            list << "," + h
+          end
+        end
+      end
+      list = list.chop
+      return list
     end
 
     def calc_artnum(tag)

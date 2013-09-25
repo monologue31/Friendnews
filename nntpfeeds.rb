@@ -6,7 +6,6 @@ module FriendNews
   class NNTPFeeds < NNTPServer
     def initialize()
       @fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0666)
-      @fnsgroup = DBM::open("#{$fns_path}/etc/fnsgroup",0666)
   	end
 
 	  def run
@@ -27,8 +26,6 @@ module FriendNews
         #feeds news
         loop do
           artnum,tag = $fns_queue.pop().split(",")
-          p artnum
-          p tag
           if tag == "control"
             path = "#{$fns_path}/article/control"
           else
@@ -37,14 +34,14 @@ module FriendNews
           msg = self.to_hash(File.read("#{path}/#{artnum}"))
           puts "nntpfeeds:Transfer message #{msg["Message-ID"]}"
           if msg.has_key?("Distribution")
-            hosts = @fnsgroup[msg["Distribuliton"]].split(",")
+            list = msg["Distribuliton"].split(",")
           else
             @fnsfeed.each_key do |h|
-              hosts << u
+              list << h
             end
           end
-          hosts.each do |h|
-            feed_ip,feed_tags = @fnsfeed[u].split(",",2)
+          list.each do |l|
+            feed_ip,feed_tags = @fnsfeed[l].split(",",2)
             if feed_tags != "*"
               feed_tags.each do |ft|
                 if msg["Newsgroups"].include(ft)
