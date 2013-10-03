@@ -6,56 +6,63 @@ module FriendNews
   class NNTPFeeds < NNTPServer
     def initialize()
       @fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0666)
+      @feedlist = Queue.new
   	end
 
 	  def run
       begin
-	  	  #load feeds history
+        self.load_feedlist
+
+        #thread load feedlist
 	  	  Thread.start do
 	  	  	loop do
-#	  	  		feed_list = DBM::open("#{$fns_path}/db/feeds_hist",0666)
-#		    		feed_list.each_key{|host|
-#			    	  list = File.read("#{$fns_path}/feeds/#{host}")
- #             $fns_queue.push("#{host}!#{list}")
-  #          }
-	#		  	  feeds_list.close
-	#		  	  sleep(3600) #sleep 1 hour
+            sleep($feed_time)
+            self.load_feedlist
   		  	end
   		  end
 
-        #feeds news
-        loop do
-          artnum,tag = $fns_queue.pop().split(",")
-          if tag == "control"
-            path = "#{$fns_path}/article/control"
-          else
-            path = "#{$fns_path}/article"
-          end
-          msg = self.to_hash(File.read("#{path}/#{artnum}"))
-          puts "nntpfeeds:Transfer message #{msg["Message-ID"]}"
-          if msg.has_key?("Distribution")
-            list = msg["Distribuliton"].split(",")
-          else
-            @fnsfeed.each_key do |h|
-              list << h
+        #thread 
+        Thread.start do
+          loop do
+            artnum,tags = $fns_queue.pop().split(",")
+            if tags == "control"
+              path = "#{$fns_path}/article/control"
+            else
+              path = "#{$fns_path}/article"
             end
-          end
-          list.each do |l|
-            feed_ip,feed_tags = @fnsfeed[l].split(",",2)
-            if feed_tags != "*"
-              feed_tags.each do |ft|
-                if msg["Newsgroups"].include(ft)
-                  hosts.delete(u)
-                  break
+            msg = self.to_hash(File.read("#{path}/#{artnum}"))
+            list = Arrary.new
+            if msg.has_key?("Distribution")
+              msg["Distribuliton"].split(",").each do |d|
+                DBM::opn("#{$fns_path}/etc/#{d}",0666).each_key do |h|
+                  unless list.include(h)
+                    list << h
+                  end
+                end
+              end
+            else
+              @fnsfeed.each_key do |h|
+                list << h
+              end
+            end
+            tag = tags.split(",")
+            list.each do |l|
+              hosts = @fnsfeed[l].split(",")
+              tag.each do |t|
+                unless hosts.include("!#{t}") && (hosts.include("!*") && !hosts.include("t"))
+                  self.append_feedhist(msg["Message-ID"],l,nil)
+                  @feedlist.push(l,msg["Message-ID"])
                 end
               end
             end
           end
-          client = FriendNews::NNTPClient.new(119)
-          hosts.each do |h|
-            client.connect(host)
-            stat_code = client.command(ihave,msg["Message-ID"])
-            client.disconnect
+        end
+
+        #thread feed message
+        Thread.start do
+          loop do
+            host_id,msg_id = @feedlist.pop
+            self.feed_msg(host_id,msg_id.split(","))
           end
         end
       rescue => e
@@ -63,6 +70,45 @@ module FriendNews
         puts e
       end
     end
+    
+    def append_feedhist(msg_id,host,stat_code)
+      feedhist = DBM::open("#{$fns_path}/db/feedhist/#{host}")
+      feedhist[host] = stat_code
+      feedhist.close
+    end
+
+    def del_feedhist(msg_id,host)
+      feedhist = DBM::open("#{$fns_path}/db/feedhist/#{host}")
+      feedhist.delete(msg_id)
+      feedhist.close
+    end
+
+    def load_feedlist
+      @fnsfeed.each_key do |k|
+        feedhist = DBM::open("#{$fns_path}/db/feedhist/#{k}")
+        msg_id = ""
+        feedhist.each_key do |m|
+          msg_id += "#{m}," if (feedhist[m] == "436" || feedhist[m] == nil)
+        end
+        msg_id = msg_id.chop
+        p msg_id
+        @feedlist.push(k,msg_id)
+        feedhist.close
+      end
+    end
+
+    def feed_msg(host_id,msg_id)
+      client = FriendNews::NNTPClient.new(119)
+      host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
+      client.connect(host_ip[host_id])
+      msg_id.each do |m|
+        stat_code = client.command(ihave,m)
+        self.append_feedhist(m,host,stat_code)
+      end
+      client.disconnect
+      return
+    end
+    
   end
 
 end

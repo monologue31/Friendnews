@@ -193,14 +193,9 @@ module FriendNews
       end
 
       if msg.has_key?("Distribution")
-        msg["Distribution"] = self.parse_distro(msg["Distribution"])
-        if msg["Destribution"] = ""
-          self.response("441 Posting failed - Can't parse distribution")
-          return
-        end
         msg["Signature"] = "From,Subject,Newsgroups,Message-ID,Distribution" #Which header should be signed
       else
-          msg["Signature"] = "From,Subject,Newsgroups,Message-ID" #Which header should be signed
+        msg["Signature"] = "From,Subject,Newsgroups,Message-ID" #Which header should be signed
       end
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags = Array.new
@@ -344,6 +339,8 @@ module FriendNews
         return true
       when "rmtag"
         return true
+      when "newgroup"
+      when "updategroup"
       else
         return nil
       end
