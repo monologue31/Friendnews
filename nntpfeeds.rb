@@ -1,5 +1,5 @@
 require 'dbm'
-require 'nntpserver'
+require './nntpserver'
 
 module FriendNews
 
@@ -34,7 +34,7 @@ module FriendNews
             list = Arrary.new
             if msg.has_key?("Distribution")
               msg["Distribuliton"].split(",").each do |d|
-                DBM::opn("#{$fns_path}/etc/#{d}",0666).each_key do |h|
+                DBM::opn("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
                   unless list.include(h)
                     list << h
                   end

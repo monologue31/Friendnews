@@ -45,3 +45,6 @@ p fnstag["all"]
 fnstag["control"] = "0,0,y,0"
 p fnstag["control"]
 
+#creat users
+host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
+host_ip[] =

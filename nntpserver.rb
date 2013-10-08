@@ -202,7 +202,7 @@ module FriendNews
       msg["Newsgroups"].split(",").each do |t|
         tags << t if active.has_key?(t)
       end
-      tags << "all" unless tags.nil?
+      tags << "junk" if tags.empty?
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -323,11 +323,12 @@ module FriendNews
         cnt = 0 #article number
         history.each_key do |k|
           tags = history[k].split("!")[7].split(",")
-          artnum = history[k].split("!")[0]
+          main_artnum = history[k].split("!")[0]
           tags.each do |t|
             if t == param
               cnt += 1
-              sub_artnum[cnt.to_s] = artnum
+              sub_artnum[cnt.to_s] = main_artnum
+              self.rm_artnum("junk",main_artnum)
             end
           end
         end
@@ -336,35 +337,61 @@ module FriendNews
         else
           active[param] = "1,#{cnt.to_s},y,#{cnt.to_s}"
         end
+        active.close
         return true
       when "rmtag"
+        active = DBM::open("#{$fns_path}/db/active",0666)
+        return nil if active.has_key?(param)
+        sub_artnum = DBM::open("#{$fns_path}/db/tags/#{param}",0666)
+        sub_artnum.each_key do |k|
+          self.add_artnum("junk",k)
+        end
+        active.delete(param)
+        active.close
         return true
-      when "newgroup"
-      when "updategroup"
+      when "newml"
+        ml = DBM::opn("#{$fns_path}/etc/memberlist/#{param}",0666) 
+        return nil if ml["Version"] <= Time.now.to_s
+        ml["Version"] = Time.now.to_s
+        msg["Body"].split("\r\n").each do |m|
+          host,permission = m.split(/\s*|\t*/)
+          ml[host] = permission
+        end
       else
         return nil
       end
     end
 
-    def parse_ditsro(ditro)
-      list = ""
-      gp = DBM::open("#{$fns_path}/etc/groups",0666)
-      groups = ditro.split(",")
-      groups.each do |g|
-        host = gp[g].split(",")
-        host.each do |h|
-          unless list.inclued("h")
-            list << "," + h
-          end
-        end
-      end
-      list = list.chop
-      return list
+    def rm_artnum(tag,main_artnum)
+      artnum = DBM::open("#{$fns_path}/db/tags/#{tag}",0666)
+      sub_artnum = artnum.index(main_artnum) 
+      artnum.delete(sub_artnum)
+      artnum.close
+      active = DBM::open("#{$fns_path}/db/active",0666)
+      min_artnum,max_artnum,p,num = active[tag].split(",")
+      num = (num.to_i - 1).to_s
+      max_artnum = (max_artnum.to_i - 1).to_s if sub_artnum == max_artnum
+      active["junk"] = min_artnum + "," + max_artnum + "," +  p + "," + num
+      active.close
+    end
+
+    def add_artnum(tag,main_artnum)
+      sub_artnum = self.calc_artnum(tag)
+      artnum = DBM::open("#{$fns_path}/db/tags/#{tag}",0666)
+      artunum[sub_artnum] = main_artnum
+      artnum.close
+      active = DBM::open("#{$fns_path}/db/active",0666)
+      min_artnum,max_artnum,p,num = active[tag].split(",")
+      num = (num.to_i + 1).to_s
+      max_artnum = sub_artnum if subartnum.to_i > max_artnum.to_i
+      active["junk"] = min_artnum + "," + max_artnum + "," +  p + "," + num
+      active.close
     end
 
     def calc_artnum(tag)
       active = DBM::open("#{$fns_path}/db/active",0666)
       num = (active[tag].split(",")[1].to_i + 1).to_s # first article number,last article number,post,number
+      active.close
       return num
     end
 
@@ -373,23 +400,11 @@ module FriendNews
       return tags[sub_artnum]
     end
 
-    def create_artnum(tags,main_num)
-      active = DBM::open("#{$fns_path}/db/active",0666)
+    def create_artnum(tags,main_artnum)
       tags.each do |t|
-        sub_artnum = DBM::open("#{$fns_path}/db/tags/#{t}",0666)
-        min_artnum,max_artnum,p,num = active[t].split(",")
-        unless num == "0"
-          max_artnum = (max_artnum.to_i + 1).to_s
-        else
-          min_artnum = (min_artnum.to_i + 1).to_s
-          max_artnum = (max_artnum.to_i + 1).to_s
-        end
-        num = (num.to_i + 1).to_s
-        sub_artnum[max_artnum] = main_num
-        sub_artnum.close
-        active[t] = min_artnum + "," + max_artnum + "," +  p + "," + num
+        self.add_artnum(t,main_artnum)
       end
-      self.create_artnum("all",main_num) if !tags.include?("control") && !tags.include?("all")
+      self.add_art_num("all",main_artnum) if !tags.include?("control")
     end
 
     def append_hist(msg,art_num)
@@ -506,5 +521,9 @@ module FriendNews
 			  return nil
 		  end
 	  end
+
+    def tag_mapping(tag)
+
+    end
   end
 end
