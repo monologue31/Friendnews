@@ -6,6 +6,7 @@ FileUtils.mkpath("log")
 FileUtils.mkpath("article/control")
 FileUtils.mkpath("tmp")
 FileUtils.mkpath("db/tags")
+FileUtils.mkpath("db/feedhist")
 #set header
 headers = DBM::open("db/headers",0666)
 headers.clear
@@ -40,17 +41,18 @@ history.clear
 #creat tag
 fnstag = DBM::open("db/active",0666)
 fnstag.clear
-fnstag["all"] = "0,0,y,0"
+fnstag["all"] = "1,0,y,0"
 p fnstag["all"]
-fnstag["control"] = "0,0,y,0"
+fnstag["control"] = "1,0,y,0"
 p fnstag["control"]
-
+fnstag["junk"] = "1,0,y,0"
+p fnstag["junk"]
 #creat users
-host_ip = DBM::open("#{$fns_path}/db/hosts",0666)
+host_ip = DBM::open("db/hosts",0666)
 host_ip["xiao-face-vm-01"] = "192.168.83.145"
 host_ip["xiao-face-vm-02"] = "192.168.83.146"
 
 #creat feedlist
-fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0666)
+fnsfeed = DBM::open("etc/fnsfeed",0666)
 fnsfeed["xiao-face-vm-01"] = "*"
 fnsfeed["xiao-fcae-vm-02"] = "*"

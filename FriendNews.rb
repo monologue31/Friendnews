@@ -4,7 +4,7 @@ require './nntpfeeds'
 
 #Initialize globle parameter
 $fns_queue = SizedQueue.new(100)
-$fns_path = "/usr/local/bin/Friendnews"
+$fns_path = "/home/xiaokunyao/Friendnews"
 $fns_host = ""
 
 #Start Newfeeds

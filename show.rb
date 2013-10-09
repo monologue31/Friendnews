@@ -19,6 +19,7 @@ fnstags.each_key{|k|
 }
 p "---------------"
 
+p "show artnum"
 all = DBM::open("db/tags/all",0666)
 p "---------------"
 all.each_key{|k|
@@ -34,3 +35,13 @@ test.each_key{|k|
   p test[k]
 }
 p "---------------"
+
+p "show fnsfeed"
+fnsfeed = DBM::open("etc/fnsfeed",0666)
+p "---------------"
+fnsfeed.each_key{|k|
+  p k
+  p fnsfeed[k]
+}
+p "---------------"
+

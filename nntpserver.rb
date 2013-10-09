@@ -165,6 +165,7 @@ module FriendNews
           end
         end
 		  rescue => e
+				puts "nntpserver error"
 		    puts e.to_s
         @socket.close
       end
@@ -333,7 +334,7 @@ module FriendNews
           end
         end
         if cnt == 0
-          active[param] = "0,0,y,0"
+          active[param] = "1,0,y,0"
         else
           active[param] = "1,#{cnt.to_s},y,#{cnt.to_s}"
         end
@@ -371,20 +372,20 @@ module FriendNews
       min_artnum,max_artnum,p,num = active[tag].split(",")
       num = (num.to_i - 1).to_s
       max_artnum = (max_artnum.to_i - 1).to_s if sub_artnum == max_artnum
-      active["junk"] = min_artnum + "," + max_artnum + "," +  p + "," + num
+      active[tag] = min_artnum + "," + max_artnum + "," +  p + "," + num
       active.close
     end
 
     def add_artnum(tag,main_artnum)
       sub_artnum = self.calc_artnum(tag)
       artnum = DBM::open("#{$fns_path}/db/tags/#{tag}",0666)
-      artunum[sub_artnum] = main_artnum
+      artnum[sub_artnum] = main_artnum
       artnum.close
       active = DBM::open("#{$fns_path}/db/active",0666)
       min_artnum,max_artnum,p,num = active[tag].split(",")
       num = (num.to_i + 1).to_s
-      max_artnum = sub_artnum if subartnum.to_i > max_artnum.to_i
-      active["junk"] = min_artnum + "," + max_artnum + "," +  p + "," + num
+      max_artnum = sub_artnum if sub_artnum.to_i > max_artnum.to_i
+      active[tag] = min_artnum + "," + max_artnum + "," +  p + "," + num
       active.close
     end
 
@@ -404,7 +405,7 @@ module FriendNews
       tags.each do |t|
         self.add_artnum(t,main_artnum)
       end
-      self.add_art_num("all",main_artnum) if !tags.include?("control")
+      self.add_artnum("all",main_artnum) if !tags.include?("control")
     end
 
     def append_hist(msg,art_num)
@@ -495,7 +496,7 @@ module FriendNews
 			  case action
 			  when "sign"
           puts "nntpserver:Starting sign message #{msg["Message-ID"]} with private key"
-				  msg_sign = Base64.b64encode(key.sign(digest,File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))).delete("\n")
+				  msg_sign = Base64.encode64(key.sign(digest,File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))).delete("\n")
           #del tmp file
           File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
           puts "nntpserver:Sign message#{msg["Message-ID"]} with private key ok"

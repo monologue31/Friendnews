@@ -11,8 +11,10 @@ module FriendNews
       begin
         @socket = TCPSocket.open(host,@port)
         puts "nntpclient:Connecting #{host} with port[#{@port}] successful"
+				return true
       rescue => e
-        puts "nntpclient:Connecting #{host} with port[#{@port}] erro [#{e}]"
+        puts "nntpclient:Connecting #{host} with port[#{@port}] error [#{e}]"
+				return nil
       end
     end
 
