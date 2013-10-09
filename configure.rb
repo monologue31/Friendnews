@@ -47,4 +47,10 @@ p fnstag["control"]
 
 #creat users
 host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
-host_ip[] =
+host_ip["xiao-face-vm-01"] = "192.168.83.145"
+host_ip["xiao-face-vm-02"] = "192.168.83.146"
+
+#creat feedlist
+fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0666)
+fnsfeed["xiao-face-vm-01"] = "*"
+fnsfeed["xiao-fcae-vm-02"] = "*"
