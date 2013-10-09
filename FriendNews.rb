@@ -1,6 +1,6 @@
 require 'thread'
-require 'nntpserver'
-require 'nntpfeeds'
+require './nntpserver'
+require './nntpfeeds'
 
 #Initialize globle parameter
 $fns_queue = SizedQueue.new(100)
