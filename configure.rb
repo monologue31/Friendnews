@@ -4,8 +4,8 @@ require "dbm"
 module FriendNews
   
   class FNSConf
-    def initialize(fns_path)
-      @fns_path = fns_path
+    def initialize()
+      @fns_path = "."
     end
 
     def set_header
@@ -35,6 +35,7 @@ module FriendNews
       headers["22"] = "Xref"
       headers["23"] = "Msg-Sign"
       headers["24"] = "Body"
+      puts "set header ok"
     end
 
     def clear_hist
@@ -46,7 +47,7 @@ module FriendNews
     end
 
     def clear_tag
-      fnstag = DBM::open("db/active",0666)
+      fnstag = DBM::open("#{@fns_path}db/active",0666)
       fnstag.clear
       fnstag["all"] = "1,0,y,0"
       fnstag["control"] = "1,0,y,0"
@@ -73,8 +74,14 @@ module FriendNews
 
 end
 
-conf = FriendNews::FNSConf.new(ARGV)
 if ARGV.length < 1
   puts "useage:configure.rb [command]"
 else
+   conf = FriendNews::FNSConf.new(ARGV)
+   command = ARGV[0]
+   case command
+   when "set_header"
+     conf.set_header
+   when
+   end
 end
