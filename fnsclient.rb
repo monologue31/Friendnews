@@ -24,7 +24,6 @@ module FriendNews
     end
 
     def command(cmd,param)
-      puts "nntpclient:Sent command <#{cmd}>"
       case cmd
       when /(?i)ihave/
         stat_code = self.ihave(param)
@@ -36,10 +35,10 @@ module FriendNews
 
     def request(cmd_line)
       @socket.puts(cmd_line)
-      puts "nntpclient:Send command <#{cmd_line}>"
+      puts "nntpclient:Send command [#{cmd_line}]"
       while code = @socket.gets
         next unless code
-        puts "nntpclient:Receive status code <#{code.chomp}>"
+        puts "nntpclient:Receive status code [#{code.chomp}]"
         return code
       end
     end

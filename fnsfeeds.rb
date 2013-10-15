@@ -63,7 +63,7 @@ module FriendNews
         Thread.start do
           loop do
             host_id,msg_id = @feedlist.pop.split(",")
-						puts "nntpfeeds:feed message #{msg_id} to #{host_id}"
+						puts "nntpfeeds:feed message #{msg_id} to#{host_id}"
             self.feed_msg(host_id,msg_id.split(","))
           end
         end
@@ -108,7 +108,7 @@ module FriendNews
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
       	  stat_code = client.command("ihave",m)
-					puts "nntpfeeds:feed message #{m} status code <#{stat_code}>"
+					puts "nntpfeeds:feed message #{m} status code [#{stat_code}]"
       	  self.append_feedhist(m,host,stat_code)
       	end
       	client.disconnect
