@@ -1,5 +1,5 @@
 require 'dbm'
-require './fnspserver.rb'
+require './fnsserver.rb'
 require './fnsclient.rb'
 
 module FriendNews
