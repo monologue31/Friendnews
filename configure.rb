@@ -82,7 +82,6 @@ else
    case command
    when "set_header"
      conf.set_header
-   when
    else
    end
 end
