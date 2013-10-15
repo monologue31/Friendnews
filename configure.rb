@@ -3,7 +3,7 @@ require "dbm"
 
 module FriendNews
   
-  class FNSconf
+  class FNSConf
     def initialize(fns_path)
       @fns_path = fns_path
     end
@@ -73,7 +73,7 @@ module FriendNews
 
 end
 
-conf = FNSconf.new(ARGV)
+conf = FriendNews::FNSConf.new(ARGV)
 if ARGV.length < 1
   puts "useage:configure.rb [command]"
 else
