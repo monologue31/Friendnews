@@ -243,6 +243,7 @@ module FriendNews
         msg_str += line
       end
       msg = self.to_hash(msg_str)
+			p msg
       #Verify Sign
       unless self.digital_sign(msg,"public","verify")
         msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"

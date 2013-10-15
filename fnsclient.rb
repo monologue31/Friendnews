@@ -2,7 +2,7 @@ require 'socket'
 
 module FriendNews
 
-  class NNTPClient
+  class FNSClient
     def initialize(port)
       @port = port
     end
@@ -10,7 +10,8 @@ module FriendNews
     def connect(host)
       begin
         @socket = TCPSocket.open(host,@port)
-        puts "nntpclient:Connecting #{host} with port[#{@port}] successful"
+				stat_code = @socket.gets
+        puts "nntpclient:Connecting #{host} with port[#{@port}] successful status code [#{stat_code.chomp}]"
 				return true
       rescue => e
         puts "nntpclient:Connecting #{host} with port[#{@port}] error [#{e}]"
@@ -47,7 +48,7 @@ module FriendNews
       file.each{|line|
         @socket.puts(line)
       }
-      @socket.puts(".")
+      @socket.puts(".\r\n")
       while code = @socket.gets
         next unless code
         return code
@@ -57,7 +58,7 @@ module FriendNews
     def text_res
       res = ""
       while line = @socket.gets
-        break if line == ".\n"
+        break if line == ".\r\n"
         res += line
       end
       return res
@@ -66,7 +67,7 @@ module FriendNews
     def ihave(msg_id)
       stat_code = self.request("IHAVE #{msg_id}")
       puts "nntpclient:Send message to server"
-      return stat_code unless /355/ =~ stat_code
+      return stat_code unless /335/ =~ stat_code
       history = DBM::open("#{$fns_path}/db/history",0666)
       tag = history[msg_id][7]
       artnum = history[msg_id][0]
