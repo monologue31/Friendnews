@@ -77,7 +77,7 @@ end
 if ARGV.length < 1
   puts "useage:configure.rb [command]"
 else
-   conf = FriendNews::FNSConf.new(ARGV)
+   conf = FriendNews::FNSConf.new()
    command = ARGV[0]
    case command
    when "set_header"
