@@ -1,6 +1,6 @@
 require 'thread'
-require './nntpserver'
-require './nntpfeeds'
+require './fnsserver'
+require './fnsfeeds'
 
 #Initialize globle parameter
 $fns_queue = SizedQueue.new(100)
@@ -9,11 +9,11 @@ $fns_host = ""
 
 #Start Newfeeds
 Thread.start do
-  feeds   = FriendNews::NNTPFeeds.new
+  feeds   = FriendNews::FNSFeeds.new
   feeds.run
 end
 
 #Start Server
-server  = FriendNews::NNTPServer.new(119)
+server  = FriendNews::FNSServer.new(119)
 server.start
 

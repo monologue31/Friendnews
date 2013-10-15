@@ -1,10 +1,10 @@
 require 'dbm'
-require './nntpserver'
-require './nntpclient'
+require './fnspserver'
+require './fnsclient'
 
 module FriendNews
 
-  class NNTPFeeds
+  class FNSFeeds
     def initialize()
       @fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0666)
       @feedlist = Queue.new
@@ -104,7 +104,7 @@ module FriendNews
     end
 
     def feed_msg(host_id,msg_id)
-      client = FriendNews::NNTPClient.new(119)
+      client = FriendNews::FNSClient.new(119)
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
