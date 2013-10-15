@@ -8,7 +8,7 @@ require 'base64'
 
 module FriendNews
 
-  class NNTPServer
+  class FNSServer
     def initialize(port)
       @socket = TCPServer.open(port)
     end
@@ -21,7 +21,7 @@ module FriendNews
         puts "nntpserver:Accepted connection from #{conn.addr[2]}"
         Thread.start do
           conn.puts(200)
-          process = NNTPProcess.new(conn)
+          process = Process.new(conn)
           process.run
           puts "nntpserver:#{conn.addr[2]} done"
         end
@@ -29,7 +29,7 @@ module FriendNews
     end
   end
 
-  class NNTPProcess
+  class Process
 	  def initialize(socket)
 		  @socket = socket
 	  end
