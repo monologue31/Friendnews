@@ -108,7 +108,7 @@ else
        conf.feedrule(ARGV[1],ARGV[2])
      end
    when "-h"
-     puts <<EOS
+     puts << EOS
      set_hearder
      mkdir
      clear_hist
