@@ -104,7 +104,7 @@ else
      if ARGV.length < 3
        puts"ussage:configure.rb create_feedrule [host_name] [rule]"
      else
-       conf.feedrule(ARGV[1],ARGV[2])
+       conf.create_feedrule(ARGV[1],ARGV[2])
      end
    when "-h"
      puts << EOS
