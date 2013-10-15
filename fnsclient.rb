@@ -69,8 +69,8 @@ module FriendNews
       puts "nntpclient:Send message to server"
       return stat_code unless /335/ =~ stat_code
       history = DBM::open("#{$fns_path}/db/history",0666)
-      tag = history[msg_id][7]
-      artnum = history[msg_id][0]
+      tag = history[msg_id].split("!")[7]
+      artnum = history[msg_id].split("!")[0]
       if tag == "control"
         path = "#{$fns_path}/article/control/#{artnum}"
       else

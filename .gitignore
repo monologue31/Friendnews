@@ -3,4 +3,4 @@ log/
 nntp.rb
 article/
 bin/
-configure.rb
+show.rb

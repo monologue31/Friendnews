@@ -239,12 +239,10 @@ module FriendNews
       self.response("335 Send article to be transferred.end with <.>")
       msg_str = ""
       while line = @socket.gets
-				p line
         break if line == ".\r\n"
         msg_str += line
       end
       msg = self.to_hash(msg_str)
-			p msg
       #Verify Sign
       unless self.digital_sign(msg,"public","verify")
         msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
@@ -264,7 +262,7 @@ module FriendNews
       end
       msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
       msg["Xref"] = @socket.addr[2]
-      tag.each do |t|
+      tags.each do |t|
         msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       end
       if msg["Newsgroups"] == "control"
