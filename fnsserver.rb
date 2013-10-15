@@ -108,7 +108,7 @@ module FriendNews
               sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) if tag != "control" && tag != "all"
               while min <= max
                 if tag != "control" && tag != "all"
-                  atrnum = sub_artnum[min.to_s]
+                  artnum = sub_artnum[min.to_s]
                 else
                   artnum = min.to_s
                 end
