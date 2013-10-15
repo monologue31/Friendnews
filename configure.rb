@@ -38,6 +38,13 @@ module FriendNews
       puts "set header ok"
     end
 
+    def mkdir
+      FileUtils.mkpath("log")
+      FileUtils.mkpath("tmp")
+      FileUtils.mkpath("db/tags")
+      FileUtils.mkpath("db/feedhist")
+      FileUtils.mkpath("article/control")
+    end
     def clear_hist
       #clear message history
       history = DBM::open("#{@fns_path}db/history",0666)
@@ -82,6 +89,34 @@ else
    case command
    when "set_header"
      conf.set_header
+   when "mkdir"
+     conf.mkdir
+   when "clear_hist"
+     conf.clear_hist
+   when "clear_tag"
+     conf.clear_tag
+   when "create_host"
+     if ARGV.length < 3
+       puts"ussage:configure.rb create_host [host_name] [host_ip]"
+     else
+       conf.create_host(ARGV[1],ARGV[2])
+     end
+   when "create_feedrule"
+     if ARGV.length < 3
+       puts"ussage:configure.rb create_feedrule [host_name] [rule]"
+     else
+       conf.feedrule(ARGV[1],ARGV[2])
+     end
+   when "-h"
+     puts <<EOS
+     set_hearder
+     mkdir
+     clear_hist
+     clear_tag
+     create_host
+     cereate_feedrule
+     EOS
    else
+      puts "use command -h to get help"
    end
 end
