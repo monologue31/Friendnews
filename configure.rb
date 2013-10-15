@@ -53,11 +53,27 @@ module FriendNews
       fnstag["junk"] = "1,0,y,0"
     end
     
-    def creat_host(host_name,host_ip)
+    def create_host(host_name,host_ip)
       host = DBM::open("#{@fns_path}/db/hosts",0666)
       host[host_name] = host_ip
+      puts "create host <#{host_name}> ok,social router ip <#{host_ip}>"
     end
 
+    def create_feedrule(host_name,rule)
+      host = DBM::open("#{@fns_path}/db/hosts",0666)
+      if host.has_key?(host_name)
+        fnsfeed = DBM::open("#{@fns_path}/etc/fnsfeed",0066)
+        fnsfeed[host_name] = rule
+        puts "host <#{host_name}> add feedrule ok"
+      else
+        puts "do not find host <#{host_name}>"
+      end
   end
 
+end
+
+conf = FNSconf.new(ARGV)
+if ARGV.length < 1
+  puts "useage:configure.rb [command]"
+else
 end
