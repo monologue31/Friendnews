@@ -41,6 +41,7 @@ module FriendNews
     def mkdir
       FileUtils.mkpath("log")
       FileUtils.mkpath("tmp")
+      FileUtils.mkpath("etc")
       FileUtils.mkpath("db/tags")
       FileUtils.mkpath("db/feedhist")
       FileUtils.mkpath("article/control")
