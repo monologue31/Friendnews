@@ -239,6 +239,7 @@ module FriendNews
       self.response("335 Send article to be transferred.end with <.>")
       msg_str = ""
       while line = @socket.gets
+				p line
         break if line == ".\r\n"
         msg_str += line
       end
