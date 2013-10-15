@@ -68,6 +68,7 @@ module FriendNews
       else
         puts "do not find host <#{host_name}>"
       end
+    end
   end
 
 end
