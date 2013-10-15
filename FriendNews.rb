@@ -1,6 +1,6 @@
 require 'thread'
-require './fnsserver'
-require './fnsfeeds'
+require './fnsserver.rb'
+require './fnsfeeds.rb'
 
 #Initialize globle parameter
 $fns_queue = SizedQueue.new(100)
