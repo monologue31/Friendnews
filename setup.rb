@@ -1,3 +1,5 @@
+require './configure.rb'
+
 conf = FriendNews::FNSConf.new()
 conf.mkdir
 conf.set_header
