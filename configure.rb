@@ -50,7 +50,6 @@ module FriendNews
       history = DBM::open("#{@fns_path}db/history",0666)
       history.clear
       #clear feed histroy
-      FileUtile.rm("#{@fns_path}db/feedhist/*")
     end
 
     def clear_tag
