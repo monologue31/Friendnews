@@ -276,7 +276,7 @@ module FriendNews
         f.write self.to_str(msg)
       end
       self.append_hist(msg,main_artnum)
-      self.create_artnum(tag,main_artnum)
+      self.create_artnum(tags,main_artnum)
       puts "nntpserver:Article <#{msg["Message-ID"]}> transferred ok"
       self.response("235 Article transferred OK")
       #feed message
