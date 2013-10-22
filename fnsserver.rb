@@ -108,7 +108,7 @@ module FriendNews
               sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) if tag != "control" && tag != "all"
               while min <= max
                 if tag != "control" && tag != "all"
-                  artnum = sub_artnum[min.to_s]
+                  atrnum = sub_artnum[min.to_s]
                 else
                   artnum = min.to_s
                 end
@@ -260,6 +260,10 @@ module FriendNews
           tags.delete(t)
         end
       end
+      if tags.empty?
+        tags = self.tap_mapping(msg["Newsgroups"])
+        tags << "junk" if tags.empty
+      end
       msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
       msg["Xref"] = @socket.addr[2]
       tags.each do |t|
@@ -276,7 +280,7 @@ module FriendNews
         f.write self.to_str(msg)
       end
       self.append_hist(msg,main_artnum)
-      self.create_artnum(tags,main_artnum)
+      self.create_artnum(tag,main_artnum)
       puts "nntpserver:Article <#{msg["Message-ID"]}> transferred ok"
       self.response("235 Article transferred OK")
       #feed message
@@ -480,7 +484,7 @@ module FriendNews
   	end
 
     #Digital sign
-	  def digital_sign(msg,rsakey,action)
+	  def digital_sign(msg,rsakey,action,host_name)
 		  begin
 		    tmpfile = File.open("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}","w+")
 		    sign_headers = msg["Signature"].split(",")
@@ -523,8 +527,18 @@ module FriendNews
 		  end
 	  end
 
-    def tag_mapping(tag)
-
+    def tag_mapping(tags)
+      tag = tags.split(",")
+      ctags = Arrary.net
+      tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
+      tag.each do |t|
+        tag_rule.each_key do |k|
+           if /#{k}/ =~ tag
+             ctag << t
+          end
+        end
+      end
+      return ctag
     end
   end
 end

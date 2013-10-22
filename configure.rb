@@ -46,6 +46,7 @@ module FriendNews
       FileUtils.mkpath("db/feedhist")
       FileUtils.mkpath("article/control")
     end
+
     def clear_hist
       #clear message history
       history = DBM::open("#{@fns_path}db/history",0666)
@@ -77,6 +78,12 @@ module FriendNews
         puts "do not find host <#{host_name}>"
       end
     end
+    
+    def tag_mapping(rule,tag)
+      tag_rule = DBM::open("#{@fns_path}etc/tag_rule",0666)
+      tag_rule[rule] = tag
+      puts "rule <#{rule}> to <#{tag}>"
+    end
   end
 
 end
@@ -106,6 +113,12 @@ else
        puts"ussage:configure.rb create_feedrule [host_name] [rule]"
      else
        conf.create_feedrule(ARGV[1],ARGV[2])
+     end
+   when "tag_mapping"
+     if ARGV.length < 3
+       puts"ussage:configure.rb create_feedrule [rule] [tagname]"
+     else
+       conf.tag_mapping(ARGV[1],ARGV[2])
      end
    when "-h"
      puts << EOS
