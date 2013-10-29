@@ -107,7 +107,7 @@ module FriendNews
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
-      	  stat_code = client.command(ihave,m)
+      	  stat_code = client.command("ihave",m)
 					puts "nntpfeeds:feed message #{m} status code #{stat_code}"
       	  self.append_feedhist(m,host,stat_code)
       	end
