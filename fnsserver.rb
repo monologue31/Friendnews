@@ -17,6 +17,7 @@ module FriendNews
       puts "nntpserver:NNTP Server Started"
       loop do
         conn = @socket.accept
+				p conn.addr
         puts "nntpserver:Connection from #{conn.addr[2]} IP:#{conn.addr[3]}"
         puts "nntpserver:Accepted connection from #{conn.addr[2]}"
         Thread.start do
@@ -484,7 +485,7 @@ module FriendNews
   	end
 
     #Digital sign
-	  def digital_sign(msg,rsakey,action,host_name)
+	  def digital_sign(msg,rsakey,action,host_name = nil)
 		  begin
 		    tmpfile = File.open("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}","w+")
 		    sign_headers = msg["Signature"].split(",")
