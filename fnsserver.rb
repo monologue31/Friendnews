@@ -17,13 +17,14 @@ module FriendNews
       puts "nntpserver:NNTP Server Started"
       loop do
         conn = @socket.accept
-        puts "nntpserver:Connection from #{Socket.getnameinfo(Socket.sockaddr_in(119,conn.peeraddr[3]))} IP:#{conn.peeraddr[3]}"
-        puts "nntpserver:Accepted connection from #{conn.addr[2]}"
+				cdomain = Socket.getnameinfo(Socket.sockaddr_in(119,conn.peeraddr[3]))[1]
+        puts "nntpserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
+        puts "nntpserver:Accepted connection from #{cdomain}"
         Thread.start do
           conn.puts(200)
           process = Process.new(conn)
           process.run
-          puts "nntpserver:#{conn.addr[2]} done"
+          puts "nntpserver:#{cdomain} done"
         end
       end
     end
@@ -42,7 +43,7 @@ module FriendNews
         loop do
           if @socket.eof?
             @socket.close
-            puts "nntpserver:Connection closed by #{@socket.addr[2]}"
+            puts "nntpserver:Connection closed by #{Socket.getnameinfo(Socket.sockaddr_in(119,@socket.peeraddr[3]))[1]}"
           end
         
           while line = @socket.gets
