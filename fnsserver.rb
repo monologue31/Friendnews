@@ -17,7 +17,7 @@ module FriendNews
       puts "nntpserver:NNTP Server Started"
       loop do
         conn = @socket.accept
-				p conn.addr
+				p conn.peeraddr
         puts "nntpserver:Connection from #{conn.addr[2]} IP:#{conn.addr[3]}"
         puts "nntpserver:Accepted connection from #{conn.addr[2]}"
         Thread.start do
