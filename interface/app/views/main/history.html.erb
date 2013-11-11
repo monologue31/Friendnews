@@ -1,0 +1,21 @@
+<table border="1" cellpadding="4">
+<tr>
+<th>Message-ID</th>
+<td>Article num</td>
+<td>Subject</td>
+<td>From</td>
+<td>Date</td>
+<td>Size</td>
+<td>Lines</td>
+<td>Xref</td>
+<td>Tag</td>
+</tr>
+<% @hist.each do |msg,val| -%>
+<tr>
+<th><%= link_to(msg,:controller => 'fnsclient',:action => 'show_msg',:artnum => val.split("!")[0]) %></th>
+<% val.split("!").each do |v|-%>
+<td><%= v %></td>
+<% end -%>
+</tr>
+<% end -%>
+</table>

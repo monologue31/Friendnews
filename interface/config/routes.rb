@@ -1,6 +1,11 @@
 Interface::Application.routes.draw do
-  get "main/index"
+  match "fnsclient/post"
+  match "fnsclient/control"
+	match "fnsclient/show_msg"
 
+  get "main/index"
+	get "main/history"
+	get "main/show_msg"
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

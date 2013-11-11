@@ -5,6 +5,8 @@ require 'uuidtools'
 require "fileutils"
 require 'openssl'
 require 'base64'
+require '/home/xiaokunyao/Friendnews/parsemsg.rb'
+require '/home/xiaokunyao/Friendnews/fnsclient.rb'
 
 module FriendNews
 
@@ -33,6 +35,7 @@ module FriendNews
   class Process
 	  def initialize(socket)
 		  @socket = socket
+			@parsemsg = FriendNews::ParseMsg.new
 	  end
 
     def run
@@ -147,14 +150,14 @@ module FriendNews
                 next
               end
               msg_id = DBM::open("#{$fns_path}/db/msg_id",0666)
-              self.response("220 #{param} #{msg_id[param]} article retrieved - head and boy follow")
+              self.response("220 #{param} #{msg_id[param]}")
               msg_id.close
               msg = File.open(path)
               while line = msg.gets
                 #self.response(line)
                 @socket.puts(line)
               end
-              self.response(".")
+              self.response(".\r\n")
               msg.close
             when /(?i)quit/
 			        puts "nntpserver:Connection closed by #{@socket.addr[2]}"
@@ -185,7 +188,7 @@ module FriendNews
         break if line == ".\r\n"
         msg_str += line
       end
-      msg = self.to_hash(msg_str)
+      msg = @parsemsg.to_hash(msg_str)
       if msg.has_key?("Control")
         unless self.parse_cmsg(msg)
           self.response("441 Posting failed - Can't parse control message")
@@ -225,7 +228,7 @@ module FriendNews
         msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       end
       File.open(path,"w") do |f|
-        f.write self.to_str(msg)
+        f.write @parsemsg.to_str(msg)
       end
       self.append_hist(msg,main_artnum)
       self.create_artnum(tags,main_artnum)
@@ -243,7 +246,7 @@ module FriendNews
         break if line == ".\r\n"
         msg_str += line
       end
-      msg = self.to_hash(msg_str)
+      msg = @parsemsg.to_hash(msg_str)
       #Verify Sign
       unless self.digital_sign(msg,"public","verify")
         msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
@@ -278,10 +281,10 @@ module FriendNews
         path =  "#{$fns_path}/article/#{main_artnum}"
       end
       File.open(path,"w") do |f|
-        f.write self.to_str(msg)
+        f.write @parsemsg.to_str(msg)
       end
       self.append_hist(msg,main_artnum)
-      self.create_artnum(tag,main_artnum)
+      self.create_artnum(tags,main_artnum)
       puts "nntpserver:Article <#{msg["Message-ID"]}> transferred ok"
       self.response("235 Article transferred OK")
       #feed message
@@ -301,7 +304,7 @@ module FriendNews
           tag.each do |t|
             tags,art_num = t.split(":") 
             if File.exist?("#{$fns_path}/article/#{tags}/#{art_num}")
-              delmsg = self.to_hash(File.read("#{$fns_path}/article/#{tags}/#{art_num}"))
+              delmsg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{tags}/#{art_num}"))
               if msg["From"] == delmsg["From"]
                 File.delete("#{$fns_path}/article/#{tags}/#{art_num}")
               else
@@ -438,52 +441,6 @@ module FriendNews
 			end
     end
 
-    #Covert hash table to sring
-  	def to_str(msg_hash)
-	  	msg = ""
-  		i = 1
-  		headers = DBM::open("#{$fns_path}/db/headers",0666)
-  		while i <= headers.length
-  			unless headers[i.to_s] == "Body"
-  				if msg_hash[headers[i.to_s]]
-  					msg += headers[i.to_s] + ":\s" + msg_hash[headers[i.to_s]] + "\r\n"
-  				end
-  			else
-          msg += "\r\n"
-  				msg += msg_hash[headers[i.to_s]]
-  			end
-  			i += 1
-  		end	
-  		return msg
-  	end
-
-    #Covert string to hash table
-  	def to_hash(str)
-      i = 0
-      msg = Hash.new
-      msg["Body"] = ""
-      line = str.split("\r\n")
-      while i < line.length
-				unless line[i] == ""
-          header_field,field_value = line[i].split(/\s*:\s*/,2)
-					msg[header_field] = field_value
-          i += 1
-				else
-          i += 1
-          break
-				end
-      end
-      msg_line = 0
-      while i < line.length
-		   	msg["Body"] += "#{line[i]}\r\n"
-        break if line[i] == "."
-		  	msg_line += 1
-        i += 1 
-      end
-      msg["Lines"] = msg_line.to_s
-	  	return msg
-  	end
-
     #Digital sign
 	  def digital_sign(msg,rsakey,action,host_name = nil)
 		  begin
@@ -528,7 +485,7 @@ module FriendNews
 		  end
 	  end
 
-    def tag_mapping(tags)
+	   def tag_mapping(tags)
       tag = tags.split(",")
       ctags = Arrary.net
       tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
@@ -541,5 +498,125 @@ module FriendNews
       end
       return ctag
     end
+  end
+
+  class FNSFeeds
+    def initialize()
+      @fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0666)
+      @feedlist = Queue.new
+			@parsemsg = FriendNews::ParseMsg.new
+  	end
+
+	  def run
+      begin
+        self.load_feedlist
+        #thread load feedlist
+	  	  Thread.start do
+	  	  	loop do
+            sleep($feed_time)
+            self.load_feedlist
+  		  	end
+  		  end
+
+        #thread 
+        Thread.start do
+          loop do
+            artnum,tags = $fns_queue.pop().split(",")
+            if tags == "control"
+              path = "#{$fns_path}/article/control"
+            else
+              path = "#{$fns_path}/article"
+            end
+            msg = @parsemsg.to_hash(File.read("#{path}/#{artnum}"))
+						puts "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
+						list = Array.new
+						list.clear	
+            if msg.has_key?("Distribution")
+              msg["Distribuliton"].split(",").each do |d|
+                DBM::opn("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
+                  unless list.include(h)
+                    list << h
+                  end
+                end
+              end
+            else
+              @fnsfeed.each_key do |h|
+                list << h
+              end
+            end
+            tag = tags.split(",")
+            list.each do |l|
+              hosts = @fnsfeed[l].split(",")
+              tag.each do |t|
+                if !hosts.include?("!#{t}") || (hosts.include?("!*") && !hosts.include?("t"))
+                  self.append_feedhist(msg["Message-ID"],l,nil)
+                  @feedlist.push("#{l},#{msg["Message-ID"]}")
+                end
+              end
+            end
+          end
+        end
+
+        #thread feed message
+        Thread.start do
+          loop do
+            host_id,msg_id = @feedlist.pop.split(",")
+						puts "nntpfeeds:feed message #{msg_id} to #{host_id}"
+            self.feed_msg(host_id,msg_id.split(","))
+          end
+        end
+      rescue => e
+        puts "nntpfeeds error"
+        puts e
+      end
+    end
+    
+    def append_feedhist(msg_id,host,stat_code)
+      feedhist = DBM::open("#{$fns_path}/db/feedhist/#{host}")
+      feedhist[host] = stat_code
+      feedhist.close
+    end
+
+    def del_feedhist(msg_id,host)
+      feedhist = DBM::open("#{$fns_path}/db/feedhist/#{host}")
+      feedhist.delete(msg_id)
+      feedhist.close
+    end
+
+    def load_feedlist
+      @fnsfeed.each_key do |k|
+        feedhist = DBM::open("#{$fns_path}/db/feedhist/#{k}")
+        msg_id = ""
+				cnt = 0
+        feedhist.each_key do |m|
+        	if (feedhist[m] == "436" || feedhist[m] == nil)
+						msg_id += "#{m},"
+						cnt += 1
+					end
+        end
+        msg_id = msg_id.chop
+        @feedlist.push("#{k},#{msg_id}") if cnt > 0
+        feedhist.close
+			end
+    end
+
+    def feed_msg(host_id,msg_id)
+      client = FriendNews::FNSClient.new(119)
+      host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
+      if client.connect(host_ip[host_id])
+      	msg_id.each do |m|
+      	  stat_code = client.command("ihave",m)
+					puts "nntpfeeds:feed message #{m} status code #{stat_code}"
+      	  self.append_feedhist(m,host,stat_code)
+      	end
+      	client.disconnect
+			else
+				puts "nntpfeeds:can't connet to host #{host_id}"
+      	msg_id.each do |m|
+      	  self.append_feedhist(m,host,"436")
+      	end
+			end
+    end
+    
   end
 end

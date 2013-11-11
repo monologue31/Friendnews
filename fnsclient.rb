@@ -1,10 +1,13 @@
 require 'socket'
+require 'dbm'
+require '/home/xiaokunyao/Friendnews/parsemsg.rb'
 
 module FriendNews
 
   class FNSClient
     def initialize(port)
       @port = port
+			@parsemsg = FriendNews::ParseMsg.new
     end
 
     def connect(host)
@@ -42,10 +45,12 @@ module FriendNews
       end
     end
 
-    def send_msg(file)
-      file.each{|line|
-        @socket.puts(line)
-      }
+    def send_msg(str)
+			line = str.split("\r\n")
+			p line
+      line.each do |l|
+        @socket.puts(l + "\r\n")
+      end
       @socket.puts(".\r\n")
       while code = @socket.gets
         next unless code
@@ -64,21 +69,24 @@ module FriendNews
 
     def ihave(msg_id)
       stat_code = self.request("IHAVE #{msg_id}")
-      puts "nntpclient:Send message to server"
       return stat_code unless /335/ =~ stat_code
       history = DBM::open("#{$fns_path}/db/history",0666)
       tag = history[msg_id].split("!")[7]
       artnum = history[msg_id].split("!")[0]
-			p tag,artnum
       if tag == "control"
         path = "#{$fns_path}/article/control/#{artnum}"
       else
         path = "#{$fns_path}/article/#{artnum}"
       end
-      stat_code = send_msg(File.open(path))
+      stat_code = send_msg(File.read(path))
       return stat_code
     end
 
+		def post(msg)
+      stat_code = self.request("POST")
+			return stat_code unless /340/ =~ stat_code
+			stat_code = send_msg(@parsemsg.to_str(msg))
+		end
   end
 
 end

@@ -8,36 +8,6 @@ module FriendNews
       @fns_path = ""
     end
 
-    def set_header
-      headers = DBM::open("#{@fns_path}db/headers",0666)
-      headers.clear
-      headers["1"] = "Date"
-      headers["2"] = "From"
-      headers["3"] = "Message-ID"
-      headers["4"] = "Subject"
-      headers["5"] = "Newsgroups"
-      headers["6"] = "Path"
-      headers["7"] = "Expires"
-      headers["8"] = "Organization"
-      headers["9"] = "Reply-To"
-      headers["10"] = "Lines"
-      headers["11"] = "Signature"
-      headers["12"] = "Followup-To"
-      headers["13"] = "References"
-      headers["14"] = "Keywords"
-      headers["15"] = "Summary"
-      headers["16"] = "Distribution"
-      headers["17"] = "User-Agent"
-      headers["18"] = "MIME-Version"
-      headers["19"] = "Content-Type"
-      headers["20"] = "Content-Transfer-Encoding"
-      headers["21"] = "Control"
-      headers["22"] = "Xref"
-      headers["23"] = "Msg-Sign"
-      headers["24"] = "Body"
-      puts "set header ok"
-    end
-
     def mkdir
       FileUtils.mkpath("log")
       FileUtils.mkpath("tmp")
@@ -94,8 +64,6 @@ else
    conf = FriendNews::FNSConf.new()
    command = ARGV[0]
    case command
-   when "set_header"
-     conf.set_header
    when "mkdir"
      conf.mkdir
    when "clear_hist"
@@ -121,14 +89,6 @@ else
        conf.tag_mapping(ARGV[1],ARGV[2])
      end
    when "-h"
-     puts << EOS
-     set_hearder
-     mkdir
-     clear_hist
-     clear_tag
-     create_host
-     cereate_feedrule
-     EOS
    else
       puts "use command -h to get help"
    end

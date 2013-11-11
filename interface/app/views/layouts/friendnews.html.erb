@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= @tittle %></title>
+  <%= stylesheet_link_tag    "fns" %>
+  <%= javascript_include_tag "applitcation" %>
+  <%= csrf_meta_tags %>
+</head>
+<body>
+<div id="main">
+<div id="header"><%= render :template => "layouts/header"%></div>
+<div id="side"><%= render :template => "layouts/side"%></div>
+<div id="center"><%= yield %></div>
+<div id="foot"><%= render :template => "layouts/footer"%></div>
+</div>
+
+</body>
+</html>
