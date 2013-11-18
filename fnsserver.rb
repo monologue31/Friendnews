@@ -10,7 +10,7 @@ require '/home/xiaokunyao/Friendnews/fnsclient.rb'
 
 module FriendNews
 
-  class FNSServer
+  class FNS_Server
     def initialize(port)
       @socket = TCPServer.open(port)
     end
@@ -69,7 +69,10 @@ module FriendNews
               end
             when "MODE"
               if param.chomp == "READER"
+								@mode = "reader"
                 self.response("200 News server ready - posting ok")
+							else if param.chomp == "BROWSER"
+								@mode = "brwser"
               else
                 self.response("201 News server ready - posting not allowed")
               end
@@ -129,7 +132,7 @@ module FriendNews
                 self.response(res)
                 min += 1
               end
-              self.response(".")
+              self.response(".\r\n")
             when /(?i)article/
               unless tag
                 self.response("412 No newsgroup has been selected")
@@ -152,13 +155,19 @@ module FriendNews
               msg_id = DBM::open("#{$fns_path}/db/msg_id",0666)
               self.response("220 #{param} #{msg_id[param]}")
               msg_id.close
-              msg = File.open(path)
-              while line = msg.gets
+              msg = File.read(path)
+							if @mode == "reader"
+								tmp = @parsemsg.to_hash(msg)
+								tmp["Tags"] = tmp["Newsgroups"]
+								tmp.delete("Nesgroups")
+								msg = @parsemsg.to_str(tmp)
+							end
+							line = msg.split("\r\n")
+							line.each do |l|
                 #self.response(line)
-                @socket.puts(line)
+                @socket.puts(l + "\r\n")
               end
               self.response(".\r\n")
-              msg.close
             when /(?i)quit/
 			        puts "nntpserver:Connection closed by #{@socket.addr[2]}"
               @socket.close
@@ -182,6 +191,7 @@ module FriendNews
     end
 
     def parse_post
+			#get message
       self.response("340 Sent article to be posted.end with <.>")
       msg_str = ""
       while line = @socket.gets
@@ -189,14 +199,22 @@ module FriendNews
         msg_str += line
       end
       msg = @parsemsg.to_hash(msg_str)
+			#convert newsgroups to tag
+			if msg.has_key?("Newsgroups")
+				msg["Tags"] = msg["Newsgroups"]
+				msg.delete("Newsgroups")
+			end
+
+			#check control header
       if msg.has_key?("Control")
         unless self.parse_cmsg(msg)
           self.response("441 Posting failed - Can't parse control message")
           return
         end
-        msg["Newsgroups"] = "control"
+        msg["Tags"] = "control"
       end
 
+			#check signature
       if msg.has_key?("Distribution")
         msg["Signature"] = "From,Subject,Newsgroups,Message-ID,Distribution" #Which header should be signed
       else
@@ -204,7 +222,7 @@ module FriendNews
       end
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags = Array.new
-      msg["Newsgroups"].split(",").each do |t|
+      msg["Tags"].split(",").each do |t|
         tags << t if active.has_key?(t)
       end
       tags << "junk" if tags.empty?
@@ -215,18 +233,18 @@ module FriendNews
       msg["Path"] = @socket.addr[2]
 #      msg["Expires"] = $expires
       msg["Date"] = Time.now.to_s unless msg.key?("Date")
-      msg["Msg-Sign"] = self.digital_sign(msg,"private","sign") #Sign the message
-      if msg["Newsgroups"] == "control"
+      msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
+      if msg["Tags"] == "control"
         main_artnum = self.calc_artnum("control")
         path =  "#{$fns_path}/article/control/#{main_artnum}"
       else
         main_artnum = self.calc_artnum("all")
         path =  "#{$fns_path}/article/#{main_artnum}"
       end
-      msg["Xref"] = @socket.addr[2]
-      tags.each do |t|
-        msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
-      end
+      #msg["Xref"] = @socket.addr[2]
+      #tags.each do |t|
+      #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
+      #end
       File.open(path,"w") do |f|
         f.write @parsemsg.to_str(msg)
       end
@@ -257,7 +275,7 @@ module FriendNews
           self.response("437 Article rejected - do not try again")
         end
       end
-      tags = msg["Newsgroups"].split(",")
+      tags = msg["Tags"].split(",")
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags.each do |t|
         unless active.has_key?(t)
@@ -269,11 +287,11 @@ module FriendNews
         tags << "junk" if tags.empty
       end
       msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
-      msg["Xref"] = @socket.addr[2]
-      tags.each do |t|
-        msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
-      end
-      if msg["Newsgroups"] == "control"
+      #msg["Xref"] = @socket.addr[2]
+      #tags.each do |t|
+      #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
+      #end
+      if msg["Tags"] == "control"
         main_artnum = self.calc_artnum("control")
         path =  "#{$fns_path}/article/control/#{main_artnum}"
       else

@@ -58,11 +58,13 @@ module FriendNews
 		end
 
 		def add_key(host_domain,key)
-			FileUtils.makpath("#{@fns_path}/key/#{host_domain}")
-			pub_key = File.open("#{@fns_path}/key/public.key","w")
+			key_pool = DBM.open("#{@fns_path}/db/key_pool")
+			key_pool[hots_domain] = key
 		end
 
-		def rm_key()
+		def rm_key(host_domain)
+			key_pool = DBM.open("#{@fns_path}/db/key_pool")
+			key_pool.delete(host_domain)
 		end
 
 		def sys_init()
