@@ -5,28 +5,44 @@ require 'uuidtools'
 require "fileutils"
 require 'openssl'
 require 'base64'
-require '/home/xiaokunyao/Friendnews/parsemsg.rb'
-require '/home/xiaokunyao/Friendnews/fnsclient.rb'
 
 module FriendNews
 
   class FNS_Server
-    def initialize(port)
-      @socket = TCPServer.open(port)
+    def initialize(nntp = nil)
+			@nntp = nntp
     end
 
     def start
-      puts "nntpserver:NNTP Server Started"
+      puts "fnsserver:Friend News System Server Started"
+
+			if @nntp
+				Thread.start do
+					nntp_socket =	TCPServer.open(119)
+					loop do
+        		conn_nntp = fns_socket.accept
+						cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn_nntp.peeraddr[3]))[0]
+        		puts "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
+        		puts "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
+          	conn.puts(200)
+          	process = Process.new(conn)
+          	process.run
+          	puts "fnsserver:#{cdomain} done MODE:NNTP"
+					end
+				end
+			end
+
+      fns_socket = TCPServer.open(11119)
       loop do
-        conn = @socket.accept
-				cdomain = Socket.getnameinfo(Socket.sockaddr_in(119,conn.peeraddr[3]))[0]
-        puts "nntpserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
-        puts "nntpserver:Accepted connection from #{cdomain}"
+        conn = fns_socket.accept
+				cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn.peeraddr[3]))[0]
+        puts "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
+        puts "fnsserver:Accepted connection from #{cdomain}"
         Thread.start do
           conn.puts(200)
           process = Process.new(conn)
           process.run
-          puts "nntpserver:#{cdomain} done"
+          puts "fnsserver:#{cdomain} done"
         end
       end
     end
@@ -43,142 +59,142 @@ module FriendNews
         #initialize
         tag = nil
         premission = nil
-        loop do
-          if @socket.eof?
-            @socket.close
-            puts "nntpserver:Connection closed by #{Socket.getnameinfo(Socket.sockaddr_in(119,@socket.peeraddr[3]))[0]}"
-          end
-        
-          while line = @socket.gets
-            puts "nntpserver:Received request [#{line.chomp}]"
-            cmd,param = line.split(/\s+/,2) #get command and parameter
-            param = param.chomp if param
-            case cmd
-            when /(?i)post/
-              #user check
-              if @socket.addr[3] == "127.0.0.1"
-                self.parse_post
-              else
-                self.response("440 Posting not allowed")
-              end
-            when /(?i)ihave/
-              unless self.chk_hist?(param)
-                self.parse_ihave(param)
-              else
-                self.response("437 Article rejected - do not try again")
-              end
-            when "MODE"
-              if param.chomp == "READER"
-								@mode = "reader"
-                self.response("200 News server ready - posting ok")
-							else if param.chomp == "BROWSER"
-								@mode = "brwser"
-              else
-                self.response("201 News server ready - posting not allowed")
-              end
-            when /(?i)list/
-              self.response("215 List of newsgroups follows")
-              active = DBM.open("#{$fns_path}/db/active",0666)
-              active.each_key{|t|
-                min_artnum,max_artnum,p = active[t].split(",")
-                res = t + "\s" + min_artnum + "\s" + max_artnum + "\s" + p
-                self.response(res)
-              }
-              self.response(".")
-              active.close
-            when /(?i)group/
-              active = DBM.open("#{$fns_path}/db/active",0666)
-              min_artnum,max_artnum,p,num = active[param].split(",")
-              res = "211 #{num}\s#{min_artnum}\s#{max_artnum}\s#{param} group selected"
-              tag = param
-              self.response(res)
-              active.close
-            when /(?i)xover/
-              unless tag
-                self.response("412 No newsgroup has been selected")
-                next
-              end
-              min,max = param.split("-")
-              min = min.to_i
-              if max
-                max = max.to_i
-              else
-                max = self.calc_artnum(tag).to_i - 1
-              end
-              self.response("224 #{param} fields follow")
-              history = DBM::open("#{$fns_path}/db/history",0666)
-              if tag == "control"
-                artnum_msg_id = DBM::open("#{$fns_path}/db/artnum_msg_id_ctl",0666)
-              else
-                artnum_msg_id = DBM::open("#{$fns_path}/db/artnum_msg_id",0666)
-              end
-              sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) if tag != "control" && tag != "all"
-              while min <= max
-                if tag != "control" && tag != "all"
-                  atrnum = sub_artnum[min.to_s]
-                else
-                  artnum = min.to_s
-                end
-                if tag == "control"
-                  path = "#{$fns_path}/article/control/"
-                else
-                  path = "#{$fns_path}/article/"
-                end
-                next unless File.exist?("#{path}#{artnum}")
-                msg_id = artnum_msg_id[artnum]
-                #files->[article number][subject][from][date][message size][lines][xref][newsgroups]
-                fields = history[msg_id].split("!")
-                res = "#{min.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{msg_id}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
-                self.response(res)
-                min += 1
-              end
-              self.response(".\r\n")
-            when /(?i)article/
-              unless tag
-                self.response("412 No newsgroup has been selected")
-                next
-              end
-              unless param
-                self.response("420 No current article has been selected")
-              end
-              if tag == "control"
-                path = "#{$fns_path}/article/control/#{param}"
-              else
-                sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666)
-                path = "#{$fns_path}/article/#{sub_artnum[param]}"
-                sub_artnum.close
-              end
-              unless File.exist?(path)
-                self.response("423 No such article number in this group")
-                next
-              end
-              msg_id = DBM::open("#{$fns_path}/db/msg_id",0666)
-              self.response("220 #{param} #{msg_id[param]}")
-              msg_id.close
-              msg = File.read(path)
-							if @mode == "reader"
-								tmp = @parsemsg.to_hash(msg)
-								tmp["Tags"] = tmp["Newsgroups"]
-								tmp.delete("Nesgroups")
-								msg = @parsemsg.to_str(tmp)
-							end
-							line = msg.split("\r\n")
-							line.each do |l|
-                #self.response(line)
-                @socket.puts(l + "\r\n")
-              end
-              self.response(".\r\n")
-            when /(?i)quit/
-			        puts "nntpserver:Connection closed by #{@socket.addr[2]}"
-              @socket.close
-              return
-            else
-              self.response("500 Command not recognized")
-            end
-          end
+				loop do
+        	if @socket.eof?
+        	  @socket.close
+        		puts "fnsserver:Connection closed by #{Socket.getnameinfo(Socket.sockaddr_in(119,@socket.peeraddr[3]))[0]}"
+        	end
+        	 
+        	while line = @socket.gets
+        	  puts "fnsserver:Received request [#{line.chomp}]"
+        	  cmd,param = line.split(/\s+/,2) #get command and parameter
+        	  param = param.chomp if param == true
+        	  case cmd
+        	  when /(?i)post/
+        	    #user check
+        	    if @socket.addr[3] == "127.0.0.1"
+        	      self.parse_post
+        	    else
+        	      self.response("440 Posting not allowed")
+        	    end
+        	  when /(?i)ihave/
+        	    unless self.chk_hist?(param)
+        	      self.parse_ihave(param)
+        	    else
+        	      self.response("437 Article rejected - do not try again")
+        	    end
+        	  when "MODE"
+        	    if param.chomp == "READER"
+        	    	@mode = "reader"
+        	      self.response("200 News server ready - posting ok")
+        	    elsif param.chomp == "BROWSER"
+        	      @mode = "brwser"
+        	    else
+        	      self.response("201 News server ready - posting not allowed")
+        	    end
+        	  when /(?i)list/
+        	    self.response("215 List of newsgroups follows")
+        	    active = DBM.open("#{$fns_path}/db/active",0666)
+        	    active.each_key{|t|
+        	      min_artnum,max_artnum,p = active[t].split(",")
+        	      res = t + "\s" + min_artnum + "\s" + max_artnum + "\s" + p
+        	      self.response(res)
+        	    }
+        	    self.response(".")
+        	    active.close
+        	  when /(?i)group/
+        	    active = DBM.open("#{$fns_path}/db/active",0666)
+        	    min_artnum,max_artnum,p,num = active[param].split(",")
+        	    res = "211 #{num}\s#{min_artnum}\s#{max_artnum}\s#{param} group selected"
+        	    tag = param
+        	    self.response(res)
+        	    active.close
+        	  when /(?i)xover/
+        	    unless tag
+        	      self.response("412 No newsgroup has been selected")
+        	      next
+        	    end
+        	    min,max = param.split("-")
+        	    min = min.to_i
+        	    if max
+        	      max = max.to_i
+        	    else
+        	      max = self.calc_artnum(tag).to_i - 1
+        	    end
+        	    self.response("224 #{param} fields follow")
+        	    history = DBM::open("#{$fns_path}/db/history",0666)
+        	    if tag == "control"
+        	      artnum_msg_id = DBM::open("#{$fns_path}/db/artnum_msg_id_ctl",0666)
+        	    else
+        	      artnum_msg_id = DBM::open("#{$fns_path}/db/artnum_msg_id",0666)
+        	    end
+        	    sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) if tag != "control" && tag != "all"
+        	    while min <= max
+        	      if tag != "control" && tag != "all"
+        	        atrnum = sub_artnum[min.to_s]
+        	      else
+        	        artnum = min.to_s
+        	      end
+        	      if tag == "control"
+        	        path = "#{$fns_path}/article/control/"
+        	      else
+        	        path = "#{$fns_path}/article/"
+        	      end
+        	      next unless File.exist?("#{path}#{artnum}")
+        	      msg_id = artnum_msg_id[artnum]
+        	      #files->[article number][subject][from][date][message size][lines][xref][newsgroups]
+        	      fields = history[msg_id].split("!")
+        	      res = "#{min.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{msg_id}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
+        	      self.response(res)
+        	      min += 1
+        	    end
+        	    self.response(".\r\n")
+        	  when /(?i)article/
+        	    unless tag
+        	      self.response("412 No newsgroup has been selected")
+        	      next
+        	    end
+        	    unless param
+        	      self.response("420 No current article has been selected")
+        	    end
+        	    if tag == "control"
+        	      path = "#{$fns_path}/article/control/#{param}"
+        	    else
+        	      sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666)
+        	      path = "#{$fns_path}/article/#{sub_artnum[param]}"
+        	      sub_artnum.close
+        	    end
+        	    unless File.exist?(path)
+        	      self.response("423 No such article number in this group")
+        	      next
+        	    end
+        	    msg_id = DBM::open("#{$fns_path}/db/msg_id",0666)
+        	    self.response("220 #{param} #{msg_id[param]}")
+        	    msg_id.close
+        	    msg = File.read(path)
+        	    if @mode == "reader"
+        	    	tmp = @parsemsg.to_hash(msg)
+        	      tmp["Tags"] = tmp["Newsgroups"]
+        	      tmp.delete("Nesgroups")
+        	      msg = @parsemsg.to_str(tmp)
+        	    end
+        	    line = msg.split("\r\n")
+        	    line.each do |l|
+        	     	#self.response(line)
+        	      @socket.puts(l + "\r\n")
+        	    end
+        	    self.response(".\r\n")
+        	  when /(?i)quit/
+        	    puts "fnsserver:Connection closed by #{@socket.addr[2]}"
+        	    @socket.close
+        	    return
+        	  else
+        	    self.response("500 Command not recognized")
+        		end
+       		end
         end
-		  rescue => e
-				puts "nntpserver error"
+			rescue => e
+				puts "fnsserver error"
 		    puts e.to_s
         @socket.close
       end
@@ -186,11 +202,11 @@ module FriendNews
 
     #Response
     def response(res)
-      puts "nntpserver:Sent response [#{res}]"
+      puts "fnsserver:Sent response [#{res}]"
       @socket.puts(res)
     end
 
-    def parse_post
+    def parse_post(nntp = nil)
 			#get message
       self.response("340 Sent article to be posted.end with <.>")
       msg_str = ""
@@ -226,6 +242,7 @@ module FriendNews
         tags << t if active.has_key?(t)
       end
       tags << "junk" if tags.empty?
+			#From
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -250,7 +267,7 @@ module FriendNews
       end
       self.append_hist(msg,main_artnum)
       self.create_artnum(tags,main_artnum)
-      puts "nntpserver:Article <#{msg["Message-ID"]}> posted ok"
+      puts "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
       self.response("240 Article posted ok")
       #Feed message  
       $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
@@ -303,7 +320,7 @@ module FriendNews
       end
       self.append_hist(msg,main_artnum)
       self.create_artnum(tags,main_artnum)
-      puts "nntpserver:Article <#{msg["Message-ID"]}> transferred ok"
+      puts "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
       self.response("235 Article transferred OK")
       #feed message
       $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
@@ -475,23 +492,23 @@ module FriendNews
 	 	    digest = OpenSSL::Digest::SHA1.new()
 			  case action
 			  when "sign"
-          puts "nntpserver:Starting sign message #{msg["Message-ID"]} with private key"
+          puts "fnsserver:Starting sign message #{msg["Message-ID"]} with private key"
 				  msg_sign = Base64.encode64(key.sign(digest,File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))).delete("\n")
           #del tmp file
           File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
-          puts "nntpserver:Sign message#{msg["Message-ID"]} with private key ok"
+          puts "fnsserver:Sign message#{msg["Message-ID"]} with private key ok"
 				  return msg_sign
 			  when "verify"
-          print "nntpserver:Starting verify message#{msg["Message-ID"]}..."
+          print "fnsserver:Starting verify message#{msg["Message-ID"]}..."
 				  if key.verify(digest,Base64.decode64(msg["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))
             #del tmp file
             File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
-            puts "nntpserver:Verify message#{msg["Message-ID"]} with public key ok"
+            puts "fnsserver:Verify message#{msg["Message-ID"]} with public key ok"
 					  return true
 				  else
             #del tmp file
             File.delete("#{$fns_path}/tmp/#{msg["Nessage-ID"]}.#{action}")
-					  puts "nntpserver:Bad sign"
+					  puts "fnsserver:Bad sign"
 					  return nil
 				  end
 			  else
@@ -503,7 +520,7 @@ module FriendNews
 		  end
 	  end
 
-	   def tag_mapping(tags)
+	  def tag_mapping(tags)
       tag = tags.split(",")
       ctags = Arrary.net
       tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
@@ -536,7 +553,7 @@ module FriendNews
   		  	end
   		  end
 
-        #thread 
+        #thread for fnsserver 
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
@@ -619,7 +636,7 @@ module FriendNews
     end
 
     def feed_msg(host_id,msg_id)
-      client = FriendNews::FNSClient.new(119)
+      client = FriendNews::FNS_Client.new(11119)
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
@@ -637,4 +654,262 @@ module FriendNews
     end
     
   end
+
+  class FNS_Client
+    def initialize(port)
+      @port = port
+			@parsemsg = FriendNews::ParseMsg.new
+    end
+
+    def connect(host)
+      begin
+        @socket = TCPSocket.open(host,@port)
+        puts "nntpclient:Connecting #{host} with port[#{@port}] successful code #{@socket.gets}"
+				return true
+      rescue => e
+        puts "nntpclient:Connecting #{host} with port[#{@port}] error [#{e}]"
+				return nil
+      end
+    end
+
+    def disconnect
+      @socket.close
+    end
+
+    def command(cmd,param)
+      case cmd
+      when /(?i)ihave/
+        stat_code = self.ihave(param)
+      end
+
+      #return code
+      return stat_code
+    end
+
+    def request(cmd_line)
+      @socket.puts(cmd_line)
+      puts "nntpclient:Send command <#{cmd_line}>"
+      while code = @socket.gets
+        next unless code
+        puts "nntpclient:Receive status code <#{code.chomp}>"
+        return code
+      end
+    end
+
+    def send_msg(str)
+			line = str.split("\r\n")
+      line.each do |l|
+        @socket.puts(l + "\r\n")
+      end
+      @socket.puts(".\r\n")
+      while code = @socket.gets
+        next unless code
+        return code
+      end
+    end
+
+    def text_res
+      res = ""
+      while line = @socket.gets
+        break if line == ".\r\n"
+        res += line
+      end
+      return res
+    end
+
+    def ihave(msg_id)
+      stat_code = self.request("IHAVE #{msg_id}")
+      return stat_code unless /335/ =~ stat_code
+      history = DBM::open("#{$fns_path}/db/history",0666)
+      tag = history[msg_id].split("!")[7]
+      artnum = history[msg_id].split("!")[0]
+      if tag == "control"
+        path = "#{$fns_path}/article/control/#{artnum}"
+      else
+        path = "#{$fns_path}/article/#{artnum}"
+      end
+      stat_code = send_msg(File.read(path))
+      return stat_code
+    end
+
+		def post(msg)
+      stat_code = self.request("POST")
+			return stat_code unless /340/ =~ stat_code
+			stat_code = send_msg(@parsemsg.to_str(msg))
+		end
+  end
+
+	class ParseMsg
+		def initialize 
+			@headers = Hash.new	
+      @headers["1"] = "Date"
+      @headers["2"] = "From"
+      @headers["3"] = "Message-ID"
+      @headers["4"] = "Subject"
+      @headers["5"] = "Tag"
+      @headers["6"] = "Path"
+      @headers["7"] = "Expires"
+      @headers["8"] = "Organization"
+      @headers["9"] = "Reply-To"
+      @headers["10"] = "Lines"
+      @headers["11"] = "Signature"
+      @headers["12"] = "Followup-To"
+      @headers["13"] = "References"
+      @headers["14"] = "Keywords"
+      @headers["15"] = "Summary"
+      @headers["16"] = "Distribution"
+      @headers["17"] = "User-Agent"
+      @headers["18"] = "MIME-Version"
+      @headers["19"] = "Content-Type"
+      @headers["20"] = "Content-Transfer-Encoding"
+      @headers["21"] = "Control"
+      @headers["22"] = "Xref"
+      @headers["23"] = "Msg-Sign"
+      @headers["24"] = "Body"
+		end
+
+  	def to_str(msg_hash)
+	  	msg = ""
+  		i = 1
+  		while i <= @headers.length
+  			unless @headers[i.to_s] == "Body"
+  				if msg_hash[@headers[i.to_s]]
+  					msg += @headers[i.to_s] + ":\s" + msg_hash[@headers[i.to_s]] + "\r\n"
+  				end
+  			else
+          msg += "\r\n"
+  				msg += msg_hash[@headers[i.to_s]]
+  			end
+  			i += 1
+  		end	
+  		return msg
+  	end
+
+    #Covert string to hash table
+  	def to_hash(str)
+      i = 0
+      msg = Hash.new
+      msg["Body"] = ""
+      line = str.split("\r\n")
+      while i < line.length
+				unless line[i] == ""
+          header_field,field_value = line[i].split(/\s*:\s*/,2)
+					msg[header_field] = field_value
+          i += 1
+				else
+          i += 1
+          break
+				end
+      end
+      msg_line = 0
+      while i < line.length
+		   	msg["Body"] += "#{line[i]}\r\n"
+        break if line[i] == "."
+		  	msg_line += 1
+        i += 1 
+      end
+      msg["Lines"] = msg_line.to_s
+	  	return msg
+  	end
+	end
+
+	class FNS_Managment
+		def initialize()
+		end
+
+    def add_host(host_name,host_domain)
+      host = DBM::open("#{$fns_path}/db/hosts",0666)
+      host[host_name] = host_domain
+      msg = "create host <#{host_name}> ok,social router domain <#{host_domain}>"
+			host.close
+    end
+
+		def rm_host(host_name)
+      host = DBM::open("#{$fns_path}/db/hosts",0666)
+			host.delete(host_name)
+			host.close
+		end
+
+    def add_feedrule(host_name,rule)
+      host = DBM::open("#{$fns_path}/db/hosts",0666)
+      if host.has_key?(host_name)
+        fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
+        fnsfeed[host_name] = rule
+        msg = "host <#{host_name}> add feedrule ok"
+      else
+        msg "do not find host <#{host_name}>"
+      end
+			return msg
+		end
+
+		def rm_feedrule(host_name)
+    	fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
+			fnsfeed.delete(hostname)
+		end
+
+    def add_mapping(rule,tag)
+      tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
+      tag_rule[rule] = tag
+      msg = "rule <#{rule}> to <#{tag}>"
+			return msg
+    end
+
+		def rm_mapping(rule)
+      tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
+			tag_rule.delete(rule)
+		end
+
+		def add_filter(header,param,tag)
+			filter = DBM::open("#{$fns_path}/etc/filter/#{header}",0666)
+		end
+
+		def rm_filter()
+		end
+
+		def set_expire()
+		end
+
+		def set_enviroments()
+		end
+
+		def add_key(host_name,key)
+			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+			key_pool[host_name] = key
+			p host_name
+			p key
+			key_pool.close
+		end
+
+		def rm_key(host_name)
+			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+			key_pool.delete(host_name)
+			key_pool.close
+		end
+
+		def sys_init()
+      FileUtils.mkpath("log")
+      FileUtils.mkpath("tmp")
+      FileUtils.mkpath("etc")
+      FileUtils.mkpath("db/tags")
+      FileUtils.mkpath("db/feedhist")
+      FileUtils.mkpath("article/control")
+
+      #clear message history
+      history = DBM::open("#{$fns_path}/db/history",0666)
+      history.clear
+      #clear feed histroy
+
+			#clear tag
+      fnstag = DBM::open("#{$fns_path}/db/active",0666)
+      fnstag.clear
+      fnstag["all"] = "1,0,y,0"
+      fnstag["control"] = "1,0,y,0"
+      fnstag["junk"] = "1,0,y,0"
+		end
+		
+		def feed_msg(art_num,tag)
+      $fns_queue.push(art_num,tag)
+		end
+	end
+
 end

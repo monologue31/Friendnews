@@ -1,0 +1,16 @@
+<form action="/main/upload_key" method = "post" enctype = "multipart/form-data">
+	<p>
+		<label>Host Name:</label>
+		<select name = "host">
+		<option value = ""></option>
+		<% @host_list.each_key do |f| -%>
+			<option value = <%= f %>><%= f %></option>
+		<% end -%>
+		</select>
+	</p>
+	<p>
+		<label>Host Public Key:</label>
+		<input name = "public_key" type ="file">
+	</p>
+	<p><input type = "submit"></p>
+</form>

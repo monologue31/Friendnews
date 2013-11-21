@@ -6,6 +6,8 @@ Interface::Application.routes.draw do
   get "main/index"
 	get "main/history"
 	get "main/show_msg"
+	match "main/upload_key"
+	match "main/add_host"
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

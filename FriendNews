@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'thread'
+require './fnsserver.rb'
+require 'drb/drb'
+
+#Initialize globle parameter
+$fns_queue = SizedQueue.new(100)
+$fns_path = "/home/xiaokunyao/Friendnews"
+$fns_host = ""
+
+#Process.daemon
+#Start Newfeeds
+Thread.start do
+  feeds   = FriendNews::FNSFeeds.new
+  feeds.run
+end
+
+#Start System Managment
+Thread.start do
+	url = "druby://localhost:11118"
+	fns_sys_mgt = FriendNews::FNS_Managment.new 
+	DRb.start_service(url,fns_sys_mgt)
+	sleep()
+end
+
+#Start Server
+nntp = nil
+nntp = true if ARGV[0] == "nntp"
+server  = FriendNews::FNS_Server.new(nntp)
+server.start
+
