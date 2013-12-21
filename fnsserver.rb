@@ -17,15 +17,16 @@ module FriendNews
       puts "fnsserver:Friend News System Server Started"
 
 			if @nntp
+				puts "nntp"
 				Thread.start do
 					nntp_socket =	TCPServer.open(119)
 					loop do
-        		conn_nntp = fns_socket.accept
+        		conn_nntp = nntp_socket.accept
 						cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn_nntp.peeraddr[3]))[0]
         		puts "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
         		puts "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
-          	conn.puts(200)
-          	process = Process.new(conn)
+          	conn_nntp.puts(200)
+          	process = Process.new(conn_nntp)
           	process.run
           	puts "fnsserver:#{cdomain} done MODE:NNTP"
 					end
@@ -49,7 +50,7 @@ module FriendNews
   end
 
   class Process
-	  def initialize(socket)
+	  def initialize(socket = nil)
 		  @socket = socket
 			@parsemsg = FriendNews::ParseMsg.new
 	  end
@@ -61,19 +62,27 @@ module FriendNews
         premission = nil
 				loop do
         	if @socket.eof?
-        	  @socket.close
         		puts "fnsserver:Connection closed by #{Socket.getnameinfo(Socket.sockaddr_in(119,@socket.peeraddr[3]))[0]}"
+        	  @socket.close
+						break
         	end
-        	 
         	while line = @socket.gets
         	  puts "fnsserver:Received request [#{line.chomp}]"
         	  cmd,param = line.split(/\s+/,2) #get command and parameter
-        	  param = param.chomp if param == true
+        	  param = param.chomp if param
         	  case cmd
         	  when /(?i)post/
         	    #user check
-        	    if @socket.addr[3] == "127.0.0.1"
-        	      self.parse_post
+        	    if @socket.peeraddr[3] == "127.0.0.1"
+								#get message
+      					self.response("340 Sent article to be posted.end with <.>")
+      					msg_str = ""
+      					while line = @socket.gets
+      					  break if line == ".\r\n"
+      					  msg_str += line
+      					end
+      					msg = @parsemsg.to_hash(msg_str)
+        	      self.response(self.parse_post(msg,@mode))
         	    else
         	      self.response("440 Posting not allowed")
         	    end
@@ -104,11 +113,11 @@ module FriendNews
         	    active.close
         	  when /(?i)group/
         	    active = DBM.open("#{$fns_path}/db/active",0666)
-        	    min_artnum,max_artnum,p,num = active[param].split(",")
-        	    res = "211 #{num}\s#{min_artnum}\s#{max_artnum}\s#{param} group selected"
-        	    tag = param
-        	    self.response(res)
+        	    min_artnum,max_artnum,p,num = active[param.chomp].split(",")
         	    active.close
+        	    res = "211 #{num}\s#{min_artnum}\s#{max_artnum}\s#{param}\sgroup selected"
+        	    tag = param.chomp
+        	    self.response(res)
         	  when /(?i)xover/
         	    unless tag
         	      self.response("412 No newsgroup has been selected")
@@ -130,6 +139,8 @@ module FriendNews
         	    end
         	    sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) if tag != "control" && tag != "all"
         	    while min <= max
+								p min
+								p max
         	      if tag != "control" && tag != "all"
         	        atrnum = sub_artnum[min.to_s]
         	      else
@@ -142,6 +153,7 @@ module FriendNews
         	      end
         	      next unless File.exist?("#{path}#{artnum}")
         	      msg_id = artnum_msg_id[artnum]
+								p msg_id
         	      #files->[article number][subject][from][date][message size][lines][xref][newsgroups]
         	      fields = history[msg_id].split("!")
         	      res = "#{min.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{msg_id}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
@@ -206,15 +218,7 @@ module FriendNews
       @socket.puts(res)
     end
 
-    def parse_post(nntp = nil)
-			#get message
-      self.response("340 Sent article to be posted.end with <.>")
-      msg_str = ""
-      while line = @socket.gets
-        break if line == ".\r\n"
-        msg_str += line
-      end
-      msg = @parsemsg.to_hash(msg_str)
+    def parse_post(msg,mode)
 			#convert newsgroups to tag
 			if msg.has_key?("Newsgroups")
 				msg["Tags"] = msg["Newsgroups"]
@@ -223,18 +227,15 @@ module FriendNews
 
 			#check control header
       if msg.has_key?("Control")
-        unless self.parse_cmsg(msg)
-          self.response("441 Posting failed - Can't parse control message")
-          return
-        end
+        return "441 Posting failed - Can't parse control message" unless self.parse_cmsg(msg)
         msg["Tags"] = "control"
       end
 
 			#check signature
       if msg.has_key?("Distribution")
-        msg["Signature"] = "From,Subject,Newsgroups,Message-ID,Distribution" #Which header should be signed
+        msg["Signature"] = "From,Subject,Tags,Message-ID,Distribution" #Which header should be signed
       else
-        msg["Signature"] = "From,Subject,Newsgroups,Message-ID" #Which header should be signed
+        msg["Signature"] = "From,Subject,Tags,Message-ID" #Which header should be signed
       end
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags = Array.new
@@ -243,6 +244,10 @@ module FriendNews
       end
       tags << "junk" if tags.empty?
 			#From
+      host = DBM::open("#{$fns_path}/db/hosts",0666)
+      host_name,host_domain = host["localhost"].split(",")
+			msg["From"] = "#{host_name}\s<#{host_name}@#{host_domain}>"
+			#message-id
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
         break unless chk_hist?(msg["Message-ID"])
@@ -268,10 +273,9 @@ module FriendNews
       self.append_hist(msg,main_artnum)
       self.create_artnum(tags,main_artnum)
       puts "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
-      self.response("240 Article posted ok")
       #Feed message  
       $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
-      return
+      return "240 Article posted ok"
     end
     
     def parse_ihave(msg_id)
@@ -292,17 +296,17 @@ module FriendNews
           self.response("437 Article rejected - do not try again")
         end
       end
-      tags = msg["Tags"].split(",")
+			#tag mapping
+      tags = self.tap_mapping(msg["Newsgroups"])
+			tags = self.header_mapping(msg,tags)
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags.each do |t|
         unless active.has_key?(t)
           tags.delete(t)
         end
       end
-      if tags.empty?
-        tags = self.tap_mapping(msg["Newsgroups"])
-        tags << "junk" if tags.empty
-      end
+			
+			#add path
       msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
       #msg["Xref"] = @socket.addr[2]
       #tags.each do |t|
@@ -396,11 +400,53 @@ module FriendNews
       when "newml"
         ml = DBM::opn("#{$fns_path}/etc/memberlist/#{param}",0666) 
         return nil if ml["Version"] <= Time.now.to_s
+				msg["From"] = "#{host_name}\s<#{host_name}@#{host_domain}>"
         ml["Version"] = Time.now.to_s
         msg["Body"].split("\r\n").each do |m|
           host,permission = m.split(/\s*|\t*/)
           ml[host] = permission
         end
+			when "updateml"
+        ml = DBM::opn("#{$fns_path}/etc/memberlist/#{param}",0666) 
+				premission_from = ml[(msg["From"].split("\s")[1]).splite("@")[1]]
+				return if (permission_from != "admin") && !(permission_from.inclued("w"))
+			when "addarttag"
+				artnum,tag = param.split("\s")
+				msg = @parsemsg.to_hash(File::read("#{$fns_path}/article/#{artnum}"))
+				msg["Tags"] += ",
+#{tag}"
+      	File.open("#{$fns_path}/article/#{artnum}","w") do |f|
+        	f.write @parsemsg.to_str(msg)
+      	end
+			when "rmarttag"
+				artnum,tag = param.split("\s")
+				art = File::open("#{$fns_path}/article/#{artnum}")
+				msg = @parsemsg.to_str(art.read)
+				tags = msg["Tags"].split(",")
+				if tags.inclued(tag)
+					tags.delete(tag)
+				end
+				tags.each do |t|
+					msg["Tags"] += "#{t},"
+				end
+				msg["Tags"] = msg["Tags"].chop
+      	File.open("#{$fns_path}/article/#{artnum}","w") do |f|
+        	f.write @parsemsg.to_str(msg)
+      	end
+			when "sendme"
+				host_domain,count = param.split("\s")
+				hosts = DBM::open("#{$fns_path}/db/hosts",0666)
+				key_pool = DBM.open("#{$fns_path}/db/key_pool")
+				count = (count.to_i + 1).to_s
+				msg["Control"] = "sendme\s#{host_domain}\s#{count}"
+				unless hosts.has_value?(host_domain)
+					return nil if count.to_i < 0
+					return msg
+				end
+				host = hosts.index(host_domian)
+				return msg unless key_pool.has_key?(host) 
+			when "sendkey"
+				
       else
         return nil
       end
@@ -477,7 +523,7 @@ module FriendNews
     end
 
     #Digital sign
-	  def digital_sign(msg,rsakey,action,host_name = nil)
+	  def digital_sign(msg,host_name,action)
 		  begin
 		    tmpfile = File.open("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}","w+")
 		    sign_headers = msg["Signature"].split(",")
@@ -488,7 +534,10 @@ module FriendNews
 		    end
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
-			  key = OpenSSL::PKey::RSA.new(File.read("#{$fns_path}/openssl/#{rsakey}.key"))	
+				key_pool = DBM.open("#{$fns_path}/db/key_pool")
+				key_pool[host_name]
+			  key = OpenSSL::PKey::RSA.new(key_pool[host_name])	
+				key_pool.close
 	 	    digest = OpenSSL::Digest::SHA1.new()
 			  case action
 			  when "sign"
@@ -522,17 +571,43 @@ module FriendNews
 
 	  def tag_mapping(tags)
       tag = tags.split(",")
-      ctags = Arrary.net
+      ctags = Arrary.new
       tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
       tag.each do |t|
         tag_rule.each_key do |k|
-           if /#{k}/ =~ tag
-             ctag << t
-          end
+          if /#{k}/ =~ t
+          	ctag << tag_rule[k]
+					else
+						ctag << t
+        	end
         end
       end
       return ctag
     end
+	
+		def header_mapping(tag,msg)
+			host_rule = DBM::open("#{$fns_path}/etc/host_rule",0666)
+			header_rule = DBM::open("#{$fns_path}/etc/header_rule",0666)
+			host_domain = (msg["From"].split("@")[1]).split(">")[0]
+      host = DBM::open("#{$fns_path}/db/hosts",0666)
+			host_name = host.index(host_domain)
+			if host_rule.has_key?(host_name)
+				rules = host_rule[host_name]
+				rule = rules.split("!")
+				rule.each do |r|
+					header,value,ttag = rule.split(",")
+					tag << ttag if /#{value}/ ~= msg[header] 
+				end
+			else
+				header_rule.each do |r|
+					if msg.has_key?(r)
+						ttag = "#{r}.#{msg[r]}"
+						tag << ttag
+					end
+				end
+			end	
+			return tag
+		end
   end
 
   class FNSFeeds
@@ -820,7 +895,7 @@ module FriendNews
     def add_host(host_name,host_domain)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
       host[host_name] = host_domain
-      msg = "create host <#{host_name}> ok,social router domain <#{host_domain}>"
+      p "create host <#{host_name}> ok,social router domain <#{host_domain}>"
 			host.close
     end
 
@@ -869,14 +944,13 @@ module FriendNews
 		def set_expire()
 		end
 
-		def set_enviroments()
+		def set_enviroments(param,value)
+			conf = DBM.open("#{$fns_path}/etc/fns_conf")
 		end
 
 		def add_key(host_name,key)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
 			key_pool[host_name] = key
-			p host_name
-			p key
 			key_pool.close
 		end
 
@@ -907,9 +981,16 @@ module FriendNews
       fnstag["junk"] = "1,0,y,0"
 		end
 		
-		def feed_msg(art_num,tag)
-      $fns_queue.push(art_num,tag)
+		def post(msg,mode)
+			fns_post = FirendNews::Process.new
+			return fns_post.parse_post(msg,mode)
 		end
+
+		def article(artnum)
+			art = File.read("#{$fns_path}/article/#{artnum}")
+			return art
+		end
+
 	end
 
 end

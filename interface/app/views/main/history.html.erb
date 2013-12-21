@@ -12,7 +12,7 @@
 </tr>
 <% @hist.each do |msg,val| -%>
 <tr>
-<th><%= link_to(msg,:controller => 'fnsclient',:action => 'show_msg',:artnum => val.split("!")[0]) %></th>
+<th><%= link_to(msg,:controller => 'main',:action => 'article',:artnum => val.split("!")[0]) %></th>
 <% val.split("!").each do |v|-%>
 <td><%= v %></td>
 <% end -%>

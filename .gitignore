@@ -3,4 +3,7 @@ log/
 nntp.rb
 article/
 bin/
+db/
+etc/
+openssl/
 show.rb

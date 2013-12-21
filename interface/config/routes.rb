@@ -1,13 +1,15 @@
 Interface::Application.routes.draw do
   match "fnsclient/post"
   match "fnsclient/control"
-	match "fnsclient/show_msg"
 
   get "main/index"
 	get "main/history"
-	get "main/show_msg"
+	get "main/status"
+	match "main/key_pool"
+	match "main/article"
 	match "main/upload_key"
 	match "main/add_host"
+	match "main/add_localhost"
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

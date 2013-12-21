@@ -1,0 +1,22 @@
+<table border="1" cellpadding="4">
+<tr>
+<td>Host name</td>
+<td>Key</td>
+<td>Show</td>
+<td>Request</td>
+</tr>
+
+<% @key.each do |host,key| -%>
+<tr>
+<td><%= host %></td>
+<td><%= key%></td>
+<td><%= link_to("Show",:controller => 'main',:action => 'key_pool',:host_name => host) %></td>
+<td><%= link_to("Request",:controller => 'main',:action => 'key_pool',:host_name_r => host) %></td>
+</tr>
+<% end -%>
+
+</table>
+
+<% @key_str.each do |l| -%>
+<br><%= l %></br>
+<% end -%>
