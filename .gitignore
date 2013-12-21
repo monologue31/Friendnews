@@ -7,3 +7,5 @@ db/
 etc/
 openssl/
 show.rb
+test.rb
+tmp/
