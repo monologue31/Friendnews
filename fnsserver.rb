@@ -82,6 +82,7 @@ module FriendNews
       					  msg_str += line
       					end
       					msg = @parsemsg.to_hash(msg_str)
+                p msg
         	      self.response(self.parse_post(msg,@mode))
         	    else
         	      self.response("440 Posting not allowed")
