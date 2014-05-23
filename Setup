@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require './fnsserver.rb'
+
+fns = FriendNews::FNS_Managment.new
+fns.sys_init
