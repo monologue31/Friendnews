@@ -596,7 +596,7 @@ module FriendNews
 				rule = rules.split("!")
 				rule.each do |r|
 					header,value,ttag = rule.split(",")
-					tag << ttag if /#{value}/ ~= msg[header] 
+					tag << ttag if /#{value}/ =~ msg[header] 
 				end
 			else
 				header_rule.each do |r|
