@@ -82,7 +82,6 @@ module FriendNews
       					  msg_str += line
       					end
       					msg = @parsemsg.to_hash(msg_str)
-                p msg
         	      self.response(self.parse_post(msg,@mode))
         	    else
         	      self.response("440 Posting not allowed")
@@ -225,29 +224,37 @@ module FriendNews
 				msg["Tags"] = msg["Newsgroups"]
 				msg.delete("Newsgroups")
 			end
-
+      
+      p "Check Msg Type"
 			#check control header
       if msg.has_key?("Control")
         return "441 Posting failed - Can't parse control message" unless self.parse_cmsg(msg)
         msg["Tags"] = "control"
       end
 
+      p "Sign Msg"
 			#check signature
       if msg.has_key?("Distribution")
         msg["Signature"] = "From,Subject,Tags,Message-ID,Distribution" #Which header should be signed
       else
         msg["Signature"] = "From,Subject,Tags,Message-ID" #Which header should be signed
       end
+
+      p "Parse Tag"
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags = Array.new
       msg["Tags"].split(",").each do |t|
         tags << t if active.has_key?(t)
       end
       tags << "junk" if tags.empty?
+
+      p "Add from"
 			#From
       host = DBM::open("#{$fns_path}/db/hosts",0666)
       host_name,host_domain = host["localhost"].split(",")
 			msg["From"] = "#{host_name}\s<#{host_name}@#{host_domain}>"
+
+      p "Create Msg_id"
 			#message-id
       while 1
         msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
@@ -268,6 +275,8 @@ module FriendNews
       #tags.each do |t|
       #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       #end
+      
+      p "Save file"
       File.open(path,"w") do |f|
         f.write @parsemsg.to_str(msg)
       end
