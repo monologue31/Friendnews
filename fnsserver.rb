@@ -247,13 +247,13 @@ module FriendNews
         tags << t if active.has_key?(t)
       end
       tags << "junk" if tags.empty?
-
+=begin
       p "Add from"
 			#From
       host = DBM::open("#{$fns_path}/db/hosts",0666)
       host_name,host_domain = host["localhost"].split(",")
 			msg["From"] = "#{host_name}\s<#{host_name}@#{host_domain}>"
-
+=end
       p "Create Msg_id"
 			#message-id
       while 1
