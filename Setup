@@ -1,8 +1,0 @@
-#!/usr/bin/env ruby
-
-require './fnsserver.rb'
-
-$fns_path = "/home/xiaokunyao/Friendnews"
-
-fns = FriendNews::FNS_Managment.new
-fns.sys_init
