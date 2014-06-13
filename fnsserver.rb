@@ -187,7 +187,7 @@ module FriendNews
         end
 
         p "Save file"
-        File.open(path,"w") do |f|
+        File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
           f.write @parsemsg.to_str(msg)
         end
         self.append_hist(msg,main_artnum)
