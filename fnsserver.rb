@@ -167,14 +167,12 @@ module FriendNews
         end
 
         p "Path,Expires,Date,Msg-Sign"
-        $fns_conf.each do |f|
-          p f
-        end
         msg["Path"] = $fns_conf["host"]
         msg["Expires"] = $fns_conf["expires"]
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Signature"] = $fns_conf["signature"]
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
+        p msg
         active = DBM::open("#{$fns_path}/db/active",0666)
         
         p "artnum"
@@ -570,7 +568,7 @@ module FriendNews
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
 				key_pool = DBM.open("#{$fns_path}/db/key_pool")
-				key_pool[host_name]
+				p key_pool[host_name]
 			  key = OpenSSL::PKey::RSA.new(key_pool[host_name])	
 				key_pool.close
 	 	    digest = OpenSSL::Digest::SHA1.new()
@@ -991,6 +989,19 @@ module FriendNews
 			key_pool[host_name] = key
 			key_pool.close
 		end
+
+		def add_key_cl(host_name,path)
+			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+			key_pool[host_name] = File.read(path)
+			key_pool.close
+		end
+
+    def show_keypool
+			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+      key_pool.each do |k|
+        p k
+      end
+    end
 
 		def rm_key(host_name)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
