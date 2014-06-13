@@ -1,4 +1,4 @@
-require 'socket'
+equire 'socket'
 require 'dbm'
 require 'rubygems'
 require 'uuidtools'
@@ -1007,6 +1007,7 @@ module FriendNews
 
       #configure file
       fnsconf = DBM.open("#{$fns_path}/etc/fns_conf",0666)
+      fnsconf.clear
       fnsconf["fns_path"] = File.expand_path("./")
       fnsconf["host"] = host
       fnsconf["expire"] = "30"
