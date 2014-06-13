@@ -167,11 +167,13 @@ module FriendNews
         end
 
         p "Path,Expires,Date,Msg-Sign"
+        $fns_conf.each do |f|
+          p f
+        end
         msg["Path"] = $fns_conf["host"]
         msg["Expires"] = $fns_conf["expires"]
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Signature"] = $fns_conf["signature"]
-        p msg
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         active = DBM::open("#{$fns_path}/db/active",0666)
         
