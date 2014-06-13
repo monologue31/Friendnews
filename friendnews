@@ -47,7 +47,7 @@ when "mgt"
   when "add_key"
   when "rm_key"
   when "sys_init"
-    fns_sys_mgt.sys_init
+    fns_sys_mgt.sys_init(ARGV[1])
   else
     puts <<-EOS
 Friend News Systems by Xiao Kunyao Univercity of Tsukuba
