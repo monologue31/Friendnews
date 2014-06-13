@@ -1012,7 +1012,7 @@ module FriendNews
       fnsconf.clear
       fnsconf["fns_path"] = File.expand_path("./")
       fnsconf["host"] = host
-      fnsconf["expire"] = "30"
+      fnsconf["expires"] = "30"
       fnsconf["signature"] = "From,Subject,Tags,Message-ID,Distribution"
       fnsconf.each do |f|
         p f
