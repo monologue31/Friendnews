@@ -29,7 +29,7 @@ when "start",nil
   
   #Start Server
   nntp = nil
-  nntp = true if ARGV[0] == "nntp"
+  nntp = true if ARGV[1] == "nntp"
   server  = FriendNews::FNS_Server.new(nntp)
   server.start
 when "mgt"
