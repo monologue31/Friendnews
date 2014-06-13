@@ -1011,6 +1011,9 @@ module FriendNews
       fnsconf["host"] = host
       fnsconf["expire"] = "30"
       fnsconf["signature"] = "From,Subject,Tags,Message-ID,Distribution"
+      fnsconf.each do |f|
+        p f
+      end
       #clear message history
       history = DBM::open("#{File.expand_path("./")}/db/history",0666)
       history.clear
