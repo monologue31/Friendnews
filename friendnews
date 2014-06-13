@@ -45,7 +45,7 @@ when "mgt"
   when "rm_mapping"
   when "set_env"
   when "add_key"
-    fns_sys_mgt.add_key_cl(ARGV[2])
+    fns_sys_mgt.add_key_cl(ARGV[2],ARGV[3])
   when "rm_key"
   when "show_keypool"
     fns_sys_mgt.show_keypool
