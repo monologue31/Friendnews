@@ -171,7 +171,7 @@ module FriendNews
         msg["Expires"] = $fns_conf["expires"]
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Signature"] = $fns_conf["signature"]
-        
+        msg["Distribution"] = "global" unless msg["Distribution"]
         p "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         p msg
