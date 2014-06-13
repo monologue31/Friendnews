@@ -166,11 +166,13 @@ module FriendNews
           break unless chk_hist?(msg["Message-ID"])
         end
 
-        p "Path,Expires,Date,Msg-Sign"
+        p "Path,Expires,Date"
         msg["Path"] = $fns_conf["host"]
         msg["Expires"] = $fns_conf["expires"]
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Signature"] = $fns_conf["signature"]
+        
+        p "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         p msg
         active = DBM::open("#{$fns_path}/db/active",0666)
@@ -560,6 +562,7 @@ module FriendNews
 		  begin
 		    tmpfile = File.open("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}","w+")
 		    sign_headers = msg["Signature"].split(",")
+        p sign_headers
 		    i = 0
 		    while i < sign_headers.length
 			    tmpfile.puts(sign_headers[i] + ":\s" + msg[sign_headers[i]])
