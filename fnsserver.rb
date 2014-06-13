@@ -563,7 +563,9 @@ module FriendNews
 		    tmpfile = File.open("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}","w+")
 		    sign_headers = msg["Signature"].split(",")
 		    i = 0
+        p sign_headers.length
 		    while i < sign_headers.length
+          p i
 			    tmpfile.puts(sign_headers[i] + ":\s" + msg[sign_headers[i]])
           p i
 			    i += 1
