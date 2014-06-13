@@ -170,6 +170,7 @@ module FriendNews
         msg["Path"] = $fns_conf["host"]
         msg["Expires"] = $fns_conf["expires"]
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
+        msg["Signature"] = $fns_conf["signature"]
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         active = DBM::open("#{$fns_path}/db/active",0666)
         
@@ -1008,7 +1009,7 @@ module FriendNews
       fnsconf["fns_path"] = File.expand_path("./")
       fnsconf["host"] = host
       fnsconf["expire"] = "30"
-      fnsconf["signiture"] = "From,Subject,Tags,Message-ID,Distribution"
+      fnsconf["signature"] = "From,Subject,Tags,Message-ID,Distribution"
       #clear message history
       history = DBM::open("#{File.expand_path("./")}/db/history",0666)
       history.clear
