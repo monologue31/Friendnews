@@ -992,7 +992,6 @@ module FriendNews
 
 		def add_key_cl(host_name,path)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
-      p path
 			key_pool[host_name] = File.read(path)
 			key_pool.close
 		end
@@ -1025,9 +1024,6 @@ module FriendNews
       fnsconf["host"] = host
       fnsconf["expires"] = "30"
       fnsconf["signature"] = "From,Subject,Tags,Message-ID,Distribution"
-      fnsconf.each do |f|
-        p f
-      end
       #clear message history
       history = DBM::open("#{File.expand_path("./")}/db/history",0666)
       history.clear
@@ -1040,6 +1036,9 @@ module FriendNews
       fnstag["control"] = "0,0,y,0"
       fnstag["junk"] = "0,0,y,0"
       
+      #key
+			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+      key_pool.clear
 		end
 		
 		def post(msg,mode)
