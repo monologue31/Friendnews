@@ -992,6 +992,7 @@ module FriendNews
 
 		def add_key_cl(host_name,path)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+      p path
 			key_pool[host_name] = File.read(path)
 			key_pool.close
 		end
