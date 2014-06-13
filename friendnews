@@ -2,19 +2,20 @@
 
 require 'thread'
 require 'drb/drb'
+require 'dbm'
 require_relative './fnsserver.rb'
+
+#Initialize globle parameter
+$fns_conf = DBM.open("#{$fns_path}/etc/fns_conf")  
+$fns_queue = SizedQueue.new(100)
+$fns_path = $fns_conf["fns_path"]
 
 case ARGV[0]
 when "start",nil
-  #Initialize globle parameter
-  $fns_queue = SizedQueue.new(100)
-  $fns_path = "/home/xiaokunyao/Friendnews"
-  $fns_host = ""
-  
   #Process.daemon
   #Start Newfeeds
   Thread.start do
-    feeds   = FriendNews::FNSFeeds.new
+    feeds   = FriendNews::FNS_Feeds.new
     feeds.run
   end
   
@@ -31,11 +32,13 @@ when "start",nil
   nntp = true if ARGV[0] == "nntp"
   server  = FriendNews::FNS_Server.new(nntp)
   server.start
-when "mnt"
+when "mgt"
   fns_sys_mgt = FriendNews::FNS_Managment.new 
   case ARGV[1]
   when "add_host"
   when "rm_host"
+  when "show_host"
+    fns_sys_mgt.show_host
   when "add_feedrule"
   when "rm_feedrule"
   when "add_mapping"
@@ -44,6 +47,7 @@ when "mnt"
   when "add_key"
   when "rm_key"
   when "sys_init"
+    fns_sys_mgt.sys_init
   else
     puts <<-EOS
 Friend News Systems by Xiao Kunyao Univercity of Tsukuba
@@ -69,6 +73,6 @@ usage: friendnews [arguments] [value]
 
 Arguments:
   start         start Friend News System
-  mnt           start Friend News System Managment.use friendnews mnt -h to get help
+  mgt           start Friend News System Managment.use friendnews mnt -h to get help
   EOS
 end
