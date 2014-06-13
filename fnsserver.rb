@@ -1,4 +1,4 @@
-equire 'socket'
+require 'socket'
 require 'dbm'
 require 'rubygems'
 require 'uuidtools'
