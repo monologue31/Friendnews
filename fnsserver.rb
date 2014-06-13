@@ -180,7 +180,6 @@ module FriendNews
         p "artnum"
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
-        self.add_artnum("all",main_artnum) 
         tags.each do |t|
           artnum = (active[t].split(",")[1].to_i + 1).to_s
           self.update_active(t,artnum)
