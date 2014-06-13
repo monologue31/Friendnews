@@ -99,7 +99,7 @@ module FriendNews
               end
               self.xover(param)
         	  when /(?i)article/
-              unless tag
+              unless @tag
                 self.response("412 No newsgroup has been selected")
                 next
               end
