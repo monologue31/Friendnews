@@ -560,15 +560,15 @@ module FriendNews
     #Digital sign
 	  def digital_sign(msg,host_name,action)
 		  begin
-        p msg
 		    tmpfile = File.open("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}","w+")
 		    sign_headers = msg["Signature"].split(",")
 		    i = 0
 		    while i < sign_headers.length
-          p sign_headers[i]
 			    tmpfile.puts(sign_headers[i] + ":\s" + msg[sign_headers[i]])
+          p i
 			    i += 1
 		    end
+        p "body"
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
 
