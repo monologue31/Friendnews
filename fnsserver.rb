@@ -564,18 +564,14 @@ module FriendNews
 		    tmpfile = File.open("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}","w+")
 		    sign_headers = msg["Signature"].split(",")
 		    i = 0
-        p sign_headers.length
 		    while i < sign_headers.length
           p i
 			    tmpfile.puts(sign_headers[i] + ":\s" + msg[sign_headers[i]])
           p i
 			    i += 1
 		    end
-        p "body"
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
-
-        p "open key_pool"
 				key_pool = DBM.open("#{$fns_path}/db/key_pool")
 				p key_pool[host_name]
 			  key = OpenSSL::PKey::RSA.new(key_pool[host_name])	
