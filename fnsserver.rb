@@ -346,7 +346,7 @@ module FriendNews
     def update_main_sub(tag,main_artnum,sub_artnum)
       sub_main = DBM::open("#{$fns_path}/db/tags/#{tag}",0666)
       sub_main[sub_artnum] = main_artnum
-      sum_main.close
+      sub_main.close
       main = DBM::open("#{$fns_path}/db/tags/all",0666)
       if main[main_artnum]
         main[main_artnum] += "!#{tag}:#{sub_artnum}"
@@ -567,6 +567,8 @@ module FriendNews
 		    end
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
+
+        p "open key_pool"
 				key_pool = DBM.open("#{$fns_path}/db/key_pool")
 				p key_pool[host_name]
 			  key = OpenSSL::PKey::RSA.new(key_pool[host_name])	
