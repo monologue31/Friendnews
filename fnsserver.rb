@@ -194,6 +194,7 @@ module FriendNews
         puts "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
         #Feed message  
         $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
+        self.response("240 Article posted ok")
         return "240 Article posted ok"
     end
 
@@ -236,22 +237,23 @@ module FriendNews
       #tags.each do |t|
       #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       #end
-      if msg["Tags"] == "control"
-        main_artnum = self.calc_artnum("control")
-        path =  "#{$fns_path}/article/control/#{main_artnum}"
-      else
-        main_artnum = self.calc_artnum("all")
-        path =  "#{$fns_path}/article/#{main_artnum}"
+      main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
+      tags.each do |t|
+        artnum = (active[t].split(",")[1].to_i + 1).to_s
+        self.update_active(t,artnum)
+        self.update_main_sub(t,artnum,main_artnum)
       end
-      File.open(path,"w") do |f|
+      File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
         f.write @parsemsg.to_str(msg)
       end
+
       self.append_hist(msg,main_artnum)
-      self.create_artnum(tags,main_artnum)
       puts "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
-      self.response("235 Article transferred OK")
+      #Feed message  
+      $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
       #feed message
       $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
+      self.response("235 Article transferred OK")
       return
     end
 
@@ -961,7 +963,7 @@ module FriendNews
       if host.has_key?(host_name)
         fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
         fnsfeed[host_name] = rule
-        msg = "host <#{host_name}> add feedrule ok"
+        msg = "host <#{host_name}> add feedrule <#{fnsfeed[host_name]}>ok"
       else
         msg "do not find host <#{host_name}>"
       end

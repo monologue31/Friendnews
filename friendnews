@@ -36,16 +36,23 @@ when "mgt"
   fns_sys_mgt = FriendNews::FNS_Managment.new 
   case ARGV[1]
   when "add_host"
+    fns_sys_mgt.add_host(ARGV[2],ARGV[3])
   when "rm_host"
+    fns_sys_mgt.rm_host(ARGV[2])
   when "show_host"
     fns_sys_mgt.show_host
   when "show_tags"
     fns_sys_mgt.show_tags
   when "add_feedrule"
+    fns_sys_mgt.add_feedrule(ARGV[2],ARGV[3])
   when "rm_feedrule"
+    fns_sys_mgt.rm_feedrule(ARGV[2])
   when "add_mapping"
+    fns_sys_mgt.add_mapping(ARGV[2],ARGV[3])
   when "rm_mapping"
+    fns_sys_mgt.rm_mapping(ARGV[2])
   when "set_env"
+    fns_sys_mgt.set_env(ARGV[2],ARGV[3])
   when "add_key"
     fns_sys_mgt.add_key_cl(ARGV[2],ARGV[3])
   when "rm_key"
