@@ -166,7 +166,7 @@ module FriendNews
           break unless chk_hist?(msg["Message-ID"])
         end
 
-        p "Path,Expires,Date"
+        #p "Path,Expires,Date"
         msg["Path"] = $fns_conf["host"]
         msg["Expires"] = $fns_conf["expires"]
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
@@ -177,7 +177,7 @@ module FriendNews
         p msg
         active = DBM::open("#{$fns_path}/db/active",0666)
         
-        p "artnum"
+        #p "artnum"
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
         tags.each do |t|
@@ -186,7 +186,7 @@ module FriendNews
           self.update_main_sub(t,artnum,main_artnum)
         end
 
-        p "Save file"
+        #p "Save file"
         File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
           f.write @parsemsg.to_str(msg)
         end
@@ -858,7 +858,7 @@ module FriendNews
       @headers["2"] = "From"
       @headers["3"] = "Message-ID"
       @headers["4"] = "Subject"
-      @headers["5"] = "Tag"
+      @headers["5"] = "Tags"
       @headers["6"] = "Path"
       @headers["7"] = "Expires"
       @headers["8"] = "Organization"
@@ -945,6 +945,13 @@ module FriendNews
     def show_host
       host = DBM::open("#{$fns_path}/db/hosts",0666)
       host.each do |h|
+        p h
+      end
+    end
+
+    def show_tags
+      tags = DBM::open("#{$fns_path}/db/active",0666)
+      tags.each do |h|
         p h
       end
     end

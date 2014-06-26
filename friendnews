@@ -39,6 +39,8 @@ when "mgt"
   when "rm_host"
   when "show_host"
     fns_sys_mgt.show_host
+  when "show_tags"
+    fns_sys_mgt.show_tags
   when "add_feedrule"
   when "rm_feedrule"
   when "add_mapping"
