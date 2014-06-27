@@ -9,9 +9,6 @@ require_relative './fnsserver.rb'
 #Initialize globle parameter
 FileUtils.mkpath("etc") unless Dir.exist?("etc")
 $fns_conf = DBM.open("./etc/fns_conf",0666)  
-$fns_conf.each do |f|
-  p f
-end
 $fns_queue = SizedQueue.new(100)
 $fns_path = $fns_conf["fns_path"]
 
