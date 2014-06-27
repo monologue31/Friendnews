@@ -1032,7 +1032,7 @@ module FriendNews
       FileUtils.mkpath("article/control")
 
       #configure file
-      fnsconf = DBM.open("#{$fns_path}/etc/fns_conf",0666)
+      fnsconf = DBM.open("#{File.expand_path("./")}/etc/fns_conf",0666)
       fnsconf.clear
       fnsconf["fns_path"] = File.expand_path("./")
       fnsconf["host"] = host
