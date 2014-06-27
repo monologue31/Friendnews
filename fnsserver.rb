@@ -199,9 +199,7 @@ module FriendNews
     end
 
     def ihave(param)
-      unless self.chk_hist?(param)
-        self.parse_ihave(param)
-      else
+      if self.chk_hist?(param)
         self.response("437 Article rejected - do not try again")
       end
       self.response("335 Send article to be transferred.end with <.>")
