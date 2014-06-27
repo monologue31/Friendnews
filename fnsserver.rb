@@ -1038,12 +1038,12 @@ module FriendNews
       fnsconf["host"] = host
       fnsconf["expires"] = "30"
       fnsconf["signature"] = "From,Subject,Tags,Message-ID,Distribution"
-      fnsconf.each do |f|
-        p f
-      end
+      fnsconf.close
+
       #clear message history
       history = DBM::open("#{File.expand_path("./")}/db/history",0666)
       history.clear
+      history.close
       #clear feed histroy
 
 			#clear tag
@@ -1052,10 +1052,12 @@ module FriendNews
       fnstag["all"] = "0,0,y,0"
       fnstag["control"] = "0,0,y,0"
       fnstag["junk"] = "0,0,y,0"
-      
+      fnstag.close
+
       #key
 			key_pool = DBM.open("#{File.expand_path("./")}/db/key_pool")
       key_pool.clear
+      key_pool.close
 		end
 		
 		def post(msg,mode)
