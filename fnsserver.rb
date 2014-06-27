@@ -192,7 +192,7 @@ module FriendNews
         self.append_hist(msg,main_artnum)
         puts "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
         #Feed message  
-        $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
+        $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
         self.response("240 Article posted ok")
         return "240 Article posted ok"
     end
@@ -249,9 +249,7 @@ module FriendNews
       self.append_hist(msg,main_artnum)
       puts "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
       #Feed message  
-      $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
-      #feed message
-      $fns_queue.push("#{main_artnum},#{msg["Newsgroups"]}")
+      $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
       self.response("235 Article transferred OK")
       return
     end
@@ -668,6 +666,7 @@ module FriendNews
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
+            p artnum,tags
             self.feed_msg(artnum,tags)
           end
         end
@@ -676,6 +675,8 @@ module FriendNews
         Thread.start do
           loop do
             host_id,msg_id = @feedlist.pop.split(",")
+            p host_id
+            p msg_id
 						puts "nntpfeeds:feed message #{msg_id} to #{host_id}"
             self.feed_msg(host_id,msg_id.split(","))
           end
@@ -703,9 +704,11 @@ module FriendNews
         @fnsfeed.each_key do |h|
           list << h
         end
+        p list
       end
       tag = tags.split(",")
       list.each do |l|
+        p l
         hosts = @fnsfeed[l].split(",")
         tag.each do |t|
           if !hosts.include?("!#{t}") || (hosts.include?("!*") && !hosts.include?("t"))
