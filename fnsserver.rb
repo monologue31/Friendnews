@@ -313,9 +313,9 @@ module FriendNews
       unless File.exist?(path)
         self.response("423 No such article number in this group")
       end
-      msg_id = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
-      self.response("220 #{param} #{msg_id[param]}")
-      msg_id.close
+      artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
+      self.response("220 #{param} #{artnum_msgid[param]}")
+      artnum_msgid.close
       msg = File.read(path)
       if @mode == "reader"
       	tmp = @parsemsg.to_hash(msg)
@@ -393,9 +393,9 @@ module FriendNews
       history = DBM::open("#{$fns_path}/db/history",0666)
       history[msg["Message-ID"]] = "#{art_num}!#{msg["Subject"]}!#{msg["From"]}!#{msg["Date"]}!#{File.size("#{$fns_path}/article/#{art_num}")}!#{msg["Lines"]}!#{msg["Xref"]}!#{msg["Tags"]}"
       history.close
-      artnum_id = DBM::open("#{$fns_path}/db/artnum_id",0666)
-      artnum_id[art_num] = msg["Message-ID"]
-      artnum_id.close
+      artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
+      artnum_msgid[art_num] = msg["Message-ID"]
+      artnum_msgid.close
     end
 
     def chk_hist?(msg_id)
@@ -441,8 +441,8 @@ module FriendNews
       if self.chk_hist?(msg_id)
         history = DBM::open("#{$fns_path}/db/history",0666)
         return "3xx" if history[msg_id] == "Canceled"
-        artnum_id = DBM::open("#{$fns_path}/db/artnum_id",0666)
-        main_artnum = artnum_id.index(msg_id)
+        artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
+        main_artnum = artnum_msgid.index(msg_id)
         if File.exist?("#{$fns_path}/article/#{main_artnum}")
           delmsg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{art_num}"))
           if msg["From"] == delmsg["From"]
