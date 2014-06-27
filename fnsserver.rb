@@ -1051,7 +1051,7 @@ module FriendNews
       fnstag["junk"] = "0,0,y,0"
       
       #key
-			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+			key_pool = DBM.open("#{File.expand_path("./")}/db/key_pool")
       key_pool.clear
 		end
 		
