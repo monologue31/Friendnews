@@ -666,7 +666,6 @@ module FriendNews
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
-            p artnum,tags
             self.feed_msg(artnum,tags)
           end
         end
@@ -688,34 +687,40 @@ module FriendNews
     end
     
     def feed_msg(artnum,tags)
-      msg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{artnum}"))
-			puts "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
-			list = Array.new
-			list.clear	
-      if msg.has_key?("Distribution")
-        msg["Distribuliton"].split(",").each do |d|
-          DBM::opn("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
-            unless list.include(h)
-              list << h
+      begin
+        p artnum,tags
+        msg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{artnum}"))
+			  puts "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
+			  list = Array.new
+			  list.clear	
+        if msg.has_key?("Distribution")
+          msg["Distribuliton"].split(",").each do |d|
+            DBM::opn("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
+              unless list.include(h)
+                list << h
+              end
+            end
+          end
+        else
+          @fnsfeed.each_key do |h|
+            list << h
+          end
+          p list
+        end
+        tag = tags.split(",")
+        list.each do |l|
+          p l
+          hosts = @fnsfeed[l].split(",")
+          tag.each do |t|
+            if !hosts.include?("!#{t}") || (hosts.include?("!*") && !hosts.include?("t"))
+              self.append_feedhist(msg["Message-ID"],l,nil)
+              @feedlist.push("#{l},#{msg["Message-ID"]}")
             end
           end
         end
-      else
-        @fnsfeed.each_key do |h|
-          list << h
-        end
-        p list
-      end
-      tag = tags.split(",")
-      list.each do |l|
-        p l
-        hosts = @fnsfeed[l].split(",")
-        tag.each do |t|
-          if !hosts.include?("!#{t}") || (hosts.include?("!*") && !hosts.include?("t"))
-            self.append_feedhist(msg["Message-ID"],l,nil)
-            @feedlist.push("#{l},#{msg["Message-ID"]}")
-          end
-        end
+      rescue => e
+        puts "nntpfeeds error"
+        puts e
       end
     end
 
