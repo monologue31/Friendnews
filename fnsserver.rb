@@ -665,7 +665,6 @@ module FriendNews
         #thread for fnsserver 
         Thread.start do
           loop do
-            p "fnsfeed:wait msg"
             artnum,tags = $fns_queue.pop().split(",")
             p "fnsfeed:feed message #{artnum} #{tags}"
             self.parse_feed(artnum,tags)
@@ -690,8 +689,10 @@ module FriendNews
     
     def parse_feed(artnum,tags)
       begin
-        p artnum,tags
+        p artnum
+        p tags
         msg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{artnum}"))
+        p msg
 			  puts "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
 			  list = Array.new
 			  list.clear	
