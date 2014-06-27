@@ -1,4 +1,4 @@
-require 'fileutils'
+require 'dbm'
 
 db = DBM.open(ARGV[0],0666)
 
