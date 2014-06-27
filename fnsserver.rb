@@ -693,9 +693,9 @@ module FriendNews
 			  puts "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
 			  list = Array.new
 			  list.clear	
-        if msg.has_key?("Distribution") || msg["Distribution"] != "global"
+        if msg.has_key?("Distribution") && msg["Distribution"] != "global"
           msg["Distribution"].split(",").each do |d|
-            DBM::opn("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
+            DBM::open("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
               unless list.include(h)
                 list << h
               end
