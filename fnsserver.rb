@@ -275,7 +275,7 @@ module FriendNews
       active.close
       res = "211 #{num}\s#{min_artnum}\s#{max_artnum}\s#{param}\sgroup selected"
       tag = param.chomp
-      @group = param
+      @tag = param
       self.response(res)
     end
 
