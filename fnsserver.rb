@@ -657,7 +657,7 @@ module FriendNews
         #thread load feedlist
 	  	  Thread.start do
 	  	  	loop do
-            sleep($feed_time)
+            sleep(60)
             self.load_feedlist
   		  	end
   		  end
@@ -689,15 +689,12 @@ module FriendNews
     
     def parse_feed(artnum,tags)
       begin
-        p artnum
-        p tags
         msg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{artnum}"))
-        p msg
 			  puts "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
 			  list = Array.new
 			  list.clear	
-        if msg.has_key?("Distribution")
-          msg["Distribuliton"].split(",").each do |d|
+        if msg.has_key?("Distribution") || msg["Distribution"] != "global"
+          msg["Distribution"].split(",").each do |d|
             DBM::opn("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
               unless list.include(h)
                 list << h
@@ -722,7 +719,7 @@ module FriendNews
           end
         end
       rescue => e
-        puts "nntpfeeds error"
+        puts "parse_feeds error"
         puts e
       end
     end
