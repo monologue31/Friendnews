@@ -97,7 +97,7 @@ module FriendNews
                 self.response("412 No newsgroup has been selected")
                 next
               end
-              self.xover(param)
+              self.xover(@tag,param)
         	  when /(?i)article/
               unless @tag
                 self.response("412 No newsgroup has been selected")
@@ -107,7 +107,7 @@ module FriendNews
                 self.response("420 No current article has been selected")
                 next
               end
-              self.article(param)
+              self.article(@tag,param)
         	  when /(?i)quit/
         	    puts "fnsserver:Connection closed by #{@socket.addr[2]}"
         	    @socket.close
