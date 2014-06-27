@@ -79,6 +79,7 @@ module FriendNews
                 self.post
               end
         	  when /(?i)ihave/
+                self.ihave(param)
         	  when "MODE"
         	    if param.chomp == "READER"
         	    	@mode = "reader"
@@ -211,7 +212,7 @@ module FriendNews
       end
       msg = @parsemsg.to_hash(msg_str)
       #Verify Sign
-      unless self.digital_sign(msg,"public","verify")
+      unless self.digital_sign(msg,"xiao-face-vm01","verify")
         msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
         msg["Msg-Sign"] = "Bad Sign"
       end
