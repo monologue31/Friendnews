@@ -3,9 +3,11 @@
 require 'thread'
 require 'drb/drb'
 require 'dbm'
+require 'fileutils'
 require_relative './fnsserver.rb'
 
 #Initialize globle parameter
+FileUtils.makpath("etc") unless Dir.exist?("etc")
 $fns_conf = DBM.open("./etc/fns_conf",0666)  
 $fns_queue = SizedQueue.new(100)
 $fns_path = $fns_conf["fns_path"]
