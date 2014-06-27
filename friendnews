@@ -6,7 +6,7 @@ require 'dbm'
 require_relative './fnsserver.rb'
 
 #Initialize globle parameter
-$fns_conf = DBM.open("./etc/fns_conf")  
+$fns_conf = DBM.open("./etc/fns_conf",0666)  
 $fns_queue = SizedQueue.new(100)
 $fns_path = $fns_conf["fns_path"]
 
