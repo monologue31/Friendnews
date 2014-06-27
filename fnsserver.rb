@@ -284,13 +284,14 @@ module FriendNews
       if max
         max = max.to_i
       else
-        max = (active[tag].split(",")[1].to_i).to_s
+        max = active[tag].split(",")[1].to_i
       end
       self.response("224 #{param} fields follow")
       history = DBM::open("#{$fns_path}/db/history",0666)
-      sub_artnum = DBM.open("#{$fns_path}/db/tags/#{@tag}",0666) 
+      sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
       while min <= max
         artnum = sub_artnum[min.to_s]
+        p artnum
         next unless File.exist?("#{$fns_path}/article/#{artnum}")
         artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
         msg_id = artnum_msgid[artnum]
@@ -355,11 +356,7 @@ module FriendNews
       sub_main[sub_artnum] = main_artnum
       sub_main.close
       main = DBM::open("#{$fns_path}/db/tags/all",0666)
-      if main[main_artnum]
-        main[main_artnum] += "!#{tag}:#{sub_artnum}"
-      else
-        main[main_artnum] = "#{tag}#{sub_artnum}"
-      end
+      main[main_artnum] = main_artnum
     end
 
     def rm_artnum(tag,main_artnum)
@@ -394,7 +391,7 @@ module FriendNews
 
     def append_hist(msg,art_num)
       history = DBM::open("#{$fns_path}/db/history",0666)
-      history[msg["Message-ID"]] = "#{art_num}!#{msg["Subject"]}!#{msg["From"]}!#{msg["Date"]}!#{File.size("#{$fns_path}/article/#{art_num}")}!#{msg["Lines"]}!#{msg["Xref"]}!#{msg["Newsgroups"]}"
+      history[msg["Message-ID"]] = "#{art_num}!#{msg["Subject"]}!#{msg["From"]}!#{msg["Date"]}!#{File.size("#{$fns_path}/article/#{art_num}")}!#{msg["Lines"]}!#{msg["Xref"]}!#{msg["Tags"]}"
       history.close
       artnum_id = DBM::open("#{$fns_path}/db/artnum_id",0666)
       artnum_id[art_num] = msg["Message-ID"]
