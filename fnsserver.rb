@@ -342,8 +342,13 @@ module FriendNews
     def update_active(tag,artnum)
       active = DBM::open("#{$fns_path}/db/active",0666)
       min_artnum,max_artnum,p,num = active[tag].split(",")
-      min_artnum = "1" if artnum == "1"
+      if artnum == "1"
+        min_artnum = "1"
+      else
+        min_artnum = artnum if artnum < min_artnum
+      end
       max_artnum = artnum if artnum.to_i > max_artnum.to_i
+      num = (num.to_i + 1).to_s
       active[tag] = min_artnum + "," + max_artnum + "," +  p + "," + num
       active.close
     end
