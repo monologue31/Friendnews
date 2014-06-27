@@ -665,7 +665,9 @@ module FriendNews
         #thread for fnsserver 
         Thread.start do
           loop do
+            p "wait msg"
             artnum,tags = $fns_queue.pop().split(",")
+            p artnum,tags
             self.feed_msg(artnum,tags)
           end
         end
