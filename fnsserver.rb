@@ -174,7 +174,6 @@ module FriendNews
         msg["Distribution"] = "global" unless msg["Distribution"]
         p "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
-        p msg
         active = DBM::open("#{$fns_path}/db/active",0666)
         
         #p "artnum"
@@ -291,9 +290,7 @@ module FriendNews
       history = DBM::open("#{$fns_path}/db/history",0666)
       sub_artnum = DBM.open("#{$fns_path}/db/tags/#{@tag}",0666) 
       while min <= max
-      	p min
-      	p max
-        atrnum = sub_artnum[min.to_s]
+        artnum = sub_artnum[min.to_s]
         next unless File.exist?("#{$fns_path}/article/#{artnum}")
         artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
         msg_id = artnum_msgid[artnum]
@@ -572,15 +569,12 @@ module FriendNews
 		    sign_headers = msg["Signature"].split(",")
 		    i = 0
 		    while i < sign_headers.length
-          p i
 			    tmpfile.puts(sign_headers[i] + ":\s" + msg[sign_headers[i]])
-          p i
 			    i += 1
 		    end
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
 				key_pool = DBM.open("#{$fns_path}/db/key_pool")
-				p key_pool[host_name]
 			  key = OpenSSL::PKey::RSA.new(key_pool[host_name])	
 				key_pool.close
 	 	    digest = OpenSSL::Digest::SHA1.new()
