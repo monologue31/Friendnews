@@ -220,7 +220,7 @@ module FriendNews
         end
       end
 			#tag mapping
-      tags = self.tap_mapping(msg["Newsgroups"])
+      tags = self.tag_mapping(msg["Newsgroups"])
 			tags = self.header_mapping(msg,tags)
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags.each do |t|
