@@ -209,6 +209,8 @@ module FriendNews
         msg_str += line
       end
       msg = @parsemsg.to_hash(msg_str)
+      
+      p "verify"
       #Verify Sign
       unless self.digital_sign(msg,"xiao-face-vm01","verify")
         msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
@@ -220,14 +222,14 @@ module FriendNews
         end
       end
 			#tag mapping
-      tags = self.tag_mapping(msg["Newsgroups"])
-			tags = self.header_mapping(msg,tags)
-      active = DBM::open("#{$fns_path}/db/active",0666)
-      tags.each do |t|
-        unless active.has_key?(t)
-          tags.delete(t)
-        end
-      end
+#      tags = self.tag_mapping(msg["Newsgroups"])
+#			tags = self.header_mapping(msg,tags)
+#     active = DBM::open("#{$fns_path}/db/active",0666)
+#    tags.each do |t|
+#        unless active.has_key?(t)
+#          tags.delete(t)
+#        end
+#      end
 			
 			#add path
       msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
