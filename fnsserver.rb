@@ -237,16 +237,21 @@ module FriendNews
       #tags.each do |t|
       #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       #end
+
+      p "caculate artnum"
       main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
       tags.each do |t|
         artnum = (active[t].split(",")[1].to_i + 1).to_s
         self.update_active(t,artnum)
         self.update_main_sub(t,artnum,main_artnum)
       end
+
+      p "save file"
       File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
         f.write @parsemsg.to_str(msg)
       end
 
+      p "append_hist"
       self.append_hist(msg,main_artnum)
       puts "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
       #Feed message  
