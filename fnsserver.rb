@@ -239,6 +239,7 @@ module FriendNews
       #end
 
       p "caculate artnum"
+      active = DBM::open("#{$fns_path}/db/active",0666)
       main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
       tags.each do |t|
         artnum = (active[t].split(",")[1].to_i + 1).to_s
