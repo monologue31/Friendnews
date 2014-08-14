@@ -9,3 +9,4 @@ openssl/
 show.rb
 test.rb
 tmp/
+github_push.sh
