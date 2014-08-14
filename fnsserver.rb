@@ -76,10 +76,12 @@ module FriendNews
               if @socket.peeraddr[3] != "127.0.0.1"
                 self.response("440 Posting not allowed")
               else
-                self.post
+                stat_code = self.post
               end
+              puts "fnsserver:Post done with code [#{stat_code}]"
         	  when /(?i)ihave/
-                self.ihave(param)
+              stat_code = self.ihave(param)
+              puts "fnsserver:Ihave done with code [#{stat_code}]"
         	  when "MODE"
         	    if param.chomp == "READER"
         	    	@mode = "reader"
@@ -148,11 +150,11 @@ module FriendNews
           msg["Tags"] = "control"
         end
 =end
-        p "Sign Msg"
+#        p "Sign Msg"
 			  #check signature
         msg["Signature"] = $fns_conf["signature"] #Which header should be signed
 
-        p "Parse Tag"
+#        p "Parse Tag"
         active = DBM::open("#{$fns_path}/db/active",0666)
         tags = Array.new
         msg["Tags"].split(",").each do |t|
@@ -160,7 +162,7 @@ module FriendNews
         end
         tags << "junk" if tags.empty?
 
-        p "Create Msg_id"
+#        p "Create Msg_id"
 			  #message-id
         while 1
           msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
@@ -173,7 +175,7 @@ module FriendNews
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Signature"] = $fns_conf["signature"]
         msg["Distribution"] = "global" unless msg["Distribution"]
-        p "sign"
+ #       p "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         active = DBM::open("#{$fns_path}/db/active",0666)
         
@@ -192,9 +194,12 @@ module FriendNews
         end
         self.append_hist(msg,main_artnum)
         puts "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
+        self.response("240 Article posted ok")
+
         #Feed message  
         $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
-        self.response("240 Article posted ok")
+        
+        p "over"
         return "240 Article posted ok"
     end
 
@@ -230,7 +235,7 @@ module FriendNews
 #          tags.delete(t)
 #        end
 #      end
-      p "Parse Tag"
+#      p "Parse Tag"
       active = DBM::open("#{$fns_path}/db/active",0666)
       tags = Array.new
       msg["Tags"].split(",").each do |t|
@@ -246,7 +251,7 @@ module FriendNews
       #end
 
 
-      p "caculate artnum"
+#      p "caculate artnum"
       active = DBM::open("#{$fns_path}/db/active",0666)
       main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
       tags.each do |t|
@@ -255,18 +260,20 @@ module FriendNews
         self.update_main_sub(t,artnum,main_artnum)
       end
 
-      p "save file"
+#      p "save file"
       File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
         f.write @parsemsg.to_str(msg)
       end
 
-      p "append_hist"
+#      p "append_hist"
       self.append_hist(msg,main_artnum)
       puts "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
+      self.response("235 Article transferred OK")
       #Feed message  
       $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
-      self.response("235 Article transferred OK")
-      return
+      
+      p "over"
+      return "235 Article transferred OK"
     end
 
     def list
@@ -304,12 +311,10 @@ module FriendNews
       sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
       while min <= max
         artnum = sub_artnum[min.to_s]
-        p artnum
         next unless File.exist?("#{$fns_path}/article/#{artnum}")
         artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
         msg_id = artnum_msgid[artnum]
         artnum_msgid.close
-      	p msg_id
         #files->[article number][subject][from][date][message size][lines][xref][newsgroups]
         fields = history[msg_id].split("!")
         res = "#{min.to_s}\t#{fields[1]}\t#{fields[2]}\t#{fields[3]}\t#{msg_id}\t#{fields[4]}\t#{fields[5]}\t#{fields[6]}"
@@ -351,7 +356,6 @@ module FriendNews
     end
 
     def update_active(tag,artnum)
-      p "update active file"
       active = DBM::open("#{$fns_path}/db/active",0666)
       min_artnum,max_artnum,p,num = active[tag].split(",")
       if artnum == "1"
@@ -366,7 +370,6 @@ module FriendNews
     end
     
     def update_main_sub(tag,main_artnum,sub_artnum)
-      p "update relationship for main artnum and sub artnum"
       sub_main = DBM::open("#{$fns_path}/db/tags/#{tag}",0666)
       sub_main[sub_artnum] = main_artnum
       sub_main.close
@@ -683,7 +686,7 @@ module FriendNews
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
-            p "fnsfeed:feed message #{artnum} #{tags}"
+            puts "fnsfeed:feed message #{artnum} #{tags}"
             self.parse_feed(artnum,tags)
           end
         end
@@ -692,8 +695,6 @@ module FriendNews
         Thread.start do
           loop do
             host_id,msg_id = @feedlist.pop.split(",")
-            p host_id
-            p msg_id
 						puts "nntpfeeds:feed message #{msg_id} to #{host_id}"
             self.feed_msg(host_id,msg_id.split(","))
           end
