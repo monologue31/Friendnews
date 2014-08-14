@@ -342,6 +342,7 @@ module FriendNews
     end
 
     def update_active(tag,artnum)
+      p "update active file"
       active = DBM::open("#{$fns_path}/db/active",0666)
       min_artnum,max_artnum,p,num = active[tag].split(",")
       if artnum == "1"
@@ -356,6 +357,7 @@ module FriendNews
     end
     
     def update_main_sub(tag,main_artnum,sub_artnum)
+      p "update relationship for main artnum and sub artnum"
       sub_main = DBM::open("#{$fns_path}/db/tags/#{tag}",0666)
       sub_main[sub_artnum] = main_artnum
       sub_main.close
