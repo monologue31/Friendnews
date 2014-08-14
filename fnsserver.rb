@@ -230,13 +230,21 @@ module FriendNews
 #          tags.delete(t)
 #        end
 #      end
-			
+      p "Parse Tag"
+      active = DBM::open("#{$fns_path}/db/active",0666)
+      tags = Array.new
+      msg["Tags"].split(",").each do |t|
+        tags << t if active.has_key?(t)
+      end
+      tags << "junk" if tags.empty?
+
 			#add path
       msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
       #msg["Xref"] = @socket.addr[2]
       #tags.each do |t|
       #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
       #end
+
 
       p "caculate artnum"
       active = DBM::open("#{$fns_path}/db/active",0666)
