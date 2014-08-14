@@ -17,7 +17,7 @@ module FriendNews
       puts "fnsserver:Friend News System Server Started"
 
 			if @nntp
-				puts "nntp"
+				puts "fnsserver:Start nntp mode"
 				Thread.start do
 					nntp_socket =	TCPServer.open(119)
 					loop do
@@ -35,6 +35,7 @@ module FriendNews
 
       fns_socket = TCPServer.open(11119)
       loop do
+        puts "fsnserver:Start Friend News System with port 11119"
         conn = fns_socket.accept
 				cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn.peeraddr[3]))[0]
         puts "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
