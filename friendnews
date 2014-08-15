@@ -22,6 +22,7 @@ when "start"
   p debug
   Thread.start do
     fns_log = FriendNews::FNS_log(debug);
+    fns_log.start
   end
 
   #Start Newfeeds
