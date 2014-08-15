@@ -15,6 +15,15 @@ $fns_path   =   $fns_conf["fns_path"]
 
 case ARGV[0]
 when "start"
+
+  #Start log
+  debug = nil
+  debug = true if ARGV[1] == "debug" || ARGV[2] == "debug"
+  p debug
+  Thread.start do
+    fns_log = FriendNews::FNS_log(debug);
+  end
+
   #Start Newfeeds
   Thread.start do
     feeds   = FriendNews::FNS_Feeds.new
@@ -29,12 +38,6 @@ when "start"
   	sleep()
   end
   
-  #Start log
-  debug = nil
-  debug = true if ARGV[1] == "debug" || ARGV[2] == "debug"
-  Thread.start do
-    fns_log = FriendNews::FNS_log(debug);
-  end
 
   #Start Server
   nntp = nil
