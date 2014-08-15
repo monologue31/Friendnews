@@ -1100,11 +1100,13 @@ module FriendNews
       else
   			@log = File.open("#{$fns_path}/log/#{Time.now.strftime("%Y%m%d")}","a")
   		end
+      p @log
       @debug = debug
   	end
 
   	def start
       loop do
+        p "log start"
         str = $fns_log.pop
         puts str if @debug
   		  @log.puts("#{Time.now.to_s}:#{str}")
