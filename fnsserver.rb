@@ -200,7 +200,6 @@ module FriendNews
         #Feed message  
         $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
         
-        p "over"
         return "240 Article posted ok"
     end
 
@@ -216,7 +215,6 @@ module FriendNews
       end
       msg = @parsemsg.to_hash(msg_str)
       
-      p "verify"
       #Verify Sign
       unless self.digital_sign(msg,"xiao-face-vm01","verify")
         msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
@@ -1107,9 +1105,12 @@ module FriendNews
 
   	def start
       loop do
+        p "1"
         str = $fns_log.pop
+        p @debug
         puts str if @debug
   		  @log.puts("#{Time.now.to_s}:#{str}")
+        p "2"
       end
   	end
   end
