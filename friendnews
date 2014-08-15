@@ -15,12 +15,12 @@ $fns_path   =   $fns_conf["fns_path"]
 
 case ARGV[0]
 when "start"
-
   #Start log
   debug = nil
   debug = true if ARGV[1] == "debug" || ARGV[2] == "debug"
   Thread.start do
     fns_log = FriendNews::FNS_log.new(debug)
+    p fns_log
     fns_log.start
   end
 
