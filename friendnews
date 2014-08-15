@@ -13,8 +13,7 @@ $fns_queue = SizedQueue.new(100)
 $fns_path = $fns_conf["fns_path"]
 
 case ARGV[0]
-when "start",nil
-  #Process.daemon
+when "start"
   #Start Newfeeds
   Thread.start do
     feeds   = FriendNews::FNS_Feeds.new
@@ -29,9 +28,16 @@ when "start",nil
   	sleep()
   end
   
+  #Start log
+  debug = nil
+  debug = true if ARGV[1] == "debug" || ARGV[2] == "debug"
+  Thread.start do
+    fns_log = FriendNews::FNS_log(debug);
+  end
+
   #Start Server
   nntp = nil
-  nntp = true if ARGV[1] == "nntp"
+  nntp = true if ARGV[1] == "nntp" || ARGV[2] == "nntp"
   server  = FriendNews::FNS_Server.new(nntp)
   server.start
 when "mgt"
@@ -57,7 +63,7 @@ when "mgt"
     fns_sys_mgt.set_env(ARGV[2],ARGV[3])
   when "add_key"
     fns_sys_mgt.add_key_cl(ARGV[2],ARGV[3])
-  when "rm_key"
+when "rm_key"
   when "show_keypool"
     fns_sys_mgt.show_keypool
   when "sys_init"
@@ -86,7 +92,7 @@ Friend News Systems by Xiao Kunyao Univercity of Tsukuba
 usage: friendnews [arguments] [value]
 
 Arguments:
-  start         start Friend News System
-  mgt           start Friend News System Managment.use friendnews mnt -h to get help
+  start         start Friend News System.use [nntp] to start nntp.use [debug] to open debug mode
+  mgt           start Friend News System Managment.use [-h] to get help
   EOS
 end
