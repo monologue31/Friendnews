@@ -1105,12 +1105,13 @@ module FriendNews
 
   	def start
       loop do
-        p "1"
+        p "fns log"
         str = $fns_log.pop
         p @debug
+        p str
         puts str if @debug
   		  @log.puts("#{Time.now.to_s}:#{str}")
-        p "2"
+        p "fns log"
       end
   	end
   end
