@@ -14,37 +14,37 @@ module FriendNews
     end
 
     def start
-      puts "fnsserver:Friend News System Server Started"
+      $fns_log.push "fnsserver:Friend News System Server Started"
 
 			if @nntp
-				puts "fnsserver:Start nntp mode"
+				$fns_log.push "fnsserver:Start nntp mode"
 				Thread.start do
 					nntp_socket =	TCPServer.open(119)
 					loop do
         		conn_nntp = nntp_socket.accept
 						cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn_nntp.peeraddr[3]))[0]
-        		puts "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
-        		puts "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
+        		$fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
+        		$fns_log.push "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
           	conn_nntp.puts(200)
           	process = Process.new(conn_nntp)
           	process.run
-          	puts "fnsserver:#{cdomain} done MODE:NNTP"
+          	$fns_log.push "fnsserver:#{cdomain} done MODE:NNTP"
 					end
 				end
 			end
 
       fns_socket = TCPServer.open(11119)
       loop do
-        puts "fsnserver:Start Friend News System with port 11119"
+        $fns_log.push "fsnserver:Start Friend News System with port 11119"
         conn = fns_socket.accept
 				cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn.peeraddr[3]))[0]
-        puts "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
-        puts "fnsserver:Accepted connection from #{cdomain}"
+        $fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
+        $fns_log.push "fnsserver:Accepted connection from #{cdomain}"
         Thread.start do
           conn.puts(200)
           process = Process.new(conn)
           process.run
-          puts "fnsserver:#{cdomain} done"
+          $fns_log.push "fnsserver:#{cdomain} done"
         end
       end
     end
@@ -63,12 +63,12 @@ module FriendNews
         @premission = nil
 				loop do
         	if @socket.eof?
-        		puts "fnsserver:Connection closed by #{Socket.getnameinfo(Socket.sockaddr_in(119,@socket.peeraddr[3]))[0]}"
+        		$fns_log.push "fnsserver:Connection closed by #{Socket.getnameinfo(Socket.sockaddr_in(119,@socket.peeraddr[3]))[0]}"
         	  @socket.close
 						break
         	end
         	while line = @socket.gets
-        	  puts "fnsserver:Received request [#{line.chomp}]"
+        	  $fns_log.push "fnsserver:Received request [#{line.chomp}]"
         	  cmd,param = line.split(/\s+/,2) #get command and parameter
         	  param = param.chomp if param
         	  case cmd
@@ -79,10 +79,10 @@ module FriendNews
               else
                 stat_code = self.post
               end
-              puts "fnsserver:Post done with code [#{stat_code}]"
+              $fns_log.push "fnsserver:Post done with code [#{stat_code}]"
         	  when /(?i)ihave/
               stat_code = self.ihave(param)
-              puts "fnsserver:Ihave done with code [#{stat_code}]"
+              $fns_log.push "fnsserver:Ihave done with code [#{stat_code}]"
         	  when "MODE"
         	    if param.chomp == "READER"
         	    	@mode = "reader"
@@ -113,7 +113,7 @@ module FriendNews
               end
               self.article(@tag,param)
         	  when /(?i)quit/
-        	    puts "fnsserver:Connection closed by #{@socket.addr[2]}"
+        	    $fns_log.push "fnsserver:Connection closed by #{@socket.addr[2]}"
         	    @socket.close
         	    return
         	  else
@@ -122,7 +122,7 @@ module FriendNews
        		end
         end
 			rescue => e
-				puts "fnsserver error"
+				$fns_log.push "fnsserver error"
 		    puts e.to_s
         @socket.close
       end
@@ -194,7 +194,7 @@ module FriendNews
           f.write @parsemsg.to_str(msg)
         end
         self.append_hist(msg,main_artnum)
-        puts "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
+        $fns_log.push "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
         self.response("240 Article posted ok")
 
         #Feed message  
@@ -268,7 +268,7 @@ module FriendNews
 
 #      p "append_hist"
       self.append_hist(msg,main_artnum)
-      puts "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
+      $fns_log.push "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
       self.response("235 Article transferred OK")
       #Feed message  
       $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
@@ -352,7 +352,7 @@ module FriendNews
 
     #Response
     def response(res)
-      puts "fnsserver:Sent response [#{res}]"
+      $fns_log.push "fnsserver:Sent response [#{res}]"
       @socket.puts(res)
     end
 
@@ -596,30 +596,30 @@ module FriendNews
 	 	    digest = OpenSSL::Digest::SHA1.new()
 			  case action
 			  when "sign"
-          puts "fnsserver:Starting sign message #{msg["Message-ID"]} with private key"
+          $fns_log.push "fnsserver:Starting sign message #{msg["Message-ID"]} with private key"
 				  msg_sign = Base64.encode64(key.sign(digest,File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))).delete("\n")
           #del tmp file
           File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
-          puts "fnsserver:Sign message#{msg["Message-ID"]} with private key ok"
+          $fns_log.push "fnsserver:Sign message#{msg["Message-ID"]} with private key ok"
 				  return msg_sign
 			  when "verify"
           print "fnsserver:Starting verify message#{msg["Message-ID"]}..."
 				  if key.verify(digest,Base64.decode64(msg["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))
             #del tmp file
             File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
-            puts "fnsserver:Verify message#{msg["Message-ID"]} with public key ok"
+            $fns_log.push "fnsserver:Verify message#{msg["Message-ID"]} with public key ok"
 					  return true
 				  else
             #del tmp file
             File.delete("#{$fns_path}/tmp/#{msg["Nessage-ID"]}.#{action}")
-					  puts "fnsserver:Bad sign"
+					  $fns_log.push "fnsserver:Bad sign"
 					  return nil
 				  end
 			  else
           return nil
 			  end
 		  rescue => e
-			  puts e.to_s
+			  $fns_log.push e.to_s
 			  return nil
 		  end
 	  end
@@ -687,7 +687,7 @@ module FriendNews
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
-            puts "fnsfeed:feed message #{artnum} #{tags}"
+            $fns_log.push "fnsfeed:feed message #{artnum} #{tags}"
             self.parse_feed(artnum,tags)
           end
         end
@@ -696,12 +696,12 @@ module FriendNews
         Thread.start do
           loop do
             host_id,msg_id = @feedlist.pop.split(",")
-						puts "nntpfeeds:feed message #{msg_id} to #{host_id}"
+						$fns_log.push "nntpfeeds:feed message #{msg_id} to #{host_id}"
             self.feed_msg(host_id,msg_id.split(","))
           end
         end
       rescue => e
-        puts "nntpfeeds error"
+        $fns_log.push "nntpfeeds error"
         puts e
       end
     end
@@ -709,7 +709,7 @@ module FriendNews
     def parse_feed(artnum,tags)
       begin
         msg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{artnum}"))
-			  puts "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
+			  $fns_log.push "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
 			  list = Array.new
 			  list.clear	
         if msg.has_key?("Distribution") && msg["Distribution"] != "global"
@@ -738,7 +738,7 @@ module FriendNews
           end
         end
       rescue => e
-        puts "parse_feeds error"
+        $fns_log.push "parse_feeds error"
         puts e
       end
     end
@@ -778,12 +778,12 @@ module FriendNews
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
       	  stat_code = client.command("ihave",m)
-					puts "nntpfeeds:feed message #{m} status code #{stat_code}"
+					$fns_log.push "nntpfeeds:feed message #{m} status code #{stat_code}"
       	  self.append_feedhist(m,host,stat_code)
       	end
       	client.disconnect
 			else
-				puts "nntpfeeds:can't connet to host #{host_id}"
+				$fns_log.push "nntpfeeds:can't connet to host #{host_id}"
       	msg_id.each do |m|
       	  self.append_feedhist(m,host,"436")
       	end
@@ -801,10 +801,10 @@ module FriendNews
     def connect(host)
       begin
         @socket = TCPSocket.open(host,@port)
-        puts "nntpclient:Connecting #{host} with port[#{@port}] successful code #{@socket.gets}"
+        $fns_log.push "nntpclient:Connecting #{host} with port[#{@port}] successful code #{@socket.gets}"
 				return true
       rescue => e
-        puts "nntpclient:Connecting #{host} with port[#{@port}] error [#{e}]"
+        $fns_log.push "nntpclient:Connecting #{host} with port[#{@port}] error [#{e}]"
 				return nil
       end
     end
@@ -825,10 +825,10 @@ module FriendNews
 
     def request(cmd_line)
       @socket.puts(cmd_line)
-      puts "nntpclient:Send command <#{cmd_line}>"
+      $fns_log.push "nntpclient:Send command <#{cmd_line}>"
       while code = @socket.gets
         next unless code
-        puts "nntpclient:Receive status code <#{code.chomp}>"
+        $fns_log.push "nntpclient:Receive status code <#{code.chomp}>"
         return code
       end
     end
@@ -1096,22 +1096,21 @@ module FriendNews
 	end
 
   class FNS_Log
-  	def initialize()
-  	end
-  
-  	def append_log(str)
-  		@log_name.puts("#{Time.now.to_s}:#{str}")
-  	end
-  
-  	def show_log
-  	end
-  
-  	def start
-      unless File.exist?("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}")
-  			@log_name = File.open("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}","w")
-  		else
-  			@log_name = File.open("#{$fns_path}/log/#{@log_type}/#{@option_path}#{Time.now.strftime("%Y%m%d")}","a")
+  	def initialize(debug)
+      unless File.exist?("#{$fns_path}/log/#{Time.now.strftime("%Y%m%d")}")
+  			@log = File.open("#{$fns_path}/log/#{Time.now.strftime("%Y%m%d")}","w")
+      else
+  			@log = File.open("#{$fns_path}/log/#{Time.now.strftime("%Y%m%d")}","a")
   		end
+      @debug = debug
+  	end
+
+  	def start
+      loop do
+        str = $fns_log.pop
+        puts str if @debug
+  		  @log.puts("#{Time.now.to_s}:#{str}")
+      end
   	end
   end
 
