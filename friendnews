@@ -19,7 +19,7 @@ when "start"
   debug = nil
   debug = true if ARGV[1] == "debug" || ARGV[2] == "debug"
   Thread.start do
-    fns_log = FriendNews::FNS_log.new(debug)
+    fns_log = FriendNews::FNS_Log.new(debug)
     p fns_log
     fns_log.start
   end
