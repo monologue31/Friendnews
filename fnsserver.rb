@@ -35,7 +35,7 @@ module FriendNews
 
       fns_socket = TCPServer.open(11119)
       loop do
-        $fns_log.push "fsnserver:Start Friend News System with port 11119"
+        $fns_log.push "fnsserver:Start Friend News System with port 11119"
         conn = fns_socket.accept
 				cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn.peeraddr[3]))[0]
         $fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
@@ -1100,13 +1100,11 @@ module FriendNews
       else
   			@log = File.open("#{$fns_path}/log/#{Time.now.strftime("%Y%m%d")}","a")
   		end
-      p @log
       @debug = debug
   	end
 
   	def start
       loop do
-        p "log start"
         str = $fns_log.pop
         puts str if @debug
   		  @log.puts("#{Time.now.to_s}:#{str}")
