@@ -780,11 +780,11 @@ module FriendNews
       	msg_id.each do |m|
       	  stat_code = client.command("ihave",m)
 					$fns_log.push "fnsfeeds:feed message #{m} status code #{stat_code}"
-      	  self.append_feedhist(m,host,stat_code)
+      	  self.append_feedhist(m,host_id,stat_code.split("\s")[0])
       	end
       	client.disconnect
 			else
-				$fns_log.push "fnsfeeds:can't connet to host #{host_id}"
+				$fns_log.push "fnsfeeds:can not connet to host #{host_id}"
       	msg_id.each do |m|
       	  self.append_feedhist(m,host_id,"436")
       	end
