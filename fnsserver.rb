@@ -677,7 +677,7 @@ module FriendNews
         #thread load feedlist
 	  	  Thread.start do
 	  	  	loop do
-            sleep(60)
+            sleep(300)
             self.load_feedlist
   		  	end
   		  end
@@ -686,7 +686,7 @@ module FriendNews
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
-            $fns_log.push "fnsfeed:feed message #{artnum} #{tags}"
+            $fns_log.push "fnsfeeds:feed message #{artnum} #{tags}"
             self.parse_feed(artnum,tags)
           end
         end
@@ -695,12 +695,12 @@ module FriendNews
         Thread.start do
           loop do
             host_id,msg_id = @feedlist.pop.split(",")
-						$fns_log.push "nntpfeeds:feed message #{msg_id} to #{host_id}"
+						$fns_log.push "fnsfeeds:feed message #{msg_id} to #{host_id}"
             self.feed_msg(host_id,msg_id.split(","))
           end
         end
       rescue => e
-        $fns_log.push "nntpfeeds error"
+        $fns_log.push "fnsfeeds error"
         puts e
       end
     end
@@ -708,7 +708,7 @@ module FriendNews
     def parse_feed(artnum,tags)
       begin
         msg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{artnum}"))
-			  $fns_log.push "nntpfeeds:recevie messgae #{msg["Message-ID"]}"
+			  $fns_log.push "fnsfeeds:recevie message #{msg["Message-ID"]}"
 			  list = Array.new
 			  list.clear	
         if msg.has_key?("Distribution") && msg["Distribution"] != "global"
@@ -723,11 +723,10 @@ module FriendNews
           @fnsfeed.each_key do |h|
             list << h
           end
-          p list
+          $fns_log.push "fnsfeeds:feed message to #{list}"
         end
         tag = tags.split(",")
         list.each do |l|
-          p l
           hosts = @fnsfeed[l].split(",")
           tag.each do |t|
             if !hosts.include?("!#{t}") || (hosts.include?("!*") && !hosts.include?("t"))
@@ -737,14 +736,14 @@ module FriendNews
           end
         end
       rescue => e
-        $fns_log.push "parse_feeds error"
+        $fns_log.push "fnsfeeds:parse_feeds error"
         puts e
       end
     end
 
     def append_feedhist(msg_id,host,stat_code)
       feedhist = DBM::open("#{$fns_path}/db/feedhist/#{host}")
-      feedhist[host] = stat_code
+      feedhist[msg_id] = stat_code
       feedhist.close
     end
 
@@ -760,7 +759,7 @@ module FriendNews
         msg_id = ""
 				cnt = 0
         feedhist.each_key do |m|
-        	if (feedhist[m] == "436" || feedhist[m] == nil)
+        	if (feedhist[m] == "436" || feedhist[m] == nil && )
 						msg_id += "#{m},"
 						cnt += 1
 					end
@@ -777,14 +776,14 @@ module FriendNews
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
       	  stat_code = client.command("ihave",m)
-					$fns_log.push "nntpfeeds:feed message #{m} status code #{stat_code}"
+					$fns_log.push "fnsfeeds:feed message #{m} status code #{stat_code}"
       	  self.append_feedhist(m,host,stat_code)
       	end
       	client.disconnect
 			else
-				$fns_log.push "nntpfeeds:can't connet to host #{host_id}"
+				$fns_log.push "fnsfeeds:can't connet to host #{host_id}"
       	msg_id.each do |m|
-      	  self.append_feedhist(m,host,"436")
+      	  self.append_feedhist(m,host_id,"436")
       	end
 			end
     end
