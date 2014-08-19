@@ -775,8 +775,6 @@ module FriendNews
     end
 
     def feed_msg(host_id,msg_id)
-      p host_id
-      p msg_id
       client = FriendNews::FNS_Client.new(11119)
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
