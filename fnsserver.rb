@@ -173,7 +173,7 @@ module FriendNews
 
         #p "Path,Expires,Date"
         msg["Path"] = $fns_conf["host"]
-        msg["Expires"] = (Date.now + $fns_conf["expires"].to_i.days).to_s
+        msg["Expires"] = (Date.today + $fns_conf["expires"].to_i.days).to_s
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Signature"] = $fns_conf["signature"]
         msg["Distribution"] = "global" unless msg["Distribution"]
