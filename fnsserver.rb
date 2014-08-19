@@ -207,6 +207,7 @@ module FriendNews
     def ihave(param)
       if self.chk_hist?(param)
         self.response("437 Article rejected - do not try again")
+        return
       end
       self.response("335 Send article to be transferred.end with <.>")
       msg_str = ""
