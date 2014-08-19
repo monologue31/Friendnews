@@ -695,9 +695,9 @@ module FriendNews
         #thread feed message
         Thread.start do
           loop do
-            host_id,msg_id = @feedlist.pop.split(",")
+            host_id,msg_id = @feedlist.pop.split(",",2)
 						$fns_log.push "fnsfeeds:feed message #{msg_id} to #{host_id}"
-            self.feed_msg(host_id,msg_id.split(",",2))
+            self.feed_msg(host_id,msg_id.split(","))
           end
         end
       rescue => e
