@@ -777,10 +777,14 @@ module FriendNews
       client = FriendNews::FNS_Client.new(11119)
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
+        p msg_id
       	msg_id.each do |m|
+          p m
+          p "start"
       	  stat_code = client.command("ihave",m)
 					$fns_log.push "fnsfeeds:feed message #{m} status code #{stat_code}"
       	  self.append_feedhist(m,host_id,stat_code.split("\s")[0])
+          p "end"
       	end
       	client.disconnect
 			else
