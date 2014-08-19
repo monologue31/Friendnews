@@ -759,7 +759,7 @@ module FriendNews
         msg_id = ""
 				cnt = 0
         feedhist.each_key do |m|
-        	if (feedhist[m] == "436" || feedhist[m] == nil && )
+        	if (feedhist[m] == "436" || feedhist[m] == nil)
 						msg_id += "#{m},"
 						cnt += 1
 					end
