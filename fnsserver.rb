@@ -765,8 +765,10 @@ module FriendNews
 					end
         end
         msg_id = msg_id.chop
-        $fns_log.push "fnsfeeds:feedlist loaded host[#{k}] msg_id[#{msg_id}]"
-        @feedlist.push("#{k},#{msg_id}") if cnt > 0
+        if cnt > 0
+          $fns_log.push "fnsfeeds:feedlist loaded host[#{k}] msg_id[#{msg_id}]"
+          @feedlist.push("#{k},#{msg_id}") 
+        end
         feedhist.close
 			end
     end
