@@ -838,6 +838,7 @@ module FriendNews
     def send_msg(str)
 			line = str.split("\r\n")
       line.each do |l|
+        p l
         @socket.puts(l + "\r\n")
       end
       @socket.puts(".\r\n")
