@@ -37,7 +37,7 @@ module FriendNews
 
       fns_socket = TCPServer.open(@port)
       loop do
-        $fns_log.push "fnsserver:Start Friend News System with port #{port}"
+        $fns_log.push "fnsserver:Start Friend News System with port #{@port}"
         conn = fns_socket.accept
 				cdomain = Socket.getnameinfo(Socket.sockaddr_in(@port,conn.peeraddr[3]))[0]
         $fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
