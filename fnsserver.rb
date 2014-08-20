@@ -696,7 +696,7 @@ module FriendNews
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
-#            $fns_log.push "fnsfeeds:feed message #{artnum} #{tags}"
+            $fns_log.push "fnsfeeds:feed message #{artnum} #{tags}"
             self.parse_feed(artnum,tags)
           end
         end
@@ -784,6 +784,7 @@ module FriendNews
     end
 
     def feed_msg(host_id,msg_id)
+      $fns_log.push "fnsfeeds:feed message num[#{msg_id.length}]"
       client = FriendNews::FNS_Client.new(11119)
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
