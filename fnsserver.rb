@@ -956,7 +956,7 @@ module FriendNews
       msg["Body"] = ""
       line = str.split("\r\n")
       while i < line.length
-				unless line[i] == ""
+				unless line[i] == "\r\n"
           header_field,field_value = line[i].split(/\s*:\s*/,2)
 					msg[header_field] = field_value
           i += 1
