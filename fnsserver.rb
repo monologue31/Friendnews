@@ -872,7 +872,7 @@ module FriendNews
         history = DBM::open("#{$fns_path}/db/history",0666)
         tag = history[msg_id].split("!")[7]
         artnum = history[msg_id].split("!")[0]
-        histroy.close
+        history.close
         path = "#{$fns_path}/article/#{artnum}"
         stat_code = send_msg(File.read(path))
         return stat_code
