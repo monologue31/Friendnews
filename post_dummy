@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require_rellative './fnsserver.rb'
+require_relative './fnsserver.rb'
 
 if ARGV[0]
   path = ARGV[0]
