@@ -23,7 +23,7 @@ module FriendNews
 					nntp_socket =	TCPServer.open(119)
 					loop do
         		conn_nntp = nntp_socket.accept
-						cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn_nntp.peeraddr[3]))[0]
+						cdomain = Socket.getnameinfo(Socket.sockaddr_in(119,conn_nntp.peeraddr[3]))[0]
         		$fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
         		$fns_log.push "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
           	conn_nntp.puts(200)
@@ -152,11 +152,11 @@ module FriendNews
           msg["Tags"] = "control"
         end
 =end
-#        p "Sign Msg"
+        p "Sign Msg"
 			  #check signature
-        msg["Signature"] = $fns_conf["signature"] #Which header should be signed
+        msg["Signature"] = $fns_conf["signature"] unless msg["Signature"]#Which header should be signed
 
-#        p "Parse Tag"
+        p "Parse Tag"
         active = DBM::open("#{$fns_path}/db/active",0666)
         tags = Array.new
         msg["Tags"].split(",").each do |t|
@@ -164,7 +164,7 @@ module FriendNews
         end
         tags << "junk" if tags.empty?
 
-#        p "Create Msg_id"
+        p "Create Msg_id"
 			  #message-id
         while 1
           msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
@@ -175,13 +175,12 @@ module FriendNews
         msg["Path"] = $fns_conf["host"]
         msg["Expires"] = (Date.today + $fns_conf["expires"].to_i.days).to_s
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
-        msg["Signature"] = $fns_conf["signature"]
         msg["Distribution"] = "global" unless msg["Distribution"]
- #       p "sign"
+        p "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         active = DBM::open("#{$fns_path}/db/active",0666)
         
-        #p "artnum"
+        p "artnum"
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
         tags.each do |t|
@@ -190,7 +189,7 @@ module FriendNews
           self.update_main_sub(t,artnum,main_artnum)
         end
 
-        #p "Save file"
+        p "Save file"
         File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
           f.write @parsemsg.to_str(msg)
         end
