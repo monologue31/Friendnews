@@ -1021,7 +1021,7 @@ module FriendNews
 
 		def rm_feedrule(host_name)
     	fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
-			fnsfeed.delete(host_1name)
+			fnsfeed.delete(host_name)
 		end
 
     def add_mapping(rule,tag)
