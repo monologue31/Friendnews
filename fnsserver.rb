@@ -736,8 +736,12 @@ module FriendNews
             p h
             list << h
           end
-          $fns_log.push "fnsfeeds:feed message to #{list}"
         end
+        if list.length == 0
+          $fns_log.push "fnsfeeds:feed message to no one"
+          return
+        end
+        $fns_log.push "fnsfeeds:feed message to #{list}"
         tag = tags.split(",")
         list.each do |l|
           hosts = @fnsfeed[l].split(",")
