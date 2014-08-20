@@ -1013,7 +1013,6 @@ module FriendNews
       else
         p "do not find host <#{host_name}>"
       end
-			return msg
 		end
 
 		def rm_feedrule(host_name)
