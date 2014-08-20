@@ -10,8 +10,9 @@ require 'active_support/time'
 module FriendNews
 
   class FNS_Server
-    def initialize(nntp = nil)
+    def initialize(nntp = nil,port = 11119)
 			@nntp = nntp
+      @port = port
     end
 
     def start
@@ -34,11 +35,11 @@ module FriendNews
 				end
 			end
 
-      fns_socket = TCPServer.open(11119)
+      fns_socket = TCPServer.open(port)
       loop do
         $fns_log.push "fnsserver:Start Friend News System with port 11119"
         conn = fns_socket.accept
-				cdomain = Socket.getnameinfo(Socket.sockaddr_in(11119,conn.peeraddr[3]))[0]
+				cdomain = Socket.getnameinfo(Socket.sockaddr_in(port,conn.peeraddr[3]))[0]
         $fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
         $fns_log.push "fnsserver:Accepted connection from #{cdomain}"
         Thread.start do
