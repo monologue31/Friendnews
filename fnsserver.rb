@@ -991,6 +991,7 @@ module FriendNews
 		def rm_host(host_name)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
 			host.delete(host_name)
+      p "delete host <#{host_name}> ok"
 			host.close
 		end
 
@@ -1022,7 +1023,15 @@ module FriendNews
 		def rm_feedrule(host_name)
     	fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
 			fnsfeed.delete(host_name)
+      p "host <#{host_name}> remove feedrule ok"
 		end
+
+    def show_feedrules
+    	fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
+      fnsfeed.each do |h|
+        p h
+      end
+    end
 
     def add_mapping(rule,tag)
       tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
@@ -1069,6 +1078,7 @@ module FriendNews
 		def rm_key(host_name)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
 			key_pool.delete(host_name)
+      p "host <#{host_name}> remove key ok"
 			key_pool.close
 		end
 
@@ -1107,6 +1117,8 @@ module FriendNews
 			key_pool = DBM.open("#{File.expand_path("./")}/db/key_pool")
       key_pool.clear
       key_pool.close
+
+      p "Friendnews system initilize ok"
 		end
 		
 		def post(msg,mode)
