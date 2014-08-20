@@ -733,6 +733,7 @@ module FriendNews
           end
         else
           @fnsfeed.each_key do |h|
+            p h
             list << h
           end
           $fns_log.push "fnsfeeds:feed message to #{list}"
