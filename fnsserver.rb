@@ -278,7 +278,7 @@ module FriendNews
         #Feed message  
         $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
         
-        p "over"
+#        p "over"
         return "235 Article transferred OK"
 			rescue => e
 				$fns_log.push "transfer error"

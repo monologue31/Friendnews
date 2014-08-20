@@ -15,7 +15,7 @@ else
 end
 
 if ARGV[1]
-  repeat = ARGV[1]
+  repeat = ARGV[1].to_i
 else
   repeat = 0
 end
