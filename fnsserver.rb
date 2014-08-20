@@ -614,6 +614,7 @@ module FriendNews
 				  return msg_sign
 			  when "verify"
           print "fnsserver:Starting verify message#{msg["Message-ID"]}..."
+          p msg_sign
 				  if key.verify(digest,Base64.decode64(msg["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))
             #del tmp file
             File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
@@ -802,7 +803,7 @@ module FriendNews
       	end
       	client.disconnect
 			else
-				$fns_log.push "fnsfeeds:can not connet to host #{host_id}"
+				$fns_log.push "fnsfeeds:can not connect to host #{host_id}"
       	msg_id.each do |m|
       	  self.append_feedhist(m,host_id,"436")
       	end
