@@ -130,6 +130,7 @@ module FriendNews
 		end
     
     def post
+      begin
       	#get message
       	self.response("340 Sent article to be posted.end with <.>")
       	msg_str = ""
@@ -137,7 +138,6 @@ module FriendNews
       	  break if line == ".\r\n"
       	  msg_str += line
       	end
-        p msg_str
       	msg = @parsemsg.to_hash(msg_str)
 
 			  #convert newsgroups to tag
@@ -157,7 +157,7 @@ module FriendNews
 			  #check signature
         msg["Signature"] = $fns_conf["signature"] unless msg["Signature"]#Which header should be signed
 
-        p "Parse Tag"
+        #p "Parse Tag"
         active = DBM::open("#{$fns_path}/db/active",0666)
         tags = Array.new
         msg["Tags"].split(",").each do |t|
@@ -165,7 +165,7 @@ module FriendNews
         end
         tags << "junk" if tags.empty?
 
-        p "Create Msg_id"
+        #p "Create Msg_id"
 			  #message-id
         while 1
           msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
@@ -202,79 +202,88 @@ module FriendNews
         $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
         
         return "240 Article posted ok"
+			rescue => e
+				$fns_log.push "post error"
+        return "441 Posting failed"
+      end
     end
 
     def ihave(param)
-      if self.chk_hist?(param)
-        self.response("437 Article rejected - do not try again")
-        return
-      end
-      self.response("335 Send article to be transferred.end with <.>")
-      msg_str = ""
-      while line = @socket.gets
-        break if line == ".\r\n"
-        msg_str += line
-      end
-      msg = @parsemsg.to_hash(msg_str)
-      
-      #Verify Sign
-      unless self.digital_sign(msg,"xiao-face-vm01","verify")
-        msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
-        msg["Msg-Sign"] = "Bad Sign"
-      end
-      if msg.has_key?("Control") && msg["Msg-Sign"] != "Bad Sign"
-        unless self.parse_cmsg(msg)
+      begin
+        if self.chk_hist?(param)
           self.response("437 Article rejected - do not try again")
+          return
         end
-      end
-			#tag mapping
-#      tags = self.tag_mapping(msg["Newsgroups"])
-#			tags = self.header_mapping(msg,tags)
-#     active = DBM::open("#{$fns_path}/db/active",0666)
-#    tags.each do |t|
-#        unless active.has_key?(t)
-#          tags.delete(t)
+        self.response("335 Send article to be transferred.end with <.>")
+        msg_str = ""
+        while line = @socket.gets
+          break if line == ".\r\n"
+          msg_str += line
+        end
+        msg = @parsemsg.to_hash(msg_str)
+        
+        #Verify Sign
+        unless self.digital_sign(msg,"xiao-face-vm01","verify")
+          msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
+          msg["Msg-Sign"] = "Bad Sign"
+        end
+        if msg.has_key?("Control") && msg["Msg-Sign"] != "Bad Sign"
+          unless self.parse_cmsg(msg)
+            self.response("437 Article rejected - do not try again")
+          end
+        end
+			  #tag mapping
+#        tags = self.tag_mapping(msg["Newsgroups"])
+#			  tags = self.header_mapping(msg,tags)
+#       active = DBM::open("#{$fns_path}/db/active",0666)
+#    t  ags.each do |t|
+#          unless active.has_key?(t)
+#            tags.delete(t)
+#          end
 #        end
-#      end
-#      p "Parse Tag"
-      active = DBM::open("#{$fns_path}/db/active",0666)
-      tags = Array.new
-      msg["Tags"].split(",").each do |t|
-        tags << t if active.has_key?(t)
+#        p "Parse Tag"
+        active = DBM::open("#{$fns_path}/db/active",0666)
+        tags = Array.new
+        msg["Tags"].split(",").each do |t|
+          tags << t if active.has_key?(t)
+        end
+        tags << "junk" if tags.empty?
+
+			  #add path
+        msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
+        #msg["Xref"] = @socket.addr[2]
+        #tags.each do |t|
+        #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
+        #end
+
+
+#        p "caculate artnum"
+        active = DBM::open("#{$fns_path}/db/active",0666)
+        main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
+        tags.each do |t|
+          artnum = (active[t].split(",")[1].to_i + 1).to_s
+          self.update_active(t,artnum)
+          self.update_main_sub(t,artnum,main_artnum)
+        end
+
+#        p "save file"
+        File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
+          f.write @parsemsg.to_str(msg)
+        end
+
+#        p "append_hist"
+        self.append_hist(msg,main_artnum)
+        $fns_log.push "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
+        self.response("235 Article transferred OK")
+        #Feed message  
+        $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
+        
+        p "over"
+        return "235 Article transferred OK"
+			rescue => e
+				$fns_log.push "transfer error"
+        return "436 Transfer failed - try again later"
       end
-      tags << "junk" if tags.empty?
-
-			#add path
-      msg["Path"] = "#{@socket.addr[2]}!#{msg["Path"]}"
-      #msg["Xref"] = @socket.addr[2]
-      #tags.each do |t|
-      #  msg["Xref"] += "\s" + t + ":" + self.calc_artnum(t)
-      #end
-
-
-#      p "caculate artnum"
-      active = DBM::open("#{$fns_path}/db/active",0666)
-      main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
-      tags.each do |t|
-        artnum = (active[t].split(",")[1].to_i + 1).to_s
-        self.update_active(t,artnum)
-        self.update_main_sub(t,artnum,main_artnum)
-      end
-
-#      p "save file"
-      File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
-        f.write @parsemsg.to_str(msg)
-      end
-
-#      p "append_hist"
-      self.append_hist(msg,main_artnum)
-      $fns_log.push "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
-      self.response("235 Article transferred OK")
-      #Feed message  
-      $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
-      
-      p "over"
-      return "235 Article transferred OK"
     end
 
     def list
