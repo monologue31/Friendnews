@@ -873,6 +873,8 @@ module FriendNews
 
 		def post(msg)
       stat_code = self.request("POST")
+      p stat_code
+      p msg
 			return stat_code unless /340/ =~ stat_code
 			return send_msg(@parsemsg.to_str(msg))
 		end

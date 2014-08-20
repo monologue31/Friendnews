@@ -38,4 +38,5 @@ client.connect(host_ip)
 while repeat >= 0
   stat_code = client.post(msg)
   p stat_code
+  repeat -= 1
 end
