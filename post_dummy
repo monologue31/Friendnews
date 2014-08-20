@@ -13,6 +13,7 @@ if ARGV[0]
   path = ARGV[0]
 else
   p "Useage:[File Paht] [Repeat] [Host_Ip(deafult localhost)]"
+  return
 end
 
 if ARGV[1]
@@ -27,7 +28,6 @@ else
   host_ip = "localhost"
 end
 
-$fns
 msg = Hash.new
 print "Please input the Subject:"
 msg["Subject"]    =   gets
@@ -37,5 +37,8 @@ msg["User-Agent"] =   "dummy maker"
 
 client = FriendNews::FNS_Client.new(11119)
 client.connect(host_ip)
-stat_code = client.post(msg)
-p stat_code
+
+while repeat >= 0
+  stat_code = client.post(msg)
+  p stat_code
+end
