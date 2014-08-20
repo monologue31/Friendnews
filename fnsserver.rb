@@ -696,7 +696,7 @@ module FriendNews
         Thread.start do
           loop do
             artnum,tags = $fns_queue.pop().split(",")
-            $fns_log.push "fnsfeeds:feed message #{artnum} #{tags}"
+#            $fns_log.push "fnsfeeds:feed message #{artnum} #{tags}"
             self.parse_feed(artnum,tags)
           end
         end
@@ -812,10 +812,10 @@ module FriendNews
     def connect(host)
       begin
         @socket = TCPSocket.open(host,@port)
-        $fns_log.push "nntpclient:Connecting #{host} with port[#{@port}] successful code #{@socket.gets}"
+        $fns_log.push "fnsclient:Connecting #{host} with port[#{@port}] successful code #{@socket.gets}"
 				return true
       rescue => e
-        $fns_log.push "nntpclient:Connecting #{host} with port[#{@port}] error [#{e}]"
+        $fns_log.push "fnsclient:Connecting #{host} with port[#{@port}] error [#{e}]"
 				return nil
       end
     end
@@ -836,10 +836,10 @@ module FriendNews
 
     def request(cmd_line)
       @socket.puts(cmd_line)
-      $fns_log.push "nntpclient:Send command <#{cmd_line}>"
+      $fns_log.push "fnsclient:Send command <#{cmd_line}>"
       while code = @socket.gets
         next unless code
-        $fns_log.push "nntpclient:Receive status code <#{code.chomp}>"
+        $fns_log.push "fnsclient:Receive status code <#{code.chomp}>"
         return code
       end
     end
@@ -866,25 +866,32 @@ module FriendNews
     end
 
     def ihave(msg_id)
-      stat_code = self.request("IHAVE #{msg_id}")
-      return stat_code unless /335/ =~ stat_code
-      history = DBM::open("#{$fns_path}/db/history",0666)
-      tag = history[msg_id].split("!")[7]
-      artnum = history[msg_id].split("!")[0]
-      if tag == "control"
-        path = "#{$fns_path}/article/control/#{artnum}"
-      else
+      begin
+        stat_code = self.request("IHAVE #{msg_id}")
+        return stat_code unless /335/ =~ stat_code
+        history = DBM::open("#{$fns_path}/db/history",0666)
+        tag = history[msg_id].split("!")[7]
+        artnum = history[msg_id].split("!")[0]
+        histroy.close
         path = "#{$fns_path}/article/#{artnum}"
+        stat_code = send_msg(File.read(path))
+        return stat_code
+      rescue => e
+        $fns_log.push "fnsclient:Transfer message error [#{e}]"
+				return nil
       end
-      stat_code = send_msg(File.read(path))
-      return stat_code
     end
 
 		def post(msg)
-      stat_code = self.request("POST")
-			return stat_code unless /340/ =~ stat_code
-			stat_code = send_msg(@parsemsg.to_str(msg))
-      return stat_code
+      begin
+        stat_code = self.request("POST")
+			  return stat_code unless /340/ =~ stat_code
+			  stat_code = send_msg(@parsemsg.to_str(msg))
+        return stat_code
+      rescue => e
+        $fns_log.push "fnsclient:Post message error [#{e}]"
+				return nil
+      end
 		end
   end
 
