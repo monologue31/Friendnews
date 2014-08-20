@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require_rellative './fnsserver.rb'
+
+if ARGV[0]
+  path = ARGV[0]
+else
+  p "Useage:[File Paht] [Repeat] [Host_Ip(deafult localhost)]"
+end
+
+if ARGV[1]
+  repeat = ARGV[1]
+else
+  repeat = 0
+end
+
+if ARGV[2]
+  host_ip = ARGV[2]
+else
+  host_ip = "localhost"
+end
+
+msg = Hash.new
+print "Please input the Subject:"
+msg["Subject"]    =   gets
+msg["Newsgroups"] =   "all"
+msg["Body"]       =   File.read(path)
+
+client = FriendNews::FNS_Client.new(11119)
+client.connect(host_ip)
+stat_code = client.post(msg)
+p stat_code

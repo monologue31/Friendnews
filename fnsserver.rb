@@ -874,7 +874,7 @@ module FriendNews
 		def post(msg)
       stat_code = self.request("POST")
 			return stat_code unless /340/ =~ stat_code
-			stat_code = send_msg(@parsemsg.to_str(msg))
+			return send_msg(@parsemsg.to_str(msg))
 		end
   end
 
@@ -1086,8 +1086,8 @@ module FriendNews
 		end
 		
 		def post(msg,mode)
-			fns_post = FirendNews::Process.new
-			return fns_post.parse_post(msg,mode)
+			fns_post = FirendNews::FNS_Client.new
+			return fns_post.post(msg)
 		end
 
 		def article(artnum)
