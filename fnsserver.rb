@@ -1010,7 +1010,7 @@ module FriendNews
         fnsfeed[host_name] = rule
         msg = "host <#{host_name}> add feedrule <#{fnsfeed[host_name]}>ok"
       else
-        msg "do not find host <#{host_name}>"
+        msg = "do not find host <#{host_name}>"
       end
 			return msg
 		end
