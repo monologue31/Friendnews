@@ -613,8 +613,7 @@ module FriendNews
           $fns_log.push "fnsserver:Sign message#{msg["Message-ID"]} with private key ok"
 				  return msg_sign
 			  when "verify"
-          print "fnsserver:Starting verify message#{msg["Message-ID"]}..."
-          p msg_sign
+          $fns_log.push "fnsserver:Starting verify message#{msg["Message-ID"]}..."
 				  if key.verify(digest,Base64.decode64(msg["Msg-Sign"]),File.read("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}"))
             #del tmp file
             File.delete("#{$fns_path}/tmp/#{msg["Message-ID"]}.#{action}")
