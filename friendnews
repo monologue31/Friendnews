@@ -60,6 +60,8 @@ when "mgt"
     fns_sys_mgt.rm_feedrule(ARGV[2])
   when "add_mapping"
     fns_sys_mgt.add_mapping(ARGV[2],ARGV[3])
+  when "show_feedrules"
+    fns_sys_mgt.show_feedrules(ARGV[2])
   when "rm_mapping"
     fns_sys_mgt.rm_mapping(ARGV[2])
   when "set_env"
