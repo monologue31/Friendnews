@@ -946,7 +946,6 @@ module FriendNews
   			end
   			i += 1
   		end	
-      p msg
   		return msg
   	end
 
@@ -956,7 +955,6 @@ module FriendNews
       msg = Hash.new
       msg["Body"] = ""
       line = str.split("\r\n")
-      p line
       while i < line.length
 				unless line[i] == ""
           header_field,field_value = line[i].split(/\s*:\s*/,2)
@@ -969,6 +967,7 @@ module FriendNews
       end
       msg_line = 0
       while i < line.length
+        p msg_line
 		   	msg["Body"] += "#{line[i]}\r\n"
         break if line[i] == "."
 		  	msg_line += 1
