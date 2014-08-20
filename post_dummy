@@ -25,6 +25,7 @@ print "Please input the Subject:"
 msg["Subject"]    =   gets
 msg["Newsgroups"] =   "all"
 msg["Body"]       =   File.read(path)
+msg["User-Agent"] =   "dummy maker" 
 
 client = FriendNews::FNS_Client.new(11119)
 client.connect(host_ip)
