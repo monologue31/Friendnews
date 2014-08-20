@@ -10,12 +10,13 @@ $fns_path   =   "."
 if ARGV[0]
   path = ARGV[0]
 else
-  p "Useage:[File Paht] [Repeat] [Host_Ip(deafult localhost)]"
+  p "Useage:[File Paht] [Repeat(max 48)] [Host_Ip(deafult localhost)]"
   return
 end
 
 if ARGV[1]
   repeat = ARGV[1].to_i
+  repeat = 48 if repeat > 48
 else
   repeat = 0
 end
