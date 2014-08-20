@@ -1009,9 +1009,9 @@ module FriendNews
       if host.has_key?(host_name)
         fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
         fnsfeed[host_name] = rule
-        msg = "host <#{host_name}> add feedrule <#{fnsfeed[host_name]}>ok"
+        p "host <#{host_name}> add feedrule <#{fnsfeed[host_name]}>ok"
       else
-        msg = "do not find host <#{host_name}>"
+        p "do not find host <#{host_name}>"
       end
 			return msg
 		end
