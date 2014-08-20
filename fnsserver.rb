@@ -35,11 +35,11 @@ module FriendNews
 				end
 			end
 
-      fns_socket = TCPServer.open(port)
+      fns_socket = TCPServer.open(@port)
       loop do
-        $fns_log.push "fnsserver:Start Friend News System with port 11119"
+        $fns_log.push "fnsserver:Start Friend News System with port #{port}"
         conn = fns_socket.accept
-				cdomain = Socket.getnameinfo(Socket.sockaddr_in(port,conn.peeraddr[3]))[0]
+				cdomain = Socket.getnameinfo(Socket.sockaddr_in(@port,conn.peeraddr[3]))[0]
         $fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
         $fns_log.push "fnsserver:Accepted connection from #{cdomain}"
         Thread.start do
@@ -676,10 +676,11 @@ module FriendNews
   end
 
   class FNS_Feeds
-    def initialize()
+    def initialize(port = 11119)
       @fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0666)
       @feedlist = Queue.new
 			@parsemsg = FriendNews::ParseMsg.new
+      @port = port
   	end
 
 	  def run
@@ -786,7 +787,7 @@ module FriendNews
 
     def feed_msg(host_id,msg_id)
       $fns_log.push "fnsfeeds:feed message num[#{msg_id.length}]"
-      client = FriendNews::FNS_Client.new(11119)
+      client = FriendNews::FNS_Client.new(@port)
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
