@@ -966,10 +966,7 @@ module FriendNews
 				end
       end
       msg_line = 0
-      p i
-      p line
       while i < line.length
-        p msg_line
 		   	msg["Body"] += "#{line[i]}\r\n"
         break if line[i] == "."
 		  	msg_line += 1
