@@ -2,6 +2,13 @@
 
 require_relative './fnsserver.rb'
 
+#Initialize globle parameter
+FileUtils.mkpath("etc") unless Dir.exist?("etc")
+$fns_conf   =   DBM.open("./etc/fns_conf",0666)  
+$fns_queue  =   SizedQueue.new(100)
+$fns_log    =   SizedQueue.new(100)
+$fns_path   =   $fns_conf["fns_path"]
+
 if ARGV[0]
   path = ARGV[0]
 else
@@ -20,6 +27,7 @@ else
   host_ip = "localhost"
 end
 
+$fns
 msg = Hash.new
 print "Please input the Subject:"
 msg["Subject"]    =   gets
