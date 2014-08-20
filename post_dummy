@@ -28,7 +28,8 @@ end
 
 msg = Hash.new
 msg["Subject"]    =   "Dummy Article"
-msg["Tags"] =   "all"
+msg["From"]       =   "xiaokunyao <xiaokunyao@softlab>"
+msg["Tags"]       =   "all"
 msg["Body"]       =   File.read(path)
 msg["User-Agent"] =   "dummy maker" 
 
