@@ -137,15 +137,14 @@ module FriendNews
       	  break if line == ".\r\n"
       	  msg_str += line
       	end
+        p msg_str
       	msg = @parsemsg.to_hash(msg_str)
 
-        p msg
 			  #convert newsgroups to tag
 			  if msg.has_key?("Newsgroups")
 			  	msg["Tags"] = msg["Newsgroups"]
 			  	msg.delete("Newsgroups")
 			  end
-        p msg
 =begin 
         p "Check Msg Type"
 			  #check control header
