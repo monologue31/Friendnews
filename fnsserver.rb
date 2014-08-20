@@ -139,11 +139,13 @@ module FriendNews
       	end
       	msg = @parsemsg.to_hash(msg_str)
 
+        p msg
 			  #convert newsgroups to tag
 			  if msg.has_key?("Newsgroups")
 			  	msg["Tags"] = msg["Newsgroups"]
 			  	msg.delete("Newsgroups")
 			  end
+        p msg
 =begin 
         p "Check Msg Type"
 			  #check control header
@@ -152,7 +154,7 @@ module FriendNews
           msg["Tags"] = "control"
         end
 =end
-        p "Sign Msg"
+        #p "Sign Msg"
 			  #check signature
         msg["Signature"] = $fns_conf["signature"] unless msg["Signature"]#Which header should be signed
 
