@@ -177,11 +177,11 @@ module FriendNews
         msg["Expires"] = (Date.today + $fns_conf["expires"].to_i.days).to_s
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Distribution"] = "global" unless msg["Distribution"]
-        p "sign"
+        #p "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         active = DBM::open("#{$fns_path}/db/active",0666)
         
-        p "artnum"
+        #p "artnum"
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
         tags.each do |t|
@@ -190,7 +190,7 @@ module FriendNews
           self.update_main_sub(t,artnum,main_artnum)
         end
 
-        p "Save file"
+        #p "Save file"
         File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
           f.write @parsemsg.to_str(msg)
         end
@@ -847,7 +847,6 @@ module FriendNews
     def send_msg(str)
 			line = str.split("\r\n")
       line.each do |l|
-        p l
         @socket.puts(l + "\r\n")
       end
       @socket.puts(".\r\n")
@@ -884,7 +883,6 @@ module FriendNews
 		def post(msg)
       stat_code = self.request("POST")
 			return stat_code unless /340/ =~ stat_code
-      p @parsemsg.to_str(msg) 
 			stat_code = send_msg(@parsemsg.to_str(msg))
       return stat_code
 		end
@@ -971,7 +969,7 @@ module FriendNews
     def add_host(host_name,host_domain)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
       host[host_name] = host_domain
-      p "create host <#{host_name}> ok,social router domain <#{host_domain}>"
+      p "create host <#{host_name}> ok, domain <#{host_domain}>"
 			host.close
     end
 
@@ -1122,7 +1120,7 @@ module FriendNews
   	def start
       loop do
         str = $fns_log.pop
-        puts str if @debug
+        puts "#{Time.now.to_s}:#{str}" if @debug
   		  @log.puts("#{Time.now.to_s}:#{str}")
       end
   	end
