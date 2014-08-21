@@ -39,7 +39,7 @@ while size >= 0
   str += str
   size -= 1
 end
-msg["Body"]       =   File.read(str)
+msg["Body"]       =   str
 
 client = FriendNews::FNS_Client.new(11119)
 client.connect(host_ip)
