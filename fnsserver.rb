@@ -601,7 +601,7 @@ module FriendNews
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
 				key_pool = DBM.open("#{$fns_path}/db/key_pool")
-        unless key_pool.hash_key?(host_name)
+        unless key_pool.has_key?(host_name)
           $nfs_log.push "fnsserver:Do not has the key of [#{host_name}]"
           return nil
         end
