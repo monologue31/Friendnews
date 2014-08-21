@@ -36,7 +36,7 @@ msg["User-Agent"] =   "dummy maker"
 
 file = File.read(path)
 str = file
-while size >= 0
+while size > 0
   str += file
   size -= 1
 end
