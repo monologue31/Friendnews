@@ -21,24 +21,31 @@ else
   repeat = 0
 end
 
+host_ip = "localhost"
 if ARGV[2]
-  host_ip = ARGV[2]
+  size = ARGV[2].to_i
 else
-  host_ip = "localhost"
+  size = 0
 end
 
 msg = Hash.new
 msg["Subject"]    =   "Dummy Article"
 msg["From"]       =   "xiaokunyao <xiaokunyao@softlab>"
 msg["Tags"]       =   "all"
-msg["Body"]       =   File.read(path)
 msg["User-Agent"] =   "dummy maker" 
+
+str = File.read(path)
+while size >= 0
+  str += srt
+  size -= 1
+end
+msg["Body"]       =   File.read(str)
 
 client = FriendNews::FNS_Client.new(11119)
 client.connect(host_ip)
 
 while repeat >= 0
   stat_code = client.post(msg)
-  p stat_code
+  puts stat_code
   repeat -= 1
 end
