@@ -34,9 +34,10 @@ msg["From"]       =   "xiaokunyao <xiaokunyao@softlab>"
 msg["Tags"]       =   "all"
 msg["User-Agent"] =   "dummy maker" 
 
-str = File.read(path)
+file = File.read(path)
+str = file
 while size >= 0
-  str += str
+  str += file
   size -= 1
 end
 msg["Body"]       =   str
