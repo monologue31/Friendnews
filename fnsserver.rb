@@ -749,7 +749,8 @@ module FriendNews
             p !hosts.include?("!#{t}")
             p !hosts.include?("!*")
             p (hosts.include?("*") || hosts.include?("#{t}"))
-            if !hosts.include?("!#{t}") && !hosts.include?("!*") && (hosts.include?("*") || hosts.include?("#{t}"))
+            p (!hosts.include?("!#{t}") && !hosts.include?("!*") && (hosts.include?("*") || hosts.include?("#{t}")))
+            if (!hosts.include?("!#{t}") && !hosts.include?("!*") && (hosts.include?("*") || hosts.include?("#{t}")))
               self.append_feedhist(msg["Message-ID"],l,nil)
               @feedlist.push("#{l},#{msg["Message-ID"]}")
             end
