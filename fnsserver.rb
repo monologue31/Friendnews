@@ -601,6 +601,10 @@ module FriendNews
 		    tmpfile.puts(msg["Body"])
         tmpfile.close
 				key_pool = DBM.open("#{$fns_path}/db/key_pool")
+        unless key_pool.hash_key?(host_name)
+          $nfs_log.push "fnsserver:Do not has the key of [#{host_name}]"
+          return nil
+        end
 			  key = OpenSSL::PKey::RSA.new(key_pool[host_name])	
 				key_pool.close
 	 	    digest = OpenSSL::Digest::SHA1.new()
@@ -1058,12 +1062,14 @@ module FriendNews
 		def add_key(host_name,key)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
 			key_pool[host_name] = key
+      p "host <#{host_name}> add key ok"
 			key_pool.close
 		end
 
 		def add_key_cl(host_name,path)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
 			key_pool[host_name] = File.read(path)
+      p "host <#{host_name}> add key ok"
 			key_pool.close
 		end
 
@@ -1117,7 +1123,7 @@ module FriendNews
       key_pool.clear
       key_pool.close
 
-      p "Friendnews system initilize ok"
+      p "Friendnews system initialize ok"
 		end
 		
 		def post(msg,mode)
