@@ -733,7 +733,6 @@ module FriendNews
           end
         else
           @fnsfeed.each_key do |h|
-            p h
             list << h
           end
         end
@@ -746,7 +745,7 @@ module FriendNews
         list.each do |l|
           hosts = @fnsfeed[l].split(",")
           tag.each do |t|
-            if !hosts.include?("!#{t}") || (hosts.include?("!*") && !hosts.include?("t"))
+            if !hosts.include?("!#{t}") || !(hosts.include?("!*") && !hosts.include?("t"))
               self.append_feedhist(msg["Message-ID"],l,nil)
               @feedlist.push("#{l},#{msg["Message-ID"]}")
             end
