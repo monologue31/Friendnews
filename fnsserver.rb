@@ -356,6 +356,7 @@ module FriendNews
         tmp.delete("Nesgroups")
         msg = @parsemsg.to_str(tmp)
       end
+      p msg
       line = msg.split("\r\n")
       line.each do |l|
         p line
