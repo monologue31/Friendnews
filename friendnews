@@ -52,6 +52,8 @@ when "mgt"
     fns_sys_mgt.rm_host(ARGV[2])
   when "show_host"
     fns_sys_mgt.show_host
+  when "add_tag"
+    fns_sys_mgt.add_tag(ARGV[2])
   when "show_tags"
     fns_sys_mgt.show_tags
   when "add_feedrule"

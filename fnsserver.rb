@@ -223,6 +223,7 @@ module FriendNews
         end
         msg = @parsemsg.to_hash(msg_str)
         
+        msg["From"].split
         #Verify Sign
         unless self.digital_sign(msg,"xiao-face-vm01","verify")
           msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
@@ -1003,6 +1004,13 @@ module FriendNews
       host.each do |h|
         p h
       end
+    end
+
+    def add_tag(tag_name)
+			#add tag
+      fnstag = DBM::open("#{$fns_path}/db/active",0666)
+      fnstag[tag_name] = "0,0,y,0"
+      fnstag.close
     end
 
     def show_tags
