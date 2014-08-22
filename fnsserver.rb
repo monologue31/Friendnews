@@ -136,7 +136,6 @@ module FriendNews
       	self.response("340 Sent article to be posted.end with <.>")
       	msg_str = ""
       	while line = @socket.gets
-          p line
       	  break if line == ".\r\n"
       	  msg_str += line
       	end
@@ -186,10 +185,10 @@ module FriendNews
         #p "artnum"
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
-        p "main_artnum is #{main_artnum}"
+        self.update_active("all",main_artnum)
         tags.each do |t|
+          next if t == "all"
           artnum = (active[t].split(",")[1].to_i + 1).to_s
-          p "sub_artnumi tag:#{t} num:#{artnum}"
           self.update_active(t,artnum)
           self.update_main_sub(t,artnum,main_artnum)
         end
@@ -265,6 +264,7 @@ module FriendNews
 #        p "caculate artnum"
         active = DBM::open("#{$fns_path}/db/active",0666)
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
+        self.update_active("all",main_artnum)
         tags.each do |t|
           artnum = (active[t].split(",")[1].to_i + 1).to_s
           self.update_active(t,artnum)
