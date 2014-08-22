@@ -139,6 +139,7 @@ module FriendNews
       	  break if line == ".\r\n"
       	  msg_str += line
       	end
+        p msg_str
       	msg = @parsemsg.to_hash(msg_str)
 
 			  #convert newsgroups to tag
