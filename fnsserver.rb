@@ -136,10 +136,10 @@ module FriendNews
       	self.response("340 Sent article to be posted.end with <.>")
       	msg_str = ""
       	while line = @socket.gets
+          p line
       	  break if line == ".\r\n"
       	  msg_str += line
       	end
-        p msg_str
       	msg = @parsemsg.to_hash(msg_str)
 
 			  #convert newsgroups to tag
