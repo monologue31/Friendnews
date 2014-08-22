@@ -27,7 +27,6 @@ module FriendNews
 						cdomain = Socket.getnameinfo(Socket.sockaddr_in(119,conn_nntp.peeraddr[3]))[0]
         		$fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
         		$fns_log.push "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
-            p conn_nntp.gets
           	conn_nntp.puts(200)
           	process = Process.new(conn_nntp)
           	process.run
