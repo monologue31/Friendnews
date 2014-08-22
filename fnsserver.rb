@@ -186,8 +186,10 @@ module FriendNews
         #p "artnum"
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
+        p "main_artnum is #{main_artnum}"
         tags.each do |t|
           artnum = (active[t].split(",")[1].to_i + 1).to_s
+          p "sub_artnumi tag:#{t} num:#{artnum}"
           self.update_active(t,artnum)
           self.update_main_sub(t,artnum,main_artnum)
         end
