@@ -206,7 +206,7 @@ module FriendNews
         
         return "240 Article posted ok"
 			rescue => e
-				$fns_log.push "post error"
+				$fns_log.push "fnsserver:post error [#{e}]"
         return "441 Posting failed"
       end
     end
@@ -961,25 +961,21 @@ module FriendNews
       i = 0
       msg = Hash.new
       msg["Body"] = ""
-      line = str.split("\r\n")
-      while i < line.length
-				unless line[i] == ""
-          header_field,field_value = line[i].split(/\s*:\s*/,2)
-					msg[header_field] = field_value
-          i += 1
-				else
-          i += 1
-          break
-				end
+      header,body = str.split("\r\n\r\n",2)
+      header_line = header.split(/\r\n(?!\s|\t)/)
+      while i < header_line.length
+        header_field,field_value = header_line[i].split(/\s*:\s*/,2)
+			  msg[header_field] = field_value
+        i += 1
       end
-      msg_line = 0
-      while i < line.length
-		   	msg["Body"] += "#{line[i]}\r\n"
-        break if line[i] == "."
-		  	msg_line += 1
+
+      i = 0
+      body_line = body.split("\r\n")
+      while i < body_line.length
+		   	msg["Body"] += "#{body_line[i]}\r\n"
         i += 1 
       end
-      msg["Lines"] = msg_line.to_s
+      msg["Lines"] = body_line.length.to_s
 	  	return msg
   	end
 	end
