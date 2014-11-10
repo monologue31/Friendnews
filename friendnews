@@ -16,10 +16,8 @@ $fns_path   =   $fns_conf["fns_path"]
 case ARGV[0]
 when "start"
   #Start log
-  debug = nil
-  debug = true if ARGV[1] == "debug" || ARGV[2] == "debug"
   Thread.start do
-    fns_log = FriendNews::FNS_Log.new(debug)
+    fns_log = FriendNews::FNS_Log.new(ARGV.include?("-d"))
     fns_log.start
   end
 
@@ -36,12 +34,9 @@ when "start"
   	DRb.start_service(url,fns_sys_mgt)
   	sleep()
   end
-  
 
   #Start Server
-  nntp = nil
-  nntp = true if ARGV[1] == "nntp" || ARGV[2] == "nntp"
-  server  = FriendNews::FNS_Server.new(nntp)
+  server  = FriendNews::FNS_Server.new(ARGV.include?("-f"))
   server.start
 when "mgt"
   fns_sys_mgt = FriendNews::FNS_Managment.new 

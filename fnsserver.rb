@@ -10,45 +10,45 @@ require 'active_support/time'
 module FriendNews
 
   class FNS_Server
-    def initialize(nntp = nil,port = 11119)
-			@nntp = nntp
+    def initialize(fns,port = 11119)
+      @fns = fns
       @port = port
     end
 
     def start
       $fns_log.push "fnsserver:Friend News System Server Started"
 
-			if @nntp
-				$fns_log.push "fnsserver:Start nntp mode"
+      if @fns
 				Thread.start do
-					nntp_socket =	TCPServer.open(119)
-					loop do
-        		conn_nntp = nntp_socket.accept
-						cdomain = Socket.getnameinfo(Socket.sockaddr_in(119,conn_nntp.peeraddr[3]))[0]
-        		$fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
-        		$fns_log.push "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
-          	conn_nntp.puts(200)
-          	process = Process.new(conn_nntp)
-          	process.run
-          	$fns_log.push "fnsserver:#{cdomain} done MODE:NNTP"
-					end
+          fns_socket = TCPServer.open(@port)
+          loop do
+            $fns_log.push "fnsserver:Start Friend News System with port #{@port}"
+            conn = fns_socket.accept
+			    	cdomain = Socket.getnameinfo(Socket.sockaddr_in(@port,conn.peeraddr[3]))[0]
+            $fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
+            $fns_log.push "fnsserver:Accepted connection from #{cdomain}"
+            Thread.start do
+              conn.puts(200)
+              process = Process.new(conn)
+              process.run
+              $fns_log.push "fnsserver:#{cdomain} done"
+            end
+          end
 				end
-			end
-
-      fns_socket = TCPServer.open(@port)
-      loop do
-        $fns_log.push "fnsserver:Start Friend News System with port #{@port}"
-        conn = fns_socket.accept
-				cdomain = Socket.getnameinfo(Socket.sockaddr_in(@port,conn.peeraddr[3]))[0]
-        $fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn.peeraddr[3]}"
-        $fns_log.push "fnsserver:Accepted connection from #{cdomain}"
-        Thread.start do
-          conn.puts(200)
-          process = Process.new(conn)
-          process.run
-          $fns_log.push "fnsserver:#{cdomain} done"
-        end
       end
+
+			nntp_socket =	TCPServer.open(119)
+      $fns_log.push "fnsserver:Listening port 119"
+			loop do
+      	conn_nntp = nntp_socket.accept
+				cdomain = Socket.getnameinfo(Socket.sockaddr_in(119,conn_nntp.peeraddr[3]))[0]
+      	$fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
+      	$fns_log.push "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
+       	conn_nntp.puts(200)
+       	process = Process.new(conn_nntp)
+       	process.run
+       	$fns_log.push "fnsserver:#{cdomain} done MODE:NNTP"
+			end
     end
   end
 
