@@ -146,14 +146,7 @@ module FriendNews
 			  	msg["Tags"] = msg["Newsgroups"]
 			  	msg.delete("Newsgroups")
 			  end
-=begin 
-        p "Check Msg Type"
-			  #check control header
-        if msg.has_key?("Control")
-          return "441 Posting failed - Can't parse control message" unless self.parse_cmsg(msg)
-          msg["Tags"] = "control"
-        end
-=end
+
         #p "Sign Msg"
 			  #check signature
         msg["Signature"] = $fns_conf["signature"] unless msg["Signature"]#Which header should be signed
@@ -308,8 +301,7 @@ module FriendNews
       min_artnum,max_artnum,p,num = active[param.chomp].split(",")
       active.close
       res = "211 #{num}\s#{min_artnum}\s#{max_artnum}\s#{param}\sgroup selected"
-      tag = param.chomp
-      @tag = param
+      @tag = param.chomp
       self.response(res)
     end
 
@@ -326,9 +318,11 @@ module FriendNews
       sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
       while min <= max
         artnum = sub_artnum[min.to_s]
+        p "artnum is #{artnum}"
         next unless File.exist?("#{$fns_path}/article/#{artnum}")
         artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
         msg_id = artnum_msgid[artnum]
+        p "msg_id is #{msg_id}"
         artnum_msgid.close
         #files->[article number][subject][from][date][message size][lines][xref][newsgroups]
         fields = history[msg_id].split("!")
@@ -606,8 +600,8 @@ module FriendNews
         tmpfile.close
 				key_pool = DBM.open("#{$fns_path}/db/key_pool")
         unless key_pool.has_key?(host_name)
-          $nfs_log.push "fnsserver:Do not has the key of [#{host_name}]"
-          return nil
+          $fns_log.push "fnsserver:Do not has the key of [#{host_name}]"
+          return "do not find key"
         end
 			  key = OpenSSL::PKey::RSA.new(key_pool[host_name])	
 				key_pool.close
@@ -803,7 +797,11 @@ module FriendNews
       host_ip = DBM::open("#{$fns_path}/db/hosts",0066)
       if client.connect(host_ip[host_id])
       	msg_id.each do |m|
-      	  stat_code = client.command("ihave",m)
+          history = DBM::open("#{$fns_path}/db/history",0666)
+          artnum = history[m].split("!")[0]
+          history.close
+          path = "#{$fns_path}/article/#{artnum}"
+      	  stat_code = client.ihave(m,File.read(path))
 					$fns_log.push "fnsfeeds:feed message #{m} status code #{stat_code}"
       	  self.append_feedhist(m,host_id,stat_code.split("\s")[0])
       	end
@@ -821,7 +819,6 @@ module FriendNews
   class FNS_Client
     def initialize(port)
       @port = port
-			@parsemsg = FriendNews::ParseMsg.new
     end
 
     def connect(host)
@@ -880,16 +877,11 @@ module FriendNews
       return res
     end
 
-    def ihave(msg_id)
+    def ihave(msg_id,msg)
       begin
         stat_code = self.request("IHAVE #{msg_id}")
         return stat_code unless /335/ =~ stat_code
-        history = DBM::open("#{$fns_path}/db/history",0666)
-        tag = history[msg_id].split("!")[7]
-        artnum = history[msg_id].split("!")[0]
-        history.close
-        path = "#{$fns_path}/article/#{artnum}"
-        stat_code = send_msg(File.read(path))
+        stat_code = send_msg(msg)
         return stat_code
       rescue => e
         $fns_log.push "fnsclient:Transfer message error [#{e}]"
@@ -901,7 +893,7 @@ module FriendNews
       begin
         stat_code = self.request("POST")
 			  return stat_code unless /340/ =~ stat_code
-			  stat_code = send_msg(@parsemsg.to_str(msg))
+			  stat_code = send_msg(msg)
         return stat_code
       rescue => e
         $fns_log.push "fnsclient:Post message error [#{e}]"
@@ -912,6 +904,9 @@ module FriendNews
 
 	class ParseMsg
 		def initialize 
+		end
+
+  	def to_str(msg_hash)
 			@headers = Hash.new	
       @headers["1"] = "Date"
       @headers["2"] = "From"
@@ -937,9 +932,7 @@ module FriendNews
       @headers["22"] = "Xref"
       @headers["23"] = "Msg-Sign"
       @headers["24"] = "Body"
-		end
 
-  	def to_str(msg_hash)
 	  	msg = ""
   		i = 1
   		while i <= @headers.length
@@ -998,7 +991,7 @@ module FriendNews
 			host.close
 		end
 
-    def show_host
+    def show_hosts
       host = DBM::open("#{$fns_path}/db/hosts",0666)
       host.each do |h|
         p h
@@ -1133,6 +1126,12 @@ module FriendNews
       p "Friendnews system initialize ok"
 		end
 		
+    def show_db(path)
+      db = DBM::open(path)
+      db.each do |l|
+        p l
+      end
+    end
 		def post(msg,mode)
 			fns_post = FirendNews::FNS_Client.new
 			return fns_post.post(msg)
@@ -1164,4 +1163,27 @@ module FriendNews
   	end
   end
 
+  class NNTP_Msg
+    def initialize()
+      @msg = Hash.new
+			@parsemsg = FriendNews::ParseMsg.new
+      @port = 119
+      @host = nil
+      attr_writer :msg
+      attr_writer :host
+      attr_writer :port
+    end
+
+    def post
+      client = FriendNews::FNS_Client.new(@port)
+      if client.connect(@host)
+        p @msg
+      	stat_code = client.post(@parsemsg.to_str(@msg))
+      	client.disconnect
+      else
+      	p "fnsclient:can not connect to host"
+      end
+    end
+
+  end
 end

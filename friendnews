@@ -13,6 +13,7 @@ $fns_queue  =   SizedQueue.new(1000)
 $fns_log    =   SizedQueue.new(1000)
 $fns_path   =   $fns_conf["fns_path"]
 
+puts "The path of fns is #{$fns_path}"
 case ARGV[0]
 when "start"
   #Start log
@@ -28,11 +29,13 @@ when "start"
   end
   
   #Start System Managment
-  Thread.start do
-  	url = "druby://localhost:11118"
-  	fns_sys_mgt = FriendNews::FNS_Managment.new 
-  	DRb.start_service(url,fns_sys_mgt)
-  	sleep()
+  if ARGV.include?("-m")
+    Thread.start do
+    	url = "druby://localhost:11118"
+    	fns_sys_mgt = FriendNews::FNS_Managment.new 
+    	DRb.start_service(url,fns_sys_mgt)
+    	sleep()
+    end
   end
 
   #Start Server
@@ -45,8 +48,8 @@ when "mgt"
     fns_sys_mgt.add_host(ARGV[2],ARGV[3])
   when "rm_host"
     fns_sys_mgt.rm_host(ARGV[2])
-  when "show_host"
-    fns_sys_mgt.show_host
+  when "show_hosts"
+    fns_sys_mgt.show_hosts
   when "add_tag"
     fns_sys_mgt.add_tag(ARGV[2])
   when "show_tags"
@@ -65,19 +68,24 @@ when "mgt"
     fns_sys_mgt.set_env(ARGV[2],ARGV[3])
   when "add_key"
     fns_sys_mgt.add_key_cl(ARGV[2],ARGV[3])
-when "rm_key"
+  when "rm_key"
   when "show_keypool"
     fns_sys_mgt.show_keypool
+  when "show_db"
+    fns_sys_mgt.show_db(ARGV[2])
   when "sys_init"
     fns_sys_mgt.sys_init(ARGV[2])
   else
     puts <<-EOS
-Friend News Systems by Xiao Kunyao Univercity of Tsukuba
+Friend News Systems by Xiao Kunyao University of Tsukuba
 usage: friendnews mnt [arguments] [value]
 
 Arguments:
   add_host        add host's ip
   rm_host         remove host's ip
+  show_hosts      show all hosts
+  add_tag         add a new tag
+  show_tags       show all tags
   add_feedrule    add a rule to feed
   rm_feedrule     remove a rule to feed
   add_mapping     add a tag mapping rule
@@ -85,16 +93,20 @@ Arguments:
   set_env         setting system option
   add_key         add a friend's public key
   rm_key          remove a friend's public key
+  show_keypool    show all the keys
   sys_init        initialize Friend News Systems
   EOS
   end
 else
   puts <<-EOS
-Friend News Systems by Xiao Kunyao Univercity of Tsukuba
+Friend News Systems by Xiao Kunyao University of Tsukuba
 usage: friendnews [arguments] [value]
 
 Arguments:
   start         start Friend News System.use [nntp] to start nntp.use [debug] to open debug mode
+    -d          open debug model
+    -f          open friendnews system server
+    -m          open friendnews system managment erver
   mgt           start Friend News System Managment.use [-h] to get help
   EOS
 end
