@@ -179,11 +179,12 @@ module FriendNews
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
         self.update_active("all",main_artnum)
+        self.update_main_sub("all",main_artnum,main_artnum)
         tags.each do |t|
           next if t == "all"
           artnum = (active[t].split(",")[1].to_i + 1).to_s
           self.update_active(t,artnum)
-          self.update_main_sub(t,artnum,main_artnum)
+          self.update_main_sub(t,main_artnum,artnum)
         end
 
         #p "Save file"
@@ -258,10 +259,11 @@ module FriendNews
         active = DBM::open("#{$fns_path}/db/active",0666)
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
         self.update_active("all",main_artnum)
+        self.update_main_sub("all",main_artnum,main_artnum)
         tags.each do |t|
           artnum = (active[t].split(",")[1].to_i + 1).to_s
           self.update_active(t,artnum)
-          self.update_main_sub(t,artnum,main_artnum)
+          self.update_main_sub(t,main_artnum,artnum)
         end
 
 #        p "save file"
@@ -318,11 +320,9 @@ module FriendNews
       sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
       while min <= max
         artnum = sub_artnum[min.to_s]
-        p "artnum is #{artnum}"
         next unless File.exist?("#{$fns_path}/article/#{artnum}")
         artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
         msg_id = artnum_msgid[artnum]
-        p "msg_id is #{msg_id}"
         artnum_msgid.close
         #files->[article number][subject][from][date][message size][lines][xref][newsgroups]
         fields = history[msg_id].split("!")
@@ -382,8 +382,6 @@ module FriendNews
       sub_main = DBM::open("#{$fns_path}/db/tags/#{tag}",0666)
       sub_main[sub_artnum] = main_artnum
       sub_main.close
-      main = DBM::open("#{$fns_path}/db/tags/all",0666)
-      main[main_artnum] = main_artnum
     end
 
     def rm_artnum(tag,main_artnum)
