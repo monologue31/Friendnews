@@ -1,0 +1,2 @@
+1.Use ./friendnews mgt sys_inti to initialize the system
+2.Use sudo ./friendnews start -d to start server

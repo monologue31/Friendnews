@@ -7,7 +7,7 @@ class MainController < ApplicationController
   end
 
 	def history
-		@hist = DBM::open("/home/xiaokunyao/Friendnews/db/history",0666) 
+		@hist = DBM::open("/Users/monologue31/MyPG/Friendnews/db/history",0666) 
 	end
 
 	def article
@@ -22,8 +22,8 @@ class MainController < ApplicationController
 	def key_pool
 		@key = Hash.new
 		@key_str = Array.new
-		hosts = DBM::open("/home/xiaokunyao/Friendnews/db/hosts",0666)
-		key_pool = DBM::open("/home/xiaokunyao/Friendnews/db/key_pool",0666)
+		hosts = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
+		key_pool = DBM::open("/Users/monologue31/MyPG/Friendnews/db/key_pool",0666)
 		hosts.each_key do |k|
 			if key_pool.has_key?(k)
 				@key[k] = "true"
@@ -70,13 +70,17 @@ class MainController < ApplicationController
 		else
 		end
 		@host_list = Hash.new
-		host = DBM::open("/home/xiaokunyao/Friendnews/db/hosts",0666)
+		host = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
 		host.each_key do |k|
 			@host_list[k] = host[k]
 		end
 		host.close
 	end
 
-	def sys_stat
+  def ml
+  end
+
+	def status
+		@stat = DBM::open("/Users/monologue31/MyPG/Friendnews/etc/fns_conf",0666) 
 	end
 end
