@@ -511,6 +511,7 @@ module FriendNews
     end
 
     def new_ml(name,msg)
+      return nil if name == "list"
       ml = DBM::opn("#{$fns_path}/etc/memberlist/#{name}",0666) 
       return nil if ml["Version"] <= Time.now.to_s
 			msg["From"] = "#{host_name}\s<#{host_name}@#{host_domain}>"
@@ -519,10 +520,16 @@ module FriendNews
         host,permission = m.split(/\s*|\t*/)
         ml[host] = permission
       end
+      list = DBM::opn("#{$fns_path}/etc/memberlist/list",0666)
+      list[name] = ml["Version"]
+      list.close
+      ml.close
       return 1
     end
 
     def update_ml(name,msg)
+      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
+      return nil unless list.include?(name)
       ml = DBM::opn("#{$fns_path}/etc/memberlist/#{name}",0666) 
 			premission_from = ml[(msg["From"].split("\s")[1]).splite("@")[1]]
 			return nil if (permission_from != "admin") && !(permission_from.inclued("w"))
@@ -532,6 +539,9 @@ module FriendNews
         ml[host] = permission
       end
       return 1
+    end
+
+    def rem_ml(name)
     end
 
     def add_art_tag(param,msg)

@@ -1,0 +1,29 @@
+<form action="/main/add_ml" method = "post" enctype = "multipart/form-data">
+	<p>
+		<label>MemberList Name:</label>
+		<input name = "ml_name" type = "text">
+	</p>
+  <p>
+  <table border="1" cellpadding="4">
+    <tr>
+      <td> </td>
+      <th>host_name</th>
+      <td>permission</td>
+    </tr>
+    <% @hosts.each_key do |h| -%>
+    <tr>
+      <td><%= check_box_tag h, 'test',true %></td>
+      <th><%= h %></th>
+      <td>
+        <select name = <%= h+"prem "%>>
+		      <option value = "a">administrator</option>
+          <option value = "w">write</option>
+          <option value = "r">read</option>
+		    </select>
+      </td>
+    </tr>
+    <% end -%>
+  </table>
+  </p>
+  <p><input type = "submit"></p>
+</form>

@@ -7,8 +7,31 @@ class MainController < ApplicationController
   end
 
 	def history
-		@hist = DBM::open("/Users/monologue31/MyPG/Friendnews/db/history",0666) 
+		history = DBM::open("/Users/monologue31/MyPG/Friendnews/db/history",0666) 
+    @hist = Hash.new
+    history.each do |k,v|
+      @hist[k] = v
+    end
+    history.close
 	end
+
+  def hosts
+		hostsdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
+		key_pool = DBM::open("/Users/monologue31/MyPG/Friendnews/db/key_pool",0666)
+		if request.post?
+      hostsdbm.delete(params["host_name"])
+    else
+    end
+    @hosts = Hash.new {|h,k| h[k] = {}}
+    hostsdbm.each do |h,d|
+      @hosts[h]["host_domain"] = d
+			if key_pool.has_key?(h)
+				@hosts[h]["key"] = 1
+			else
+				@hosts[h]["key"] = 0
+			end
+    end
+  end
 
 	def article
 		if params["artnum"]
@@ -36,17 +59,6 @@ class MainController < ApplicationController
 		end
 		hosts.close
 		key_pool.close
-	end
-
-	def add_localhost
-		if request.post?
-			host_name = "localhost" 
-			host_domain = "#{params["host_name"]},#{params["host_domain"]}"
-			url = "druby://localhost:11118"
-			mgt = DRbObject.new_with_uri(url)
-			mgt.add_host(host_name,host_domain)
-		else
-		end
 	end
 
 	def add_host
@@ -77,10 +89,36 @@ class MainController < ApplicationController
 		host.close
 	end
 
-  def ml
+  def memberlists
+    listdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
+    @list = Hash.new
+    listdbm.each do |k,v|
+      @list[k] = v
+    end
+    listdbm.close
+  end
+
+  def add_ml
+    if request.post?
+      p params
+    end
+		hostsdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
+    @hosts = Hash.new
+    hostsdbm.each do |k,v|
+      @hosts[k] = v
+    end
+    hostsdbm.close
+  end
+
+  def update_ml
   end
 
 	def status
-		@stat = DBM::open("/Users/monologue31/MyPG/Friendnews/etc/fns_conf",0666) 
+		statdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/etc/fns_conf",0666) 
+    @stat = Hash.new
+    statdbm.each do |k,v|
+      @stat[k] = v
+    end
+    statdbm.close
 	end
 end
