@@ -2,8 +2,14 @@
 <table border="1" cellpadding="4">
 <tr>
 <th>name</th>
-<td>administrator</td>
-<td>create time</td>
 <td>version</td>
+<td>action</td>
 </tr>
+<% @list.each do |n,v| -%>
+<tr>
+<th><%= n %></th>
+<td><%= v %></td>
+<td><%=  button_to "show",{:controller => 'main',:action => 'show_ml',:ml_name => n},{:method => :post} %></td>
+</tr>
+<% end -%>
 </table>

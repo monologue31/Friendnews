@@ -12,10 +12,10 @@
     </tr>
     <% @hosts.each_key do |h| -%>
     <tr>
-      <td><%= check_box_tag h, 'test',true %></td>
+      <td><%= check_box_tag h, '1',true %></td>
       <th><%= h %></th>
       <td>
-        <select name = <%= h+"prem "%>>
+        <select name = <%= h+"prem" %> >
 		      <option value = "a">administrator</option>
           <option value = "w">write</option>
           <option value = "r">read</option>

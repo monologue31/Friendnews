@@ -56,7 +56,7 @@ module FriendNews
 	  def initialize(socket = nil,cdomain)
 		  @socket = socket
 			@parsemsg = FriendNews::ParseMsg.new
-      @cdomain = cdomian
+      @cdomain = cdomain
 	  end
 
     def run
@@ -150,15 +150,16 @@ module FriendNews
 			  	msg.delete("Newsgroups")
 			  end
 
+        p "parse control"
         if msg.has_key?("Control")
-          unless self.parse_cmsg(msg)
+          unless self.parse_cmsg(msg,@cdomain)
             return "500"
           end
         end
-			  #check signature
-        msg["Signature"] = $fns_conf["signature"] unless msg["Signature"]#Which header should be signed
 
-        #p "Parse Tag"
+			  p "check signature"
+        msg["Signature"] = $fns_sign unless msg["Signature"]#Which header should be signed
+
         active = DBM::open("#{$fns_path}/db/active",0666)
         tags = Array.new
         msg["Tags"].split(",").each do |t|
@@ -166,21 +167,20 @@ module FriendNews
         end
         tags << "junk" if tags.empty?
 
-			  #message-id
+			  p "message-id"
         while 1
           msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
           break unless chk_hist?(msg["Message-ID"])
         end
 
-        msg["Path"] = $fns_conf["host"]
-        msg["Expires"] = (Date.today + $fns_conf["expires"].to_i.days).to_s
+        #msg["Path"] = fns_conf["host"]
+        msg["Expires"] = (Date.today + $fns_expire.to_i.days).to_s
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Distribution"] = "global" unless msg["Distribution"]
-        #p "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
         active = DBM::open("#{$fns_path}/db/active",0666)
         
-        #create artnum
+        p "create artnum"
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
         self.update_active("all",main_artnum)
         self.update_main_sub("all",main_artnum,main_artnum)
@@ -191,7 +191,6 @@ module FriendNews
           self.update_main_sub(t,main_artnum,artnum)
         end
 
-        #p "Save file"
         File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
           f.write @parsemsg.to_str(msg)
         end
@@ -419,7 +418,7 @@ module FriendNews
 
     #Control message parese
     def parse_cmsg(msg,host_name)
-      perm = self.chk_premession(host_name)
+      #perm = self.chk_premession(host_name)
       cmd,param = msg["Control"].split("\s",2)
       case cmd
       when "cancel"
@@ -455,9 +454,9 @@ module FriendNews
         artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
         main_artnum = artnum_msgid.index(msg_id)
         if File.exist?("#{$fns_path}/article/#{main_artnum}")
-          delmsg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{art_num}"))
+          delmsg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{main_artnum}"))
           if msg["From"] == delmsg["From"]
-            File.delete("#{$fns_path}/article/#{art_num}")
+            FileUtils.mv("#{$fns_path}/article/#{main_artnum}","#{$fns_path}/tmp/#{Time.now.to_s}")
           else
             #wrong auther
             return nil
@@ -512,15 +511,14 @@ module FriendNews
 
     def new_ml(name,msg)
       return nil if name == "list"
-      ml = DBM::opn("#{$fns_path}/etc/memberlist/#{name}",0666) 
-      return nil if ml["Version"] <= Time.now.to_s
-			msg["From"] = "#{host_name}\s<#{host_name}@#{host_domain}>"
+      ml = DBM::open("#{$fns_path}/etc/memberlist/#{name}",0666) 
+      #return nil if ml["Version"] <= Time.now.to_s 
       ml["Version"] = Time.now.to_s
       msg["Body"].split("\r\n").each do |m|
-        host,permission = m.split(/\s*|\t*/)
+        host,permission = m.split(/\s+|\t+/)
         ml[host] = permission
       end
-      list = DBM::opn("#{$fns_path}/etc/memberlist/list",0666)
+      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
       list[name] = ml["Version"]
       list.close
       ml.close
@@ -530,14 +528,18 @@ module FriendNews
     def update_ml(name,msg)
       list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
       return nil unless list.include?(name)
-      ml = DBM::opn("#{$fns_path}/etc/memberlist/#{name}",0666) 
+      ml = DBM::open("#{$fns_path}/etc/memberlist/#{name}",0666) 
 			premission_from = ml[(msg["From"].split("\s")[1]).splite("@")[1]]
-			return nil if (permission_from != "admin") && !(permission_from.inclued("w"))
+			return nil if (permission_from.include("a")) && !(permission_from.inclue("w"))
       return nil if msg["Date"] <= ml["Version"]
       msg["Body"].split("\r\n").each do |m|
-        host,permission = m.split(/\s*|\t*/)
+        host,permission = m.split(/\s+|\t+/)
         ml[host] = permission
       end
+      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
+      list[name] = msg["Date"]
+      list.close
+      ml.close
       return 1
     end
 
@@ -742,7 +744,7 @@ module FriendNews
         if msg.has_key?("Distribution") && msg["Distribution"] != "global"
           msg["Distribution"].split(",").each do |d|
             DBM::open("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
-              unless list.include(h)
+              unless list.include?(h) || h == "Version"
                 list << h
               end
             end
@@ -984,14 +986,14 @@ module FriendNews
     def add_host(host_name,host_domain)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
       host[host_name] = host_domain
-      p "create host <#{host_name}> ok, domain <#{host_domain}>"
+      $fns_log.push "create host <#{host_name}> ok, domain <#{host_domain}>"
 			host.close
     end
 
 		def rm_host(host_name)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
 			host.delete(host_name)
-      p "delete host <#{host_name}> ok"
+      $fns_log.push "delete host <#{host_name}> ok"
 			host.close
 		end
 
@@ -1007,6 +1009,7 @@ module FriendNews
       fnstag = DBM::open("#{$fns_path}/db/active",0666)
       fnstag[tag_name] = "0,0,y,0"
       fnstag.close
+      $fns_log.push "add tag <#{tag_name}> ok"
     end
 
     def show_tags
@@ -1095,7 +1098,7 @@ module FriendNews
 
     end
 
-		def sys_init(host)
+		def sys_init(host,mail)
       FileUtils.mkpath("log")
       FileUtils.mkpath("tmp")
       FileUtils.mkpath("etc")
@@ -1110,6 +1113,7 @@ module FriendNews
       fnsconf["host"] = host
       fnsconf["expires"] = "30"
       fnsconf["signature"] = "From,Subject,Tags,Message-ID,Distribution"
+      fnsconf["from"] = "#{host}\n<#{mail}>"
       fnsconf.close
 
       #clear message history
@@ -1144,9 +1148,17 @@ module FriendNews
         p l
       end
     end
-		def post(msg,mode)
-			fns_post = FirendNews::FNS_Client.new
-			return fns_post.post(msg)
+
+		def post(msg)
+      client = FriendNews::FNS_Client.new(119)
+      if client.connect("localhost")
+			  parsemsg = FriendNews::ParseMsg.new
+      	stat_code = client.post(parsemsg.to_str(msg))
+      	client.disconnect
+        return stat_code
+      else
+      	p "fnsclient:can not connect to host"
+      end
 		end
 
 		def article(artnum)
@@ -1193,6 +1205,7 @@ module FriendNews
         p @parsemsg.to_str(@msg)
       	stat_code = client.post(@parsemsg.to_str(@msg))
       	client.disconnect
+        return stat_code
       else
       	p "fnsclient:can not connect to host"
       end

@@ -1,0 +1,30 @@
+<form method="post" action="/main/post">
+<p>From:<input type="text" name="from"></p>
+<p>Subject:<input type="text" name="subject"></p>
+<p>Tag:<input type="text" name="tag"></p>
+<p>
+	<label>Control:</label>
+	<select name = "cmsgtype">
+	<option value = ""></option>
+	<option value = "cancel">Cancel</option>
+	<option value = "newtag">New tag</option>
+	<option value = "rmtag">Remove tag</option>
+	<option value = "newml">New memberlist</option>
+	<option value = "updateml">Update memberlist</option>
+  </select>
+  <input type="text" name="cmsgparam">
+</p>
+<p>
+	<label>Distributions:</label>
+	<select name = "distributions">
+	<option value = "goblal">all friends</option>
+	<% @ml.each do |f| -%>
+		<option value = <%= f %>><%= f %></option>
+	<% end -%>
+	</select>
+</p>
+<textarea name="body" rows=10 cols=100></textarea>
+<br>
+<input type="submit" value="post">
+</form>
+<%= @result %>

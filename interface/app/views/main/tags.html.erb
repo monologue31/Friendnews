@@ -1,0 +1,20 @@
+<table border="1" cellpadding="4">
+<tr>
+<th>tag name</th>
+<td>min article number</td>
+<td>max article number</td>
+<td>status</td>
+<td>article numbers</td>
+<td>action</td>
+</tr>
+<% @tags.each_key do |h| -%>
+  <tr>
+  <th><%= h %></th>
+  <td><%= @tags[h][0] %></td>
+  <td><%= @tags[h][1] %></td>
+  <td><%= @tags[h][2] %></td>
+  <td><%= @tags[h][3] %></td>
+  <td><%=  button_to "delete",{:controller => 'main',:action => 'tags',:tag_name => h},{:method => :post} %></td>
+  </tr>
+<% end -%>
+</table>

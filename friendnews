@@ -8,10 +8,13 @@ require_relative './fnsserver.rb'
 
 #Initialize globle parameter
 FileUtils.mkpath("etc") unless Dir.exist?("etc")
-$fns_conf   =   DBM.open("./etc/fns_conf",0666)  
+fns_conf   =   DBM.open("./etc/fns_conf",0666)  
 $fns_queue  =   SizedQueue.new(1000)
 $fns_log    =   SizedQueue.new(1000)
-$fns_path   =   $fns_conf["fns_path"]
+$fns_path   =   fns_conf["fns_path"]
+$fns_sign   =   fns_conf["signature"]
+$fns_expire =   fns_conf["expire"]
+fns_conf.close
 
 puts "The path of fns is #{$fns_path}"
 case ARGV[0]
@@ -74,7 +77,7 @@ when "mgt"
   when "show_db"
     fns_sys_mgt.show_db(ARGV[2])
   when "sys_init"
-    fns_sys_mgt.sys_init(ARGV[2])
+    fns_sys_mgt.sys_init(ARGV[2],ARGV[3])
   else
     puts <<-EOS
 Friend News Systems by Xiao Kunyao University of Tsukuba

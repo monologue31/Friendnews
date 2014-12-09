@@ -7,7 +7,7 @@ class MainController < ApplicationController
   end
 
 	def history
-		history = DBM::open("/Users/monologue31/MyPG/Friendnews/db/history",0666) 
+		history = DBM::open("#{File.expand_path('../')}/db/history",0666) 
     @hist = Hash.new
     history.each do |k,v|
       @hist[k] = v
@@ -15,13 +15,35 @@ class MainController < ApplicationController
     history.close
 	end
 
-  def hosts
-		hostsdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
-		key_pool = DBM::open("/Users/monologue31/MyPG/Friendnews/db/key_pool",0666)
+  def tags
 		if request.post?
-      hostsdbm.delete(params["host_name"])
+			tag_name = params["tag_name"]
+			url = "druby://localhost:11118"
+			mgt = DRbObject.new_with_uri(url)
+			mgt.rm_tag(tag_name)
     else
     end
+    @tags = Hash.new
+		tagsdbm = DBM::open("#{File.expand_path('../')}/db/active",0666)
+    tagsdbm.each do |t,p|
+      @tags[t] = p.split(",")
+    end
+    tagsdbm.close
+  end
+
+  def ctl_msg
+  end
+
+  def hosts
+		if request.post?
+			host_name = params["host_name"]
+			url = "druby://localhost:11118"
+			mgt = DRbObject.new_with_uri(url)
+			mgt.rm_host(host_name)
+    else
+    end
+		hostsdbm = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
+		key_pool = DBM::open("#{File.expand_path('../')}/db/key_pool",0666)
     @hosts = Hash.new {|h,k| h[k] = {}}
     hostsdbm.each do |h,d|
       @hosts[h]["host_domain"] = d
@@ -45,8 +67,8 @@ class MainController < ApplicationController
 	def key_pool
 		@key = Hash.new
 		@key_str = Array.new
-		hosts = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
-		key_pool = DBM::open("/Users/monologue31/MyPG/Friendnews/db/key_pool",0666)
+		hosts = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
+		key_pool = DBM::open("#{File.expand_path('../')}/db/key_pool",0666)
 		hosts.each_key do |k|
 			if key_pool.has_key?(k)
 				@key[k] = "true"
@@ -82,7 +104,7 @@ class MainController < ApplicationController
 		else
 		end
 		@host_list = Hash.new
-		host = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
+		host = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
 		host.each_key do |k|
 			@host_list[k] = host[k]
 		end
@@ -90,7 +112,7 @@ class MainController < ApplicationController
 	end
 
   def memberlists
-    listdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
+    listdbm = DBM::open("#{File.expand_path('../')}/etc/memberlist/list",0666)
     @list = Hash.new
     listdbm.each do |k,v|
       @list[k] = v
@@ -99,12 +121,32 @@ class MainController < ApplicationController
   end
 
   def add_ml
+		hostsdbm = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
     if request.post?
-      p params
+      fnsconf = DBM::open("#{File.expand_path('../')}/etc/fns_conf",0666)
+      msg = Hash.new
+  		msg["From"] = fnsconf["from"] 
+  		msg["Subject"] = "New memberlist creat by #{fnsconf["host"]}"
+  		msg["Tags"] = "control"
+      msg["Control"] = "newml #{params["ml_name"]}" 
+  		msg["User-Agent"] = request.env["HTTP_USER_AGENT"] + " fnsmgt"
+      msg["Distribution"] = params["ml_name"]
+      msg["Body"] = ""
+      hostsdbm.each_key do |h|
+        if params[h] == "1"
+          msg["Body"] += hostsdbm[h] + "\t" + params["#{h}prem"] + "\r\n"
+        end
+      end
+      msg["Body"] += hostsdbm["localhost"] + "\ta\r\n"
+      fnsconf.close
+  		url = "druby://localhost:11118"
+      p msg
+  		mgt = DRbObject.new_with_uri(url)
+  		@result = mgt.post(msg)
     end
-		hostsdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/db/hosts",0666)
     @hosts = Hash.new
     hostsdbm.each do |k,v|
+      next if k == "localhost"
       @hosts[k] = v
     end
     hostsdbm.close
@@ -113,8 +155,31 @@ class MainController < ApplicationController
   def update_ml
   end
 
+  def post
+		if request.post?
+      msg = Hash.new
+			msg["From"] = params["from"]
+			msg["Subject"] = params["subject"]
+			msg["Tags"] = params["tag"]
+      msg["Control"] = params["cmsgtype"] + "\s" + params["cmsgparam"]if params["cmsgtype"] != ""
+			msg["User-Agent"] = request.env["HTTP_USER_AGENT"] + "\sfnsmgt"
+      msg["Distribution"] = params["distributions"]
+      msg["Body"] = params["body"]
+			url = "druby://localhost:11118"
+			mgt = DRbObject.new_with_uri(url)
+			@result = mgt.post(msg)
+		else
+
+		end
+    @ml = Array.new
+    list = DBM::open("#{File.expand_path('../')}/etc/memberlist/list",0666)
+    list.each_key do |l|
+      @ml << l
+    end
+  end
+
 	def status
-		statdbm = DBM::open("/Users/monologue31/MyPG/Friendnews/etc/fns_conf",0666) 
+		statdbm = DBM::open("#{File.expand_path('../')}/etc/fns_conf",0666) 
     @stat = Hash.new
     statdbm.each do |k,v|
       @stat[k] = v
