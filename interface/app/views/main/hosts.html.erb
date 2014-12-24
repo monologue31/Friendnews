@@ -1,21 +1,23 @@
 <%= button_to "add host",{:controller => 'main', :action => 'add_host'},{:method => :get} %>
 <table border="1" cellpadding="4">
 <tr>
-<th>host_name</th>
-<td>host_domain</td>
+<th>host_domain</th>
+<td>host_name</td>
 <td>key</td>
+<td>control</td>
 <td>action</td>
 </tr>
 <% @hosts.each_key do |h| -%>
   <tr>
-  <th><%= h %></th>
-  <td><%= @hosts[h]["host_domain"] %></td>
+    <th><%= h %></th>
+    <td><%= @hosts[h]["host_domain"] %></td>
     <% if @hosts[h]["key"] == 0 %>
-      <td><%=  button_to "add",{:controller => 'main',:action => 'upload_key',:host_name => h},{:method => :get} %></td>
+      <td><%=  button_to "add",{:controller => 'main',:action => 'upload_key',:host_domain => @hosts[h]["host_domain"]},{:method => :get} %></td>
     <% else %>
-      <td>true<td>
+      <td><%=  button_to "change",{:controller => 'main',:action => 'upload_key',:host_domain => @hosts[h]["host_domain"]},{:method => :get} %></td>
     <% end %>
-    <td><%=  button_to "delete",{:controller => 'main',:action => 'hosts',:host_name => h},{:method => :post} %></td>
+    <td><%= @hosts[h]["control"] %></td>
+    <td><%=  button_to "delete",{:controller => 'main',:action => 'hosts',:host_domain => @hosts[h]["host_domain"]},{:method => :post} %></td>
   </tr>
 <% end -%>
 </table>

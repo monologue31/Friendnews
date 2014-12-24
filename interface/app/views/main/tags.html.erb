@@ -1,3 +1,11 @@
+<form action="/main/tags" method = "post">
+	<p>
+		<label>Tag Name:</label>
+		<input name = "tag_name" type = "text">
+		<input type = "submit" value = "add">
+	</p>
+</form>
+
 <table border="1" cellpadding="4">
 <tr>
 <th>tag name</th>
@@ -14,7 +22,7 @@
   <td><%= @tags[h][1] %></td>
   <td><%= @tags[h][2] %></td>
   <td><%= @tags[h][3] %></td>
-  <td><%=  button_to "delete",{:controller => 'main',:action => 'tags',:tag_name => h},{:method => :post} %></td>
+  <td><%=  button_to "delete",{:controller => 'main',:action => 'tags',:tag_name => h,:acttype => "del"},{:method => :post} %></td>
   </tr>
 <% end -%>
 </table>

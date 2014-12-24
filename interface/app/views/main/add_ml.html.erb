@@ -7,18 +7,19 @@
   <table border="1" cellpadding="4">
     <tr>
       <td> </td>
+      <th>host_domain</th>
       <th>host_name</th>
       <td>permission</td>
     </tr>
-    <% @hosts.each_key do |h| -%>
+    <% @hosts.each do |d,n| -%>
     <tr>
-      <td><%= check_box_tag h, '1',true %></td>
-      <th><%= h %></th>
+      <td><%= check_box_tag n, '1',true %></td>
+      <th><%= d %></th>
+      <th><%= n %></th>
       <td>
-        <select name = <%= h+"prem" %> >
-		      <option value = "a">administrator</option>
-          <option value = "w">write</option>
+        <select name = <%= n+"perm" %> >
           <option value = "r">read</option>
+		      <option value = "a">administrator</option>
 		    </select>
       </td>
     </tr>

@@ -14,6 +14,7 @@ $fns_log    =   SizedQueue.new(1000)
 $fns_path   =   fns_conf["fns_path"]
 $fns_sign   =   fns_conf["signature"]
 $fns_expire =   fns_conf["expire"]
+$fns_domain =   fns_conf["domain"]
 fns_conf.close
 
 puts "The path of fns is #{$fns_path}"

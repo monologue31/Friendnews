@@ -1,0 +1,14 @@
+<table border="1" cellpadding="4">
+<tr>
+<th>name</th>
+<td>permission</td>
+<td>action</td>
+</tr>
+<% @ml.each do |h,p| -%>
+<tr>
+<th><%= h %></th>
+<td><%= p %></td>
+<td><%=  button_to "delete",{:controller => 'main',:action => 'update_ml',:mlaction => "del"},{:method => :post} %></td>
+</tr>
+<% end -%>
+</table>

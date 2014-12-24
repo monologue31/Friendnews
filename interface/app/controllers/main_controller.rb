@@ -31,27 +31,44 @@ class MainController < ApplicationController
     tagsdbm.close
   end
 
-  def ctl_msg
+  def cmsg_list
+		clistdbm = DBM::open("#{File.expand_path('../')}/db/cmsglist",0666) 
+    if request.post?
+  		url = "druby://localhost:11118"
+			mgt = DRbObject.new_with_uri(url)
+      clistdbm.each_key do |m|
+        if params[m] == "1"
+			    msg = mgt.article(params[m])
+  		    @result = mgt.apply_cmsg(msg,"localhost")
+        end
+      end
+    end
+    @clist = Hash.new
+    clistdbm.each do |k,v|
+      @clist[k] = v
+    end
+    clistdbm.close
   end
 
   def hosts
 		if request.post?
-			host_name = params["host_name"]
 			url = "druby://localhost:11118"
 			mgt = DRbObject.new_with_uri(url)
-			mgt.rm_host(host_name)
+			mgt.rm_host(params["host_domain"])
     else
     end
 		hostsdbm = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
 		key_pool = DBM::open("#{File.expand_path('../')}/db/key_pool",0666)
+    perm = DBM::open("#{File.expand_path('../')}/db/perm",0666)
     @hosts = Hash.new {|h,k| h[k] = {}}
-    hostsdbm.each do |h,d|
+    hostsdbm.each do |d,h|
       @hosts[h]["host_domain"] = d
 			if key_pool.has_key?(h)
 				@hosts[h]["key"] = 1
 			else
 				@hosts[h]["key"] = 0
 			end
+      @hosts[h]["control"] = perm[d]
     end
   end
 
@@ -85,11 +102,9 @@ class MainController < ApplicationController
 
 	def add_host
 		if request.post?
-			host_name = params["host_name"]
-			host_domain = params["host_domain"]
 			url = "druby://localhost:11118"
 			mgt = DRbObject.new_with_uri(url)
-			mgt.add_host(host_name,host_domain)
+			mgt.add_host(params["host_domain"],params["host_name"],params["feed"],params["control"])
 		else
 		end
 	end
@@ -122,8 +137,8 @@ class MainController < ApplicationController
 
   def add_ml
 		hostsdbm = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
+    fnsconf = DBM::open("#{File.expand_path('../')}/etc/fns_conf",0666)
     if request.post?
-      fnsconf = DBM::open("#{File.expand_path('../')}/etc/fns_conf",0666)
       msg = Hash.new
   		msg["From"] = fnsconf["from"] 
   		msg["Subject"] = "New memberlist creat by #{fnsconf["host"]}"
@@ -132,27 +147,43 @@ class MainController < ApplicationController
   		msg["User-Agent"] = request.env["HTTP_USER_AGENT"] + " fnsmgt"
       msg["Distribution"] = params["ml_name"]
       msg["Body"] = ""
-      hostsdbm.each_key do |h|
-        if params[h] == "1"
-          msg["Body"] += hostsdbm[h] + "\t" + params["#{h}prem"] + "\r\n"
+      hostsdbm.each do |d,n|
+        next if d == fnsconf["domain"]
+        if params[n] == "1"
+          msg["Body"] += d + "\t" + params["#{n}perm"] + "\r\n"
         end
       end
-      msg["Body"] += hostsdbm["localhost"] + "\ta\r\n"
-      fnsconf.close
+      msg["Body"] += fnsconf["domain"] + "\ta\r\n"
   		url = "druby://localhost:11118"
-      p msg
   		mgt = DRbObject.new_with_uri(url)
   		@result = mgt.post(msg)
     end
     @hosts = Hash.new
-    hostsdbm.each do |k,v|
-      next if k == "localhost"
-      @hosts[k] = v
+    hostsdbm.each do |d,n|
+      next if d == fnsconf["domain"]
+      @hosts[d] = n
     end
     hostsdbm.close
+    fnsconf.close
   end
 
   def update_ml
+    if request.post?
+      if params["mlaction"] == "add"
+      end
+      mldbm = DBM::open("#{File.expand_path('../')}/etc/memberlist/#{params["ml_name"]}",0666)
+      @ml = Hash.new
+      mldbm.each do |h,p|
+        if p == "a"
+          @ml[h] = "administrator"
+        elsif p == "r"
+          @ml[h] = "read"
+        elsif p == "w"
+          @ml[h] = "write"
+        end
+      end
+      mldbm.close
+    end
   end
 
   def post
@@ -161,7 +192,7 @@ class MainController < ApplicationController
 			msg["From"] = params["from"]
 			msg["Subject"] = params["subject"]
 			msg["Tags"] = params["tag"]
-      msg["Control"] = params["cmsgtype"] + "\s" + params["cmsgparam"]if params["cmsgtype"] != ""
+      msg["Control"] = params["cmsgtype"] + "\s" + params["cmsgparam"] if params["cmsgtype"] != ""
 			msg["User-Agent"] = request.env["HTTP_USER_AGENT"] + "\sfnsmgt"
       msg["Distribution"] = params["distributions"]
       msg["Body"] = params["body"]

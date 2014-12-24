@@ -1,0 +1,22 @@
+<form action="/main/cmsg_list" method = "post" enctype = "multipart/form-data">
+  <table border="1" cellpadding="4">
+    <tr>
+    <td> </td>
+    <th>Message-ID</th>
+    <td>From</td>
+    <td>Date</td>
+    <td>Type</td>
+    </tr>
+    <% @clist.each do |msg,val| -%>
+    <tr>
+      <td><%= check_box_tag msg, '1',true %></td>
+      <th><%= link_to(msg,:controller => 'main',:action => 'article',:artnum => msg) %></th>
+      <% val.split("!").each do |v|-%>
+      <td><%= v %></td>
+      <% end -%>
+    </tr>
+    <% end -%>
+  </table>
+  <p><input type = "submit" value = "apply"></p>
+</form>
+<%= @result %>

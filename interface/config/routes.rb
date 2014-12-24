@@ -13,7 +13,9 @@ Interface::Application.routes.draw do
 	match "main/add_host"
 	match "main/add_localhost"
   match "main/add_ml"
-  match "main/show_ml"
+  match "main/update_ml"
+  match "main/cmsg_list"
+  match "main/mapping"
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

@@ -56,6 +56,7 @@ module FriendNews
 	  def initialize(socket = nil,cdomain)
 		  @socket = socket
 			@parsemsg = FriendNews::ParseMsg.new
+      @parsecmsg = FriendNews::FNS_ParseCmsg.new
       @cdomain = cdomain
 	  end
 
@@ -81,10 +82,12 @@ module FriendNews
                 self.response("440 Posting not allowed")
               else
                 stat_code = self.post
+                self.response(stat_code)
               end
               $fns_log.push "fnsserver:Post done with code [#{stat_code}]"
         	  when /(?i)ihave/
               stat_code = self.ihave(param)
+              self.response(stat_code)
               $fns_log.push "fnsserver:Ihave done with code [#{stat_code}]"
         	  when "MODE"
         	    if param.chomp == "READER"
@@ -150,16 +153,26 @@ module FriendNews
 			  	msg.delete("Newsgroups")
 			  end
 
-        p "parse control"
-        if msg.has_key?("Control")
-          unless self.parse_cmsg(msg,@cdomain)
-            return "500"
-          end
+			  #message-id
+        while 1
+          msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
+          break unless chk_hist?(msg["Message-ID"])
         end
 
-			  p "check signature"
+        msg["Path"] = $fns_domain
+        msg["Expires"] = (Date.today + $fns_expire.to_i.days).to_s
+        msg["Date"] = Time.now.to_s unless msg.key?("Date")
+        msg["Distribution"] = "global" unless msg["Distribution"]
+
+        if msg.has_key?("Control")
+          feedflag = @parsecmsg.parse_cmsg(msg,@cdomain)
+          return "500" unless feedflag
+        end
+
+			  #check signature
         msg["Signature"] = $fns_sign unless msg["Signature"]#Which header should be signed
 
+        #p "Parse Tag"
         active = DBM::open("#{$fns_path}/db/active",0666)
         tags = Array.new
         msg["Tags"].split(",").each do |t|
@@ -167,20 +180,11 @@ module FriendNews
         end
         tags << "junk" if tags.empty?
 
-			  p "message-id"
-        while 1
-          msg["Message-ID"] = "<#{UUIDTools::UUID.random_create().to_s}@#{msg["From"].split("\s")[0]}>"
-          break unless chk_hist?(msg["Message-ID"])
-        end
-
-        #msg["Path"] = fns_conf["host"]
-        msg["Expires"] = (Date.today + $fns_expire.to_i.days).to_s
-        msg["Date"] = Time.now.to_s unless msg.key?("Date")
-        msg["Distribution"] = "global" unless msg["Distribution"]
-        msg["Msg-Sign"] = self.digital_sign(msg,"localhost","sign") #Sign the message
+        #p "sign"
+        msg["Msg-Sign"] = self.digital_sign(msg,$fns_domain,"sign") #Sign the message
         active = DBM::open("#{$fns_path}/db/active",0666)
         
-        p "create artnum"
+        #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
         self.update_active("all",main_artnum)
         self.update_main_sub("all",main_artnum,main_artnum)
@@ -191,15 +195,15 @@ module FriendNews
           self.update_main_sub(t,main_artnum,artnum)
         end
 
+        #p "Save file"
         File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
           f.write @parsemsg.to_str(msg)
         end
         self.append_hist(msg,main_artnum)
         $fns_log.push "fnsserver:Article <#{msg["Message-ID"]}> posted ok"
-        self.response("240 Article posted ok")
 
         #Feed message  
-        $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
+        $fns_queue.push("#{main_artnum},#{msg["Tags"]}") if feedflag == 1
         
         return "240 Article posted ok"
 			rescue => e
@@ -211,7 +215,7 @@ module FriendNews
     def ihave(param)
       begin
         if self.chk_hist?(param)
-          self.response("437 Article rejected - do not try again")
+          return "437 Article rejected - do not try again"
           return
         end
         self.response("335 Send article to be transferred.end with <.>")
@@ -227,10 +231,10 @@ module FriendNews
           msg["Body"] = "Bad Sign\r\n\r\n#{msg["Body"]}"
           msg["Msg-Sign"] = "Bad Sign"
         end
+
         if msg.has_key?("Control") && msg["Msg-Sign"] != "Bad Sign"
-          unless self.parse_cmsg(msg)
-            self.response("437 Article rejected - do not try again")
-          end
+          feedflag = @parse_cmsg.parse_cmsg(msg,@cdomain)
+          return "437 Article rejected - do not try again" if !feedflag
         end
 
 			  #tag mapping
@@ -276,9 +280,8 @@ module FriendNews
 #        p "append_hist"
         self.append_hist(msg,main_artnum)
         $fns_log.push "fnsserver:Article <#{msg["Message-ID"]}> transferred ok"
-        self.response("235 Article transferred OK")
         #Feed message  
-        $fns_queue.push("#{main_artnum},#{msg["Tags"]}")
+        $fns_queue.push("#{main_artnum},#{msg["Tags"]}") if feedflag == 1
         
 #        p "over"
         return "235 Article transferred OK"
@@ -361,9 +364,9 @@ module FriendNews
       self.response(".\r\n")
     end
 
-    def exchange(host_name)
+    def exchange(host_domain)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
-      return "5xx" unless host.has_value?(host_name)
+      return "5xx" unless host.has_value?(host_domain)
       host.close
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
       self.response(key_pool["localhost"])
@@ -416,191 +419,6 @@ module FriendNews
 			end
     end
 
-    #Control message parese
-    def parse_cmsg(msg,host_name)
-      #perm = self.chk_premession(host_name)
-      cmd,param = msg["Control"].split("\s",2)
-      case cmd
-      when "cancel"
-        return self.cancel_msg(param,msg)
-      when "newtag"
-        return self.new_tag(param,msg)
-      when "rmtag"
-        return self.rm_tag(param,msg)
-      when "newml"
-        return self.new_ml(param,msg)
-			when "updateml"
-        return self.update_ml(param,msg)
-			when "addarttag"
-        return self.add_art_tag
-			when "rmarttag"
-        return self.rm_art_tag
-			when "sendme"
-        return self.sendmme
-      else
-        return nil
-      end
-    end
-    
-    def chk_premession(host_name)
-      perm = DBM::open("#{$fns_path}/db/perm",0666)
-      return perm.hash_key?(host_name)
-    end
-
-    def cancel_msg(msg_id,msg)
-      if self.chk_hist?(msg_id)
-        history = DBM::open("#{$fns_path}/db/history",0666)
-        return 1 if history[msg_id] == "Canceled"
-        artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
-        main_artnum = artnum_msgid.index(msg_id)
-        if File.exist?("#{$fns_path}/article/#{main_artnum}")
-          delmsg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{main_artnum}"))
-          if msg["From"] == delmsg["From"]
-            FileUtils.mv("#{$fns_path}/article/#{main_artnum}","#{$fns_path}/tmp/#{Time.now.to_s}")
-          else
-            #wrong auther
-            return nil
-          end
-          #change history file
-          history[msg_id] = "Canceled"
-          #change tag file
-          return 1
-        end
-      else
-        return 1
-      end
-    end
-
-    def new_tag(tag,msg)
-      active = DBM::open("#{$fns_path}/db/active",0666)
-      return "3xx" if active.has_key?(tag)
-      history = DBM::open("#{$fns_path}/db/history",0666)
-      sub_artnum = DBM::open("#{$fns_path}/db/tags/#{param}",0666)
-      cnt = 0 #article number
-      history.each_key do |k|
-        tags = history[k].split("!")[7].split(",")
-        main_artnum = history[k].split("!")[0]
-        tags.each do |t|
-          if t == tag
-            cnt += 1
-            sub_artnum[cnt.to_s] = main_artnum
-            self.rm_artnum("junk",main_artnum)
-          end
-        end
-      end
-      if cnt == 0
-        active[param] = "1,0,y,0"
-      else
-        active[param] = "1,#{cnt.to_s},y,#{cnt.to_s}"
-      end
-      active.close
-      return 0
-    end
-
-    def rm_tag(tag,msg)
-      active = DBM::open("#{$fns_path}/db/active",0666)
-      return nil unless active.has_key?(tag)
-      sub_artnum = DBM::open("#{$fns_path}/db/tags/#{param}",0666)
-      sub_artnum.each_key do |k|
-#        self.update_active("junk",k)
-      end
-      active.delete(tag)
-      active.close
-      return 0
-    end
-
-    def new_ml(name,msg)
-      return nil if name == "list"
-      ml = DBM::open("#{$fns_path}/etc/memberlist/#{name}",0666) 
-      #return nil if ml["Version"] <= Time.now.to_s 
-      ml["Version"] = Time.now.to_s
-      msg["Body"].split("\r\n").each do |m|
-        host,permission = m.split(/\s+|\t+/)
-        ml[host] = permission
-      end
-      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
-      list[name] = ml["Version"]
-      list.close
-      ml.close
-      return 1
-    end
-
-    def update_ml(name,msg)
-      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
-      return nil unless list.include?(name)
-      ml = DBM::open("#{$fns_path}/etc/memberlist/#{name}",0666) 
-			premission_from = ml[(msg["From"].split("\s")[1]).splite("@")[1]]
-			return nil if (permission_from.include("a")) && !(permission_from.inclue("w"))
-      return nil if msg["Date"] <= ml["Version"]
-      msg["Body"].split("\r\n").each do |m|
-        host,permission = m.split(/\s+|\t+/)
-        ml[host] = permission
-      end
-      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
-      list[name] = msg["Date"]
-      list.close
-      ml.close
-      return 1
-    end
-
-    def rem_ml(name)
-    end
-
-    def add_art_tag(param,msg)
-			artnum,tag = param.split("\s")
-      return nil if tag == "all"
-      sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
-      main_artnum = sub_artnum[artnum]
-      sub_artnum.close
-			msg = @parsemsg.to_hash(File::read("#{$fns_path}/article/#{main_artnum}"))
-      if msg["Tags"] == "all"
-        msg["Tags"] = "#{tag}"
-      else
-			  msg["Tags"] += ",#{tag}"
-      end
-    	File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
-      	f.write @parsemsg.to_str(msg)
-    	end
-      artnum = (active[t].split(",")[1].to_i + 1).to_s
-      self.update_active(tag,artnum)
-      self.update_main_sub(tag,main_artnum,artnum)
-      return 0
-    end
-
-    def rm_art_tag(param,msg)
-			artnum,tag = param.split("\s")
-      sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
-      main_artnum = sub_artnum[artnum]
-			msg = @parsemsg.to_hash(File::read("#{$fns_path}/article/#{main_artnum}"))
-			tags = msg["Tags"].split(",")
-			if tags.inclued(tag)
-				tags.delete(tag)
-			end
-			tags.each do |t|
-				msg["Tags"] += "#{t},"
-			end
-			msg["Tags"] = msg["Tags"].chop
-      tags = "all" if tags.length == 0
-    	File.open("#{$fns_path}/article/#{artnum}","w") do |f|
-      	f.write @parsemsg.to_str(msg)
-    	end
-      sub_artnum.delete(artnum)
-      sub_artnum.close
-    end
-
-    def sendme(param)
-			host_domain,count = param.split("\s")
-			hosts = DBM::open("#{$fns_path}/db/hosts",0666)
-			key_pool = DBM.open("#{$fns_path}/db/key_pool")
-			count = (count.to_i + 1).to_s
-			msg["Control"] = "sendme\s#{host_domain}\s#{count}"
-			unless hosts.has_value?(host_domain)
-				return nil if count.to_i < 0
-				return 0
-			end
-			host = hosts.index(host_domian)
-			return msg unless key_pool.has_key?(host) 
-    end
 
     #Digital sign
 	  def digital_sign(msg,host_name,action)
@@ -744,7 +562,8 @@ module FriendNews
         if msg.has_key?("Distribution") && msg["Distribution"] != "global"
           msg["Distribution"].split(",").each do |d|
             DBM::open("#{$fns_path}/etc/memberlist/#{d}",0666).each_key do |h|
-              unless list.include?(h) || h == "Version"
+              next if h == "Version"
+              unless list.include?(h)
                 list << h
               end
             end
@@ -981,19 +800,22 @@ module FriendNews
 
 	class FNS_Managment
 		def initialize()
+			@parsemsg = FriendNews::ParseMsg.new
 		end
 
-    def add_host(host_name,host_domain)
+    def add_host(host_domain,host_name,feed,control)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
-      host[host_name] = host_domain
-      $fns_log.push "create host <#{host_name}> ok, domain <#{host_domain}>"
+      host[host_domain] = host_name
+      puts "create host <#{host_name}> ok, domain <#{host_domain}>"
 			host.close
+      add_feedrule(host_domain,feed)
+      set_perm(host_domain,control)
     end
 
-		def rm_host(host_name)
+		def rm_host(host_domain)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
-			host.delete(host_name)
-      $fns_log.push "delete host <#{host_name}> ok"
+			host.delete(host_domain)
+      puts "delete host <#{host_domain}> ok"
 			host.close
 		end
 
@@ -1009,7 +831,10 @@ module FriendNews
       fnstag = DBM::open("#{$fns_path}/db/active",0666)
       fnstag[tag_name] = "0,0,y,0"
       fnstag.close
-      $fns_log.push "add tag <#{tag_name}> ok"
+      puts "add tag <#{tag_name}> ok"
+    end
+
+    def rm_tag(tag_name)
     end
 
     def show_tags
@@ -1019,21 +844,22 @@ module FriendNews
       end
     end
 
-    def add_feedrule(host_name,rule)
+    def add_feedrule(host_domain,rule)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
-      if host.has_key?(host_name)
+      if host.has_key?(host_domain)
         fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
-        fnsfeed[host_name] = rule
-        p "host <#{host_name}> add feedrule <#{fnsfeed[host_name]}>ok"
+        fnsfeed[host_domain] = rule
+        puts "host <#{host_domain}> add feedrule <#{fnsfeed[host_domain]}>ok"
       else
-        p "do not find host <#{host_name}>"
+        puts "do not find host <#{host_domain}>"
       end
 		end
 
-		def rm_feedrule(host_name)
+		def rm_feedrule(host_domain)
     	fnsfeed = DBM::open("#{$fns_path}/etc/fnsfeed",0066)
-			fnsfeed.delete(host_name)
-      p "host <#{host_name}> remove feedrule ok"
+			fnsfeed.delete(host_domain)
+      puts "host <#{host_domain}> remove feedrule ok"
+      fnsfeed.close
 		end
 
     def show_feedrules
@@ -1041,6 +867,7 @@ module FriendNews
       fnsfeed.each do |h|
         p h
       end
+      fnsfeed.close
     end
 
     def add_mapping(rule,tag)
@@ -1053,10 +880,11 @@ module FriendNews
 		def rm_mapping(rule)
       tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
 			tag_rule.delete(rule)
+      tag_rule.close
 		end
 
 		def add_filter(header,param,tag)
-			filter = DBM::open("#{$fns_path}/etc/filter/#{header}",0666)
+			filter = DBM::open("#{$fns_path}/etc/filter",0666)
 		end
 
 		def rm_filter()
@@ -1066,69 +894,77 @@ module FriendNews
 			conf = DBM.open("#{$fns_path}/etc/fns_conf")
 		end
 
-		def add_key(host_name,key)
+		def add_key(host_domain,key)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
-			key_pool[host_name] = key
-      p "host <#{host_name}> add key ok"
+			key_pool[host_domain] = key
+      puts "host <#{host_domain}> add key ok"
 			key_pool.close
 		end
 
 		def add_key_cl(host_name,path)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
 			key_pool[host_name] = File.read(path)
-      p "host <#{host_name}> add key ok"
+      puts "host <#{host_name}> add key ok"
 			key_pool.close
 		end
 
     def show_keypool
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
       key_pool.each do |k|
-        p k
+        puts k
       end
     end
 
 		def rm_key(host_name)
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
 			key_pool.delete(host_name)
-      p "host <#{host_name}> remove key ok"
+      puts "host <#{host_name}> remove key ok"
 			key_pool.close
 		end
 
-    def set_perm(host_name,perm)
-
+    def set_perm(host_domain,control)
+      perm = DBM.open("#{File.expand_path("./")}/db/perm")
+      perm[host_domain] = control
+      perm.close
+      puts "set host <#{host_domain}> permission #{control} ok"
     end
 
-		def sys_init(host,mail)
+		def sys_init(host_name,domain)
       FileUtils.mkpath("log")
       FileUtils.mkpath("tmp")
       FileUtils.mkpath("etc")
       FileUtils.mkpath("db/tags")
       FileUtils.mkpath("db/feedhist")
-      FileUtils.mkpath("article/control")
 
       #configure file
       fnsconf = DBM.open("#{File.expand_path("./")}/etc/fns_conf",0666)
       fnsconf.clear
       fnsconf["fns_path"] = File.expand_path("./")
-      fnsconf["host"] = host
+      fnsconf["host"] = host_name
       fnsconf["expires"] = "30"
       fnsconf["signature"] = "From,Subject,Tags,Message-ID,Distribution"
-      fnsconf["from"] = "#{host}\n<#{mail}>"
+      fnsconf["from"] = "#{host_name}\s<#{host_name}@#{domain}>"
+      fnsconf["domain"] = domain
       fnsconf.close
 
       #clear message history
-      history = DBM::open("#{File.expand_path("./")}/db/history",0666)
-      history.clear
-      history.close
+      historys = DBM::open("#{File.expand_path("./")}/db/history",0666)
+      historys.clear
+      historys.close
       #clear feed histroy
 
+      #clear host
+      hosts = DBM::open("#{$fns_path}/db/hosts",0666)
+      hosts.clear
+      hosts.close
+
 			#clear tag
-      fnstag = DBM::open("#{File.expand_path("./")}/db/active",0666)
-      fnstag.clear
-      fnstag["all"] = "0,0,y,0"
-      fnstag["control"] = "0,0,y,0"
-      fnstag["junk"] = "0,0,y,0"
-      fnstag.close
+      fnstags = DBM::open("#{File.expand_path("./")}/db/active",0666)
+      fnstags.clear
+      fnstags["all"] = "0,0,y,0"
+      fnstags["control"] = "0,0,y,0"
+      fnstags["junk"] = "0,0,y,0"
+      fnstags.close
 
       #clear key_pool
 			key_pool = DBM.open("#{File.expand_path("./")}/db/key_pool")
@@ -1137,9 +973,12 @@ module FriendNews
 
       #set localhost control message permession
       perm = DBM.open("#{File.expand_path("./")}/db/perm")
-      perm["localhost"] = true
+      perm.clear
+      perm.close
 
-      p "Friendnews system initialize ok"
+      #set localhost domian
+      add_host(domain,host_name,"!*","enable")
+      puts "Friendnews system initialize ok"
 		end
 		
     def show_db(path)
@@ -1166,6 +1005,17 @@ module FriendNews
 			return art
 		end
     
+    def apply_cmsg(msg,host_domain)
+	    parsecmsg = FriendNews::FNS_ParseCmsg.new
+      msghash = @parsemsg.to_hash(msg)
+      stat = parsecmsg.parse_cmsg(msghash,host_domain)
+      if stat == 1
+        cmsglist =  DBM::open("#{$fns_path}/db/cmsglist",0666)
+        cmsglist.delete(msghash["Message-ID"])
+        cmsglist.close
+      end
+      return stat
+    end
 	end
 
   class FNS_Log
@@ -1185,6 +1035,212 @@ module FriendNews
   		  @log.puts("#{Time.now.to_s}:#{str}")
       end
   	end
+  end
+
+  class FNS_ParseCmsg
+	  def initialize()
+			@parsemsg = FriendNews::ParseMsg.new
+	  end
+
+    def parse_cmsg(msg,host_domain)
+      perm = self.chk_prem(host_domain)
+      if perm == "request"
+        cmsglist =  DBM::open("#{$fns_path}/db/cmsglist",0666)
+        cmsglist[msg["Message-ID"]] = "#{msg["From"] + "!" + msg["Date"] + "!" + msg["Control"]}"
+        cmsglist.close
+        return 1
+      elsif perm == "refuse"
+        return nil
+      end
+
+      cmd,param = msg["Control"].split("\s",2)
+      case cmd
+      when "cancel"
+        return self.cancel_msg(param,msg)
+      when "newtag"
+        return self.new_tag(param,msg)
+      when "rmtag"
+        return self.rm_tag(param,msg)
+      when "newml"
+        return self.new_ml(param,msg)
+			when "updateml"
+        return self.update_ml(param,msg)
+			when "addarttag"
+        return self.add_art_tag
+			when "rmarttag"
+        return self.rm_art_tag
+			when "sendme"
+        return self.sendmme
+      else
+        return nil
+      end
+    end
+    
+    def chk_prem(host_domain)
+      perm = DBM::open("#{$fns_path}/db/perm",0666)
+      return "apply" if host_domain == "localhost"
+      return perm.has_key?(host_domain)
+    end
+
+    def cancel_msg(msg_id,msg)
+			history = DBM::open("#{$fns_path}/db/history",0666)
+			if history.has_key?(msg_id)
+				chkhist = true
+			else
+				chkhist = nil
+			end
+      if chkhist
+        return 1 if history[msg_id].include?("Canceled")
+        artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
+        main_artnum = artnum_msgid.index(msg_id)
+        if File.exist?("#{$fns_path}/article/#{main_artnum}")
+          delmsg = @parsemsg.to_hash(File.read("#{$fns_path}/article/#{main_artnum}"))
+          if msg["From"] == delmsg["From"]
+            FileUtils.mv("#{$fns_path}/article/#{main_artnum}","#{$fns_path}/canceled/#{msg_id}")
+          else
+            #wrong auther
+            return nil
+          end
+          #change history file
+          history[msg_id] = "Canceled Path:#{$fns_path}/canceled/#{msg_id}"
+          history.close
+          #change tag file
+          return 1
+        end
+      else
+        return 1
+      end
+    end
+
+    def new_tag(tag,msg)
+      active = DBM::open("#{$fns_path}/db/active",0666)
+      return "3xx" if active.has_key?(tag)
+      history = DBM::open("#{$fns_path}/db/history",0666)
+      sub_artnum = DBM::open("#{$fns_path}/db/tags/#{param}",0666)
+      cnt = 0 #article number
+      history.each_key do |k|
+        tags = history[k].split("!")[7].split(",")
+        main_artnum = history[k].split("!")[0]
+        tags.each do |t|
+          if t == tag
+            cnt += 1
+            sub_artnum[cnt.to_s] = main_artnum
+            self.rm_artnum("junk",main_artnum)
+          end
+        end
+      end
+      if cnt == 0
+        active[param] = "1,0,y,0"
+      else
+        active[param] = "1,#{cnt.to_s},y,#{cnt.to_s}"
+      end
+      active.close
+      return 0
+    end
+
+    def rm_tag(tag,msg)
+      active = DBM::open("#{$fns_path}/db/active",0666)
+      return nil unless active.has_key?(tag)
+      sub_artnum = DBM::open("#{$fns_path}/db/tags/#{param}",0666)
+      sub_artnum.each_key do |k|
+#        self.update_active("junk",k)
+      end
+      active.delete(tag)
+      active.close
+      return 0
+    end
+
+    def new_ml(name,msg)
+      return nil if name == "list"
+      ml = DBM::open("#{$fns_path}/etc/memberlist/#{name}",0666) 
+      ml["Version"] = Time.now.to_s
+      msg["Body"].split("\r\n").each do |m|
+        host,permission = m.split(/\s+|\t+/)
+        ml[host] = permission
+      end
+      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
+      list[name] = ml["Version"]
+      list.close
+      ml.close
+      return 1
+    end
+
+    def update_ml(name,msg)
+      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
+      return nil unless list.include?(name)
+      ml = DBM::open("#{$fns_path}/etc/memberlist/#{name}",0666) 
+			premission_from = ml[(msg["From"].split("\s")[1]).splite("@")[1]]
+			return nil if (permission_from != "admin") && !(permission_from.inclued("w"))
+      return nil if msg["Date"] <= ml["Version"]
+      msg["Body"].split("\r\n").each do |m|
+        host,permission = m.split(/\s*|\t*/)
+        ml[host] = permission
+      end
+      list = DBM::open("#{$fns_path}/etc/memberlist/list",0666)
+      list[name] = msg["Date"]
+      list.close
+      ml.close
+      return 1
+    end
+
+    def rem_ml(name)
+    end
+
+    def add_art_tag(param,msg)
+			artnum,tag = param.split("\s")
+      return nil if tag == "all"
+      sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
+      main_artnum = sub_artnum[artnum]
+      sub_artnum.close
+			msg = @parsemsg.to_hash(File::read("#{$fns_path}/article/#{main_artnum}"))
+      if msg["Tags"] == "all"
+        msg["Tags"] = "#{tag}"
+      else
+			  msg["Tags"] += ",#{tag}"
+      end
+    	File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
+      	f.write @parsemsg.to_str(msg)
+    	end
+      artnum = (active[tag].split(",")[1].to_i + 1).to_s
+      self.update_active(tag,artnum)
+      self.update_main_sub(tag,main_artnum,artnum)
+      return 0
+    end
+
+    def rm_art_tag(param,msg)
+			artnum,tag = param.split("\s")
+      sub_artnum = DBM.open("#{$fns_path}/db/tags/#{tag}",0666) 
+      main_artnum = sub_artnum[artnum]
+			msg = @parsemsg.to_hash(File::read("#{$fns_path}/article/#{main_artnum}"))
+			tags = msg["Tags"].split(",")
+			if tags.inclued(tag)
+				tags.delete(tag)
+			end
+			tags.each do |t|
+				msg["Tags"] += "#{t},"
+			end
+			msg["Tags"] = msg["Tags"].chop
+      tags = "all" if tags.length == 0
+    	File.open("#{$fns_path}/article/#{artnum}","w") do |f|
+      	f.write @parsemsg.to_str(msg)
+    	end
+      sub_artnum.delete(artnum)
+      sub_artnum.close
+    end
+
+    def sendme(param)
+			host_domain,count = param.split("\s")
+			hosts = DBM::open("#{$fns_path}/db/hosts",0666)
+			key_pool = DBM.open("#{$fns_path}/db/key_pool")
+			count = (count.to_i + 1).to_s
+			msg["Control"] = "sendme\s#{host_domain}\s#{count}"
+			unless hosts.has_value?(host_domain)
+				return nil if count.to_i < 0
+				return 0
+			end
+			host = hosts.index(host_domain)
+			return msg unless key_pool.has_key?(host) 
+    end
   end
 
   class NNTP_Msg

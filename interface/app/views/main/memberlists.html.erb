@@ -9,7 +9,7 @@
 <tr>
 <th><%= n %></th>
 <td><%= v %></td>
-<td><%=  button_to "show",{:controller => 'main',:action => 'show_ml',:ml_name => n},{:method => :post} %></td>
+<td><%=  button_to "show",{:controller => 'main',:action => 'update_ml',:ml_name => n},{:method => :post} %></td>
 </tr>
 <% end -%>
 </table>
