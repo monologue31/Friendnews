@@ -16,6 +16,8 @@ Interface::Application.routes.draw do
   match "main/update_ml"
   match "main/cmsg_list"
   match "main/mapping"
+  match "main/add_tmapping"
+  match "main/add_hmapping"
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

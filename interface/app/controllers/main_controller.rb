@@ -17,10 +17,18 @@ class MainController < ApplicationController
 
   def tags
 		if request.post?
-			tag_name = params["tag_name"]
-			url = "druby://localhost:11118"
-			mgt = DRbObject.new_with_uri(url)
-			mgt.rm_tag(tag_name)
+      if params["acttype"] == "del"
+        p "111111111111111111111"
+			  tag_name = params["tag_name"]
+			  url = "druby://localhost:11118"
+			  mgt = DRbObject.new_with_uri(url)
+			  mgt.rm_tag(tag_name)
+      else
+			  tag_name = params["tag_name"]
+			  url = "druby://localhost:11118"
+			  mgt = DRbObject.new_with_uri(url)
+			  mgt.add_tag(tag_name)
+      end
     else
     end
     @tags = Hash.new
@@ -29,6 +37,48 @@ class MainController < ApplicationController
       @tags[t] = p.split(",")
     end
     tagsdbm.close
+  end
+
+  def mapping
+		hostsdbm = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
+    @rule = Hash.new {|h,k| h[k] = {}}
+    count = 1
+    hostsdbm.each_key do |h|
+		  itagruledbm = DBM::open("#{File.expand_path('../')}/etc/rule/#{h}_trule_include",0666)
+      itagruledbm.each do |k,r|
+        @rule[count]["host"] = h
+        @rule[count]["key_word"] = k
+        @rule[count]["type"] = "tag include"
+        @rule[count]["result"] = r
+        count += 1
+      end
+      itagruledbm.close
+
+		  etagruledbm = DBM::open("#{File.expand_path('../')}/etc/rule/#{h}_trule_equal",0666)
+      etagruledbm.each do |k,r|
+        @rule[count]["host"] = h
+        @rule[count]["key_word"] = k
+        @rule[count]["type"] = "tag equal"
+        @rule[count]["result"] = r
+        count += 1
+      end
+      etagruledbm.close
+
+    end
+    hostsdbm.close
+
+    headers = ["From","Distribution","Subject"]
+    headers.each do |h|
+		  headerruledbm = DBM::open("#{File.expand_path('../')}/etc/rule/#{h}_rule",0666)
+      headerruledbm.each do |k,r|
+        @rule[count]["host"] = h
+        @rule[count]["key_word"] = k
+        @rule[count]["type"] = "header include"
+        @rule[count]["result"] = r
+        count += 1
+      end
+    end
+    p @rule
   end
 
   def cmsg_list
@@ -63,7 +113,7 @@ class MainController < ApplicationController
     @hosts = Hash.new {|h,k| h[k] = {}}
     hostsdbm.each do |d,h|
       @hosts[h]["host_domain"] = d
-			if key_pool.has_key?(h)
+			if key_pool.has_key?(d)
 				@hosts[h]["key"] = 1
 			else
 				@hosts[h]["key"] = 0
@@ -109,6 +159,58 @@ class MainController < ApplicationController
 		end
 	end
 
+	def add_tmapping
+		if request.post?
+			url = "druby://localhost:11118"
+			mgt = DRbObject.new_with_uri(url)
+			mgt.add_tmapping(params["host_domain"],params["type"],params["key_word"],params["result"])
+		else
+		end
+		@host_list = Hash.new
+		host = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
+		host.each_key do |k|
+			@host_list[k] = host[k]
+		end
+		host.close
+
+		@tag_list = Hash.new
+		tags = DBM::open("#{File.expand_path('../')}/db/active",0666)
+		tags.each_key do |k|
+			@tag_list[k] = tags[k]
+		end
+		tags.close
+	end
+
+	def add_hmapping
+		if request.post?
+			url = "druby://localhost:11118"
+			mgt = DRbObject.new_with_uri(url)
+			mgt.add_hmapping(params["header"],params["key_word"],params["result"])
+		else
+		end
+	end
+
+	def add_tmapping
+		if request.post?
+			url = "druby://localhost:11118"
+			mgt = DRbObject.new_with_uri(url)
+			mgt.add_tmapping(params["host_domain"],params["type"],params["key_word"],params["result"])
+		else
+		end
+		@host_list = Hash.new
+		host = DBM::open("#{File.expand_path('../')}/db/hosts",0666)
+		host.each_key do |k|
+			@host_list[k] = host[k]
+		end
+		host.close
+
+		@tag_list = Hash.new
+		tags = DBM::open("#{File.expand_path('../')}/db/active",0666)
+		tags.each_key do |k|
+			@tag_list[k] = tags[k]
+		end
+		tags.close
+	end
 	def upload_key
 		if request.post?
 			key = params["public_key"]

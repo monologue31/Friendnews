@@ -1,0 +1,32 @@
+<form action="/main/add_tmapping" method = "post">
+	<p>
+		<label>User Domain:</label>
+		<select name = "host_domain">
+		<% @host_list.each_key do |f| -%>
+			<option value = <%= f %>><%= f %></option>
+		<% end -%>
+		</select>
+	</p>
+  <p>
+    <label>Mapping Type</label>
+    <select name = "type">
+      <option value = "include">include</option>
+      <option value = "equal">equal</option>
+    </select>
+  </p>
+	<p>
+		<label>Key Word:</label>
+		<input name = "key_word" type = "text">
+	</p>
+  <p>
+    <label>Result Tag</label>
+    <select name = "result">
+		<% @tag_list.each_key do |t| -%>
+			<option value = <%= t %>><%= t %></option>
+		<% end -%>
+    </select>
+  </p>
+	<p>
+		<input type = "submit">
+	</p>
+</form>

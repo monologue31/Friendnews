@@ -44,7 +44,7 @@ module FriendNews
 				cdomain = Socket.getnameinfo(Socket.sockaddr_in(119,conn_nntp.peeraddr[3]))[0]
       	$fns_log.push "fnsserver:Connection from #{cdomain} IP:#{conn_nntp.peeraddr[3]} MODE:NNTP"
       	$fns_log.push "fnsserver:Accepted connection from #{cdomain} MODE:NNTP"
-       	conn_nntp.puts(200)
+       	#conn_nntp.puts(200)
        	process = Process.new(conn_nntp,cdomain)
        	process.run
        	$fns_log.push "fnsserver:#{cdomain} done MODE:NNTP"
@@ -164,6 +164,8 @@ module FriendNews
         msg["Date"] = Time.now.to_s unless msg.key?("Date")
         msg["Distribution"] = "global" unless msg["Distribution"]
 
+        # "control"
+        feedlag = 1
         if msg.has_key?("Control")
           feedflag = @parsecmsg.parse_cmsg(msg,@cdomain)
           return "500" unless feedflag
@@ -172,7 +174,11 @@ module FriendNews
 			  #check signature
         msg["Signature"] = $fns_sign unless msg["Signature"]#Which header should be signed
 
-        #p "Parse Tag"
+			  # "tag mapping only for testing"
+        msg["Tags"] = self.tag_mapping(@cdomain,msg["Tags"].split(","))
+			  msg = self.header_mapping(msg)
+
+        # "Parse Tag"
         active = DBM::open("#{$fns_path}/db/active",0666)
         tags = Array.new
         msg["Tags"].split(",").each do |t|
@@ -180,9 +186,8 @@ module FriendNews
         end
         tags << "junk" if tags.empty?
 
-        #p "sign"
+        # "sign"
         msg["Msg-Sign"] = self.digital_sign(msg,$fns_domain,"sign") #Sign the message
-        active = DBM::open("#{$fns_path}/db/active",0666)
         
         #create artnum
         main_artnum = (active["all"].split(",")[1].to_i + 1).to_s
@@ -194,8 +199,9 @@ module FriendNews
           self.update_active(t,artnum)
           self.update_main_sub(t,main_artnum,artnum)
         end
+        active.close
 
-        #p "Save file"
+        # "Save file"
         File.open("#{$fns_path}/article/#{main_artnum}","w") do |f|
           f.write @parsemsg.to_str(msg)
         end
@@ -232,6 +238,7 @@ module FriendNews
           msg["Msg-Sign"] = "Bad Sign"
         end
 
+        feedflag = 1
         if msg.has_key?("Control") && msg["Msg-Sign"] != "Bad Sign"
           feedflag = @parse_cmsg.parse_cmsg(msg,@cdomain)
           return "437 Article rejected - do not try again" if !feedflag
@@ -366,11 +373,13 @@ module FriendNews
 
     def exchange(host_domain)
       host = DBM::open("#{$fns_path}/db/hosts",0666)
-      return "5xx" unless host.has_value?(host_domain)
+      return "5xx" unless host.has_key?(host_domain)
       host.close
 			key_pool = DBM.open("#{$fns_path}/db/key_pool")
-      self.response(key_pool["localhost"])
+      fnsconf = DBM.open("#{File.expand_path("./")}/etc/fns_conf",0666)
+      self.response(key_pool[fnsconf["domain"]])
 			key_pool.close
+      fnsconf.close
     end
 
     #Response
@@ -402,10 +411,13 @@ module FriendNews
     def append_hist(msg,art_num)
       history = DBM::open("#{$fns_path}/db/history",0666)
       history[msg["Message-ID"]] = "#{art_num}!#{msg["Subject"]}!#{msg["From"]}!#{msg["Date"]}!#{File.size("#{$fns_path}/article/#{art_num}")}!#{msg["Lines"]}!#{msg["Xref"]}!#{msg["Tags"]}"
-      history.close
       artnum_msgid = DBM::open("#{$fns_path}/db/artnum_msgid",0666)
       artnum_msgid[art_num] = msg["Message-ID"]
+      expire_hist = DBM::open("#{$fns_path}/db/expire_hist",0666)
+      expire_hist[msg["Message-ID"]] = "#{msg["Expire"]}"
+      history.close
       artnum_msgid.close
+      expire_hist.close
     end
 
     def chk_hist?(msg_id)
@@ -418,7 +430,6 @@ module FriendNews
 				return nil
 			end
     end
-
 
     #Digital sign
 	  def digital_sign(msg,host_name,action)
@@ -470,44 +481,53 @@ module FriendNews
 		  end
 	  end
 
-	  def tag_mapping(tags)
-      tag = tags.split(",")
-      ctags = Arrary.new
-      tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
-      tag.each do |t|
-        tag_rule.each_key do |k|
-          if /#{k}/ =~ t
-          	ctag << tag_rule[k]
-					else
-						ctag << t
-        	end
+	  def tag_mapping(host,tags)
+      host = "alice.socialvpn" if host == "localhost" # test 
+      tag_rule_e = DBM::open("#{$fns_path}/etc/rule/#{host}_trule_equal",0666)
+      tag_rule_i = DBM::open("#{$fns_path}/etc/rule/#{host}_trule_include",0666)
+      ctags = Array.new
+      tags.each do |t|
+        #include mapping
+        mflag = 0
+        tag_rule_i.each do |v,r|
+          if t.include?(v)
+            ctags << tag_rule_i[v]
+            mflag += 1
+          end
+        end
+        ctags << t if mflag == 0
+      end
+      tag_rule_i.close
+
+      tags.each do |t|
+        #equal mapping
+        mflag = 0
+        if tag_rule_e.include?(t)
+          ctags << tag_rule_e[t]
+        else
+          ctags << t
         end
       end
-      return ctag
+      tag_rule_e.close
+
+      result = ""
+      ctags.uniq.each do |t|
+        result += t + ","
+      end
+      return result.chop
     end
 	
-		def header_mapping(tag,msg)
-			host_rule = DBM::open("#{$fns_path}/etc/host_rule",0666)
-			header_rule = DBM::open("#{$fns_path}/etc/header_rule",0666)
-			host_domain = (msg["From"].split("@")[1]).split(">")[0]
-      host = DBM::open("#{$fns_path}/db/hosts",0666)
-			host_name = host.index(host_domain)
-			if host_rule.has_key?(host_name)
-				rules = host_rule[host_name]
-				rule = rules.split("!")
-				rule.each do |r|
-					header,value,ttag = rule.split(",")
-					tag << ttag if /#{value}/ =~ msg[header] 
-				end
-			else
-				header_rule.each do |r|
-					if msg.has_key?(r)
-						ttag = "#{r}.#{msg[r]}"
-						tag << ttag
-					end
-				end
-			end	
-			return tag
+		def header_mapping(msg)
+      headers = ["From","Distribution","Subject"]
+      headers.each do |h|
+			  header_rule = DBM::open("#{$fns_path}/etc/rule/#{h}_rule",0666)
+        header_rule.each_key do |r|
+          if msg[h].include?(r)
+            msg["Tags"] += "," + header_rule[r]
+          end
+        end
+      end
+			return msg
 		end
   end
 
@@ -659,9 +679,11 @@ module FriendNews
     def connect(host)
       begin
         @socket = TCPSocket.open(host,@port)
+        @socket.puts("MODE READER")
         puts "fnsclient:Connecting #{host} with port[#{@port}] successful code #{@socket.gets}"
 				return true
       rescue => e
+        p e
         puts "fnsclient:Connecting #{host} with port[#{@port}] error [#{e}]"
 				return nil
       end
@@ -835,6 +857,10 @@ module FriendNews
     end
 
     def rm_tag(tag_name)
+      fnstag = DBM::open("#{$fns_path}/db/active",0666)
+      fnstag.delete(tag_name)
+      fnstag.close
+      puts "rm tag <#{tag_name}> ok"
     end
 
     def show_tags
@@ -870,25 +896,32 @@ module FriendNews
       fnsfeed.close
     end
 
-    def add_mapping(rule,tag)
-      tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
-      tag_rule[rule] = tag
-      msg = "rule <#{rule}> to <#{tag}>"
-			return msg
+    def add_tmapping(host,type,key_word,result)
+      tag_rule = DBM::open("#{$fns_path}/etc/rule/#{host}_trule_#{type}",0666)
+      self.add_tag(result) unless fnstag.has_key?(result)
+      tag_rule[key_word] = result
+      puts "host #{host} add new rule type:#{type} key word:<#{key_word}> result <#{result}>"
     end
 
-		def rm_mapping(rule)
-      tag_rule = DBM::open("#{$fns_path}/etc/tag_rule",0666)
-			tag_rule.delete(rule)
+		def rm_tmapping(host,type,key_word)
+      tag_rule = DBM::open("#{$fns_path}/etc/rule/#{host}_trule_#{type}",0666)
+			tag_rule.delete(key_word)
       tag_rule.close
 		end
 
-		def add_filter(header,param,tag)
-			filter = DBM::open("#{$fns_path}/etc/filter",0666)
-		end
+    def add_hmapping(header,key_word,result)
+      header_rule = DBM::open("#{$fns_path}/etc/rule/#{header}_rule",0666)
+      fnstag = DBM::open("#{$fns_path}/db/active",0666)
+      self.add_tag(result) unless fnstag.has_key?(result)
+      header_rule[key_word] = result
+      header_rule.close
+    end
 
-		def rm_filter()
-		end
+    def rm_hmapping(header,key_word)
+      header_rule = DBM::open("#{$fns_path}/etc/rule/#{header}_rule",0666)
+      header_rule[key_word] = result
+      header_rule.close
+    end
 
 		def set_env(param,value)
 			conf = DBM.open("#{$fns_path}/etc/fns_conf")
@@ -933,6 +966,7 @@ module FriendNews
       FileUtils.mkpath("log")
       FileUtils.mkpath("tmp")
       FileUtils.mkpath("etc")
+      FileUtils.mkpath("etc/rule")
       FileUtils.mkpath("db/tags")
       FileUtils.mkpath("db/feedhist")
 
@@ -1078,7 +1112,7 @@ module FriendNews
     
     def chk_prem(host_domain)
       perm = DBM::open("#{$fns_path}/db/perm",0666)
-      return "apply" if host_domain == "localhost"
+      return "request" if host_domain == "localhost"
       return perm.has_key?(host_domain)
     end
 

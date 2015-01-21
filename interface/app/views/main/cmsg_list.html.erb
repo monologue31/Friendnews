@@ -2,17 +2,17 @@
   <table border="1" cellpadding="4">
     <tr>
     <td> </td>
-    <th>Message-ID</th>
+    <th width="100">Message-ID</th>
     <td>From</td>
     <td>Date</td>
-    <td>Type</td>
+    <td width="150">Type</td>
     </tr>
     <% @clist.each do |msg,val| -%>
     <tr>
       <td><%= check_box_tag msg, '1',true %></td>
-      <th><%= link_to(msg,:controller => 'main',:action => 'article',:artnum => msg) %></th>
+      <th width="100"><%= link_to(msg,:controller => 'main',:action => 'article',:artnum => msg) %></th>
       <% val.split("!").each do |v|-%>
-      <td><%= v %></td>
+      <td width="150"><%= v %></td>
       <% end -%>
     </tr>
     <% end -%>

@@ -1,0 +1,20 @@
+<%= button_to "add tag mapping",{:controller => 'main', :action => 'add_tmapping'},{:method => :get} %>
+<%= button_to "add header mapping",{:controller => 'main', :action => 'add_hmapping'},{:method => :get} %>
+<table border="1" cellpadding="4">
+<tr>
+<th>Pattern</th>
+<td>key word</td>
+<td>mapping type</td>
+<td>result tag</td>
+<td>action</td>
+</tr>
+<% @rule.each_key do |c| -%>
+<tr>
+<th><%= @rule[c]["host"] %></th>
+<td><%= @rule[c]["key_word"] %></td>
+<td><%= @rule[c]["type"] %></td>
+<td><%= @rule[c]["result"] %></td>
+<td><%= button_to "delete",{:controller => 'main', :action => 'mapping'},{:method => :get} %></td>
+</tr>
+<% end -%>
+</table>
